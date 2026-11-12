@@ -1,1782 +1,1346 @@
-# MASTER IMPLEMENTATION PROMPT
-# Enterprise Architecture Engineering Harness (EAEH)
+# EAEH – MASTER ARCHITECTURE AND IMPLEMENTATION PROMPT
+## Enterprise Architecture Engineering Harness
+### Rust-First | Hybrid Orchestration | Dynamic Agents | Isolated Execution | Multi-Agent Engineering | Human-Governed
 
-## 1. ROLE AND RESPONSIBILITY
+# PART 1 – ROLE, MISSION AND OBJECTIVES
 
-Act as a Principal Software Architect, Enterprise AI Architect, Rust Engineer, Agentic Systems Engineer, DevSecOps Architect and Technical Lead.
+## 1. Your Role
 
-Your responsibility is to design and implement an enterprise-grade Enterprise Architecture Engineering Harness (EAEH).
+Act as a Principal Enterprise Architect, Rust Systems Architect, AI/Agentic Systems Architect, Security Architect and Senior Engineering Lead.
 
-EAEH is intended to be a reusable, extensible, secure and governed AI engineering platform capable of supporting the complete software development lifecycle.
+You are responsible for assessing, designing, implementing, testing and documenting the Enterprise Architecture Engineering Harness (EAEH).
 
-This is not a simple AI chatbot, an LLM wrapper or a collection of independent agents.
+Your objective is to build a reusable, extensible, secure, observable and enterprise-governed AI engineering platform.
 
-It must be an engineering harness that coordinates enterprise knowledge, agent skills, dynamically instantiated agents, workflows, execution environments, engineering tools, governance controls and human decisions.
+Do not build:
+- A chatbot.
+- A basic LLM wrapper.
+- A fixed collection of hardcoded agents.
+- A prompt-driven autonomous coding application.
+- A collection of tightly coupled engineering workflows.
 
-The platform must be designed for enterprise adoption, multiple projects, multiple teams, multiple technology stacks and future extensibility.
+Build an actual engineering harness that provides reusable runtime capabilities, deterministic controls, extensibility mechanisms, intelligent agent execution, governed enterprise knowledge and engineering integrations.
 
-You must think architecturally before implementing.
+Prioritize correctness, security, reliability, maintainability, extensibility, traceability and human accountability over rapid feature delivery.
 
-Do not introduce unnecessary complexity, but do not compromise enterprise architecture, security, governance, extensibility or maintainability for implementation convenience.
+## 2. EAEH Vision
 
----
-
-# 2. PRODUCT VISION
-
-Build a platform that can support the following software engineering lifecycle:
+EAEH must support the complete software engineering lifecycle:
 
 1. Business Requirements Document (BRD) ingestion and analysis.
 2. Requirements engineering and traceability.
 3. High-Level Design (HLD) generation.
-4. Human HLD review and approval.
+4. Mandatory human HLD approval.
 5. Low-Level Design (LLD) generation.
-6. Human LLD review and approval.
-7. Software development and code generation.
+6. Mandatory human LLD approval.
+7. Multi-agent software development.
 8. Automated testing and quality engineering.
 9. Security and compliance validation.
-10. Git branch and pull-request management.
-11. CI/CD pipeline execution.
-12. Release management.
-13. Controlled deployment to target environments.
-14. Post-deployment verification and operational feedback.
+10. Git repository and branch management.
+11. Pull request creation and reviews.
+12. CI/CD integration.
+13. Release management.
+14. Controlled deployment.
+15. Post-deployment verification and feedback.
 
-The platform must preserve traceability between:
+Maintain end-to-end traceability:
 
-Business requirements
-→ Functional and non-functional requirements
-→ Architecture decisions
-→ HLD
-→ LLD
-→ Source code
-→ Tests
-→ Pull requests
-→ Build artifacts
-→ Releases
-→ Deployments
+Business Requirements → Functional/Non-Functional Requirements → Architecture Decisions → HLD → LLD → Code → Tests → Pull Requests → Build Artifacts → Releases → Deployments.
 
-Every important engineering decision and approval must be traceable.
+All important outputs must be traceable to originating requirements, applicable enterprise knowledge, skills, policies, models, tools, approvals and execution history.
 
----
+# PART 2 – APPROVED ARCHITECTURAL DECISIONS
 
-# 3. CORE ARCHITECTURAL DECISIONS
+## 3. Approved Decisions
 
-The following architectural decisions have already been made. Treat them as mandatory constraints.
+The following architectural decisions are explicitly approved. Do not change them without presenting the reasoning, alternatives, impacts and obtaining approval.
 
-## 3.1 Orchestration: Hybrid
+| Dimension | Approved decision |
+|---|---|
+| Orchestration | Hybrid |
+| Agent instantiation | Dynamic |
+| Execution environment | Isolated |
+| Software development | Multi-agent |
+| Human approvals | Gated |
+| Core implementation | Rust-first (Option A) |
 
-Implement hybrid orchestration.
+### 3.1 Hybrid orchestration
 
-Use deterministic workflow orchestration for:
+Implement two cooperating orchestration mechanisms.
 
-- Lifecycle stages.
-- Mandatory dependencies.
-- Approval gates.
-- Workflow state transitions.
-- Retry policies.
-- Timeout handling.
-- Failure recovery.
+**A. Deterministic workflow orchestration**
+
+Responsible for:
+- Lifecycle stages and state transitions.
+- Workflow dependencies and execution order.
+- Approval gates and authorization.
+- Policy enforcement.
+- Retry, timeout and cancellation.
+- Durable state and recovery.
+- Execution limits.
 - Compliance enforcement.
 - Release and deployment authorization.
 
-Use intelligent agent orchestration for:
+**B. Intelligent agent orchestration**
 
+Responsible for:
 - Task decomposition.
-- Agent selection.
-- Agent collaboration.
+- Agent selection and instantiation.
+- Task assignment and delegation.
 - Context selection.
-- Problem analysis.
-- Reasoning.
-- Delegation.
-- Result evaluation.
-- Adaptive task execution.
+- Skill and tool selection.
+- Agent collaboration.
+- Reasoning and result evaluation.
+- Recommendations for corrective action.
 
-LLMs must not be the authority for enforcing mandatory governance rules.
+The deterministic workflow and governance layers are authoritative. An LLM must never independently authorize mandatory operations or bypass deterministic controls.
 
-The deterministic orchestration layer must remain authoritative.
+### 3.2 Dynamic agent instantiation
 
-## 3.2 Agent Instantiation: Dynamic
+Agents must be instantiated dynamically according to task requirements.
 
-Agents must be dynamically instantiated when required.
-
-Do not design the platform around a fixed collection of permanently running agents.
-
-Implement:
-
-- Agent definitions.
-- Agent registration.
-- Agent discovery.
-- Agent capability descriptions.
-- Agent instantiation.
+Support:
+- Agent definitions and registration.
+- Agent profiles and capabilities.
+- Discovery and capability matching.
+- Dynamic instantiation and termination.
 - Agent lifecycle management.
-- Agent termination.
-- Agent version management.
-- Agent execution policies.
-- Agent permissions.
-- Agent resource limits.
+- Versioning and compatibility.
+- Permission and resource management.
+- Agent health and execution status.
+- Agent-to-agent communication.
+- Execution supervision.
 
-The orchestrator must select agents based on task requirements, available capabilities, policies and execution context.
+Do not require all agents to run continuously.
 
-Agent instantiation must be observable and auditable.
+### 3.3 Isolated execution
 
-## 3.3 Execution Environment: Isolated
+All agent execution must occur within appropriately controlled execution boundaries.
 
-Every agent execution must occur within an appropriately isolated execution boundary.
-
-Support isolation through an extensible execution provider architecture.
-
-Consider:
-
-- Container-based execution.
-- Sandboxed execution.
-- Process isolation where appropriate.
-- Resource quotas.
+Support:
+- Container, sandbox or process isolation.
 - Filesystem restrictions.
-- Network restrictions.
-- Secret isolation.
-- Project-level boundaries.
+- Network access restrictions.
+- CPU and memory limits.
 - Execution timeouts.
-- Cleanup and termination.
+- Secret isolation.
+- Project and tenant boundaries.
+- Workspace lifecycle and cleanup.
+- Controlled artifact exchange.
 
-Agents must not receive unrestricted access to the host environment.
+Isolation must be replaceable through an abstraction.
 
-The isolation provider must be replaceable without redesigning the orchestration core.
+Test actual security boundaries. A successfully started container is not proof of effective isolation.
 
-## 3.4 Software Development: Multi-Agent
+### 3.4 Multi-agent engineering
 
-Use specialized agents that collaborate to complete engineering tasks.
+Support specialized agents when justified, including:
+- Business Analyst.
+- Requirements Engineer.
+- Solution Architect.
+- HLD Designer.
+- LLD Designer.
+- Software Developer.
+- Code Reviewer.
+- Test Engineer.
+- Security Engineer.
+- DevOps Engineer.
+- Release Manager.
 
-Examples:
+Use the smallest effective set of agents for a task. Each agent must have defined responsibilities, capabilities, permissions and typed input/output contracts.
 
-- Business Analyst Agent.
-- Requirements Engineer Agent.
-- Solution Architect Agent.
-- HLD Design Agent.
-- LLD Design Agent.
-- Software Developer Agent.
-- Code Reviewer Agent.
-- Test Engineer Agent.
-- Security Engineer Agent.
-- DevOps Agent.
-- Release Manager Agent.
+### 3.5 Human approval gates
 
-Agents must have clearly defined responsibilities and permissions.
-
-Do not create agents simply to increase agent count.
-
-Use the minimum effective set of agents required for each task.
-
-## 3.5 Human Approvals: Gated
-
-Human approvals are mandatory at defined governance boundaries.
-
-At minimum:
-
+Mandatory approval gates:
 - HLD approval before LLD generation.
 - LLD approval before code generation.
-- Required pull-request approvals before protected-branch merges.
-- Production release/deployment authorization.
-
-Approval rules must be enforced by deterministic workflow and authorization services.
-
-An agent must never approve its own work.
-
-Agents must never bypass an approval gate by invoking another API, tool or workflow directly.
-
-Approval decisions must be recorded with:
-
-- Approver identity.
-- Approval role.
-- Timestamp.
-- Decision.
-- Comments.
-- Related artifact version.
-- Workflow identifier.
-- Audit event.
-
-Rejected artifacts must return to the appropriate revision stage without losing previous context or history.
-
----
-
-# 4. TECHNOLOGY AND IMPLEMENTATION STRATEGY
-
-## 4.1 Rust-First Architecture
-
-Use Rust as the primary implementation language for the EAEH core.
-
-Rust should be used for:
-
-- Core runtime.
-- Orchestration engine.
-- Agent lifecycle management.
-- Execution coordination.
-- Policy enforcement.
-- Workflow state management.
-- API services.
-- Tool execution coordination.
-- Event processing.
-- Audit and observability infrastructure where appropriate.
-
-Choose mature Rust libraries and frameworks based on suitability, stability, security and maintainability.
-
-Evaluate suitable technologies such as:
-
-- Tokio for asynchronous execution.
-- Axum for HTTP services.
-- Serde for serialization.
-- SQLx for database access.
-- Tracing for instrumentation.
-- OpenTelemetry integration for distributed observability.
-- Established authentication and authorization libraries.
-- Appropriate container and process-management integrations.
-
-These are candidates, not mandatory dependencies. Evaluate before selecting.
-
-Do not introduce a dependency without a clear architectural justification.
-
-## 4.2 AI and LLM Integration
-
-Do not attempt to implement an LLM inference engine in Rust.
-
-Build a provider-independent LLM integration layer.
-
-Support multiple providers through adapters.
-
-The design should accommodate:
-
-- Commercial LLM APIs.
-- Cloud-hosted model services.
-- Locally hosted models.
-- Future model providers.
-- Embedding models.
-- Reranking models.
-
-The platform must support model selection based on:
-
-- Task type.
-- Capability.
-- Context requirements.
-- Cost.
-- Latency.
-- Security classification.
-- Data residency.
-- Enterprise policies.
-
-Provider-specific implementation details must not leak into the core orchestration engine.
-
-Support model timeouts, retries, fallback policies, token tracking and cost observability.
-
-Never hardcode credentials.
-
-## 4.3 Language-Agnostic Engineering
-
-EAEH must support engineering projects implemented in different programming languages.
-
-Do not build the entire platform around Java or any other specific language.
-
-Avoid an architecture where every new programming language requires extensive modifications to the Rust core.
-
-Implement an extensible validation and engineering tool integration model.
-
-Use a combination of:
-
-- Language-specific tools where appropriate.
-- Static analysis tools.
-- Compiler diagnostics.
-- Test execution tools.
-- Security scanners.
-- Policy engines.
-- LLM-assisted semantic analysis.
-- Pluggable validation adapters.
-
-The platform should be able to invoke appropriate tools based on project technology and configured policies.
-
-Do not assume that LLMs replace deterministic validation.
-
-For example:
-
-- Use compilers for compilation correctness.
-- Use formatters and linters for formatting and static rules.
-- Use test frameworks for execution-based validation.
-- Use security scanners for known vulnerabilities.
-- Use LLM-assisted analysis for semantic, contextual and architectural assessments.
-
-Support the addition of new languages without modifying the core orchestration architecture.
-
-## 4.4 Extensible Integration Architecture
-
-Integrations must use well-defined interfaces and adapters.
-
-Potential integrations include:
-
-- GitHub.
-- GitLab.
-- Bitbucket.
-- CI/CD systems.
-- Jira.
-- Confluence.
-- ServiceNow.
-- Architecture repositories.
-- Enterprise document stores.
-- Cloud platforms.
-- Security scanning tools.
-- Observability platforms.
-- MCP-compatible tools and servers.
-
-Do not implement every integration in Phase 1.
-
-Design appropriate extension points and implement integrations in the relevant future phases.
-
----
-
-# 5. HIGH-LEVEL ARCHITECTURAL CAPABILITIES
-
-Design the platform around logically separated capabilities.
-
-The exact module boundaries must be validated during architecture design.
-
-Consider the following capabilities:
-
-## 5.1 Core Runtime
-
-Responsible for:
-
-- Platform initialization.
-- Runtime lifecycle.
-- Service coordination.
-- Configuration.
-- Dependency management.
-- Health monitoring.
-
-## 5.2 Orchestration Engine
-
-Responsible for:
-
-- Deterministic workflow execution.
-- Intelligent task planning.
-- Agent delegation.
-- Dependency management.
-- Workflow state transitions.
-- Retry and recovery.
-- Approval enforcement.
-
-## 5.3 Agent Management
-
-Responsible for:
-
-- Agent definitions.
-- Agent registration.
-- Agent discovery.
-- Dynamic instantiation.
-- Agent lifecycle.
-- Capability matching.
-- Agent permissions.
-- Version management.
-
-## 5.4 Execution Environment Manager
-
-Responsible for:
-
-- Isolated execution provisioning.
-- Workspace allocation.
-- Resource management.
-- Network and filesystem restrictions.
-- Secret injection.
-- Execution termination.
-- Cleanup.
-
-## 5.5 Knowledge Management
-
-Responsible for:
-
-- Enterprise knowledge ingestion.
-- Knowledge classification.
-- Metadata management.
-- Versioning.
-- Indexing.
-- Retrieval.
-- Source tracking.
-- Access control.
-- Knowledge lifecycle management.
-
-## 5.6 Skills Management
-
-Responsible for:
-
-- Skill registration.
-- Skill discovery.
-- Skill versioning.
-- Skill dependencies.
-- Skill validation.
-- Skill execution guidance.
-- Skill permissions.
-- Skill retirement.
-
-## 5.7 Governance and Policy Engine
-
-Responsible for:
-
-- Approval policies.
-- Agent permissions.
-- Project policies.
-- Enterprise standards.
-- Security controls.
-- Workflow restrictions.
-- Policy evaluation.
-- Enforcement and audit.
-
-## 5.8 LLM Provider Management
-
-Responsible for:
-
-- Provider configuration.
-- Model registration.
-- Model selection.
-- Routing.
-- Fallback.
-- Cost tracking.
-- Token tracking.
-- Provider health.
-
-## 5.9 Engineering Tool Integration
-
-Responsible for:
-
-- External tool adapters.
-- MCP integrations.
-- Source control integrations.
-- CI/CD integrations.
-- Security tools.
-- Testing tools.
-- Cloud integrations.
-
-## 5.10 Observability and Audit
-
-Responsible for:
-
-- Logs.
-- Metrics.
-- Distributed traces.
-- Workflow execution history.
-- Agent execution history.
-- Tool invocation history.
-- Approval records.
-- Security events.
-- Cost and usage information.
-
-## 5.11 Project and Tenant Management
-
-Responsible for:
-
-- Project registration.
-- Project configuration.
-- Project-specific knowledge.
-- Project-specific skills.
-- Project permissions.
-- Project isolation.
-- Team membership.
-- Project lifecycle.
-
-## 5.12 API and User Interaction
-
-Provide suitable interfaces for:
-
-- Platform administrators.
-- Enterprise architects.
-- Developers.
-- Security reviewers.
-- Approvers.
-- Project managers.
-
-Use CLI and APIs where appropriate.
-
-A web dashboard may be introduced according to the implementation roadmap.
-
-Do not build unnecessary user interfaces before the underlying capabilities are stable.
-
----
-
-# 6. KNOWLEDGE AND SKILLS MANAGEMENT – FIRST-CLASS CAPABILITIES
-
-Knowledge and skills must be treated as fundamental platform capabilities.
-
-Do not treat them as prompt files scattered throughout the repository.
-
-## 6.1 Enterprise Knowledge
-
-Support knowledge from:
-
-- BRDs.
-- Business processes.
-- Business rules.
-- Domain definitions.
-- HLDs.
-- LLDs.
-- Architecture principles.
-- Architecture decision records.
-- API specifications.
-- Data models.
-- Security standards.
-- Cloud governance standards.
-- Coding standards.
-- Technology standards.
-- Engineering practices.
-- Reference implementations.
-- Approved libraries and frameworks.
-- Testing standards.
-- CI/CD standards.
-- Compliance requirements.
-
-Knowledge must support:
-
-- Source registration.
-- Ingestion.
-- Parsing.
-- Classification.
-- Metadata extraction.
-- Versioning.
-- Validation.
-- Indexing.
-- Retrieval.
-- Access control.
-- Updates.
-- Retirement.
-- Provenance.
-- Traceability.
-
-Support different knowledge scopes:
-
-1. Enterprise-wide.
-2. Business domain.
-3. Technology domain.
-4. Project.
-5. Team.
-6. Individual workflow where permitted.
-
-Do not allow project-specific knowledge to leak into unrelated projects.
-
-## 6.2 Agent Skills
-
-Skills should represent reusable engineering capabilities and domain-specific instructions.
+- Required PR approvals before protected branch merges.
+- Explicit production deployment authorization.
+
+Enforce approvals at workflow and API authorization boundaries, not only in prompts or the user interface.
+
+Agents cannot approve their own work or bypass approvals.
+
+Record approver, role, timestamp, decision, comments, artifact version, workflow and audit event.
+
+Rejected artifacts must return to revision without losing their history.
+
+# PART 3 – TARGET ARCHITECTURE
+
+## 4. Architectural Structure
+
+Design EAEH around five logical architectural layers.
+
+**Layer 1 – Engineering Workflows and Experience**
+- BRD and requirements workflows.
+- Architecture generation.
+- Software development.
+- Testing and quality.
+- Git and CI/CD.
+- Release and deployment.
+- User interaction and APIs.
+
+**Layer 2 – Intelligent Execution**
+- Agent runtime.
+- Agent registry and profiles.
+- Skills management.
+- Task planning and delegation.
+- Agent communication.
+- Context engineering.
+- Prompt management.
+- Model management and routing.
+
+**Layer 3 – Harness Runtime and Extensibility**
+- Hooks.
+- Middleware.
+- Interceptors.
+- Event bus.
+- Plugin and extension framework.
+- Tool gateway.
+- Validators.
+- Workspace and artifact management.
+- Execution supervision.
+
+**Layer 4 – Deterministic Control and Governance**
+- Workflow engine.
+- Policy engine.
+- Authorization.
+- Human approval management.
+- Execution budgets.
+- Durable state.
+- Audit and traceability.
+- Validation and quality gates.
+
+**Layer 5 – Infrastructure and Enterprise Services**
+- Rust runtime.
+- Persistence.
+- Messaging.
+- Execution isolation.
+- LLM provider integrations.
+- Knowledge storage.
+- Secrets management.
+- Observability.
+- External engineering integrations.
+
+These are logical layers, not a requirement to deploy five separate services.
+
+Begin with a well-structured modular architecture. Introduce distributed services only when justified by requirements.
+
+## 5. Core Platform Components
+
+Design clearly defined modules for:
+
+1. Core Runtime.
+2. Hybrid Orchestration Engine.
+3. Workflow Management.
+4. Agent Runtime and Management.
+5. Agent Communication.
+6. Execution Environment Manager.
+7. Hook Framework.
+8. Middleware and Interceptor Framework.
+9. Event Management.
+10. Plugin and Extension Management.
+11. Tool Gateway and Tool Registry.
+12. Context Engineering.
+13. Prompt Management.
+14. LLM Provider and Model Management.
+15. Enterprise Knowledge Management.
+16. Skills Management.
+17. Validation Framework.
+18. Feedback and Correction Engine.
+19. Workspace and Artifact Management.
+20. Governance and Policy Engine.
+21. Human Approval Management.
+22. Execution Budget and Supervision.
+23. Observability and Audit.
+24. Project and Tenant Management.
+25. Engineering Integration Management.
+26. API, CLI and User Interaction.
+
+Define each component's responsibilities, interfaces, ownership, dependencies and security boundaries.
+
+Avoid unnecessary modules, abstractions, microservices and duplicated responsibilities.
+
+# PART 4 – HARNESS RUNTIME AND EXTENSIBILITY
+
+## 6. Lifecycle Hooks
+
+Hooks are mandatory architectural capabilities.
+
+Implement a reusable hook framework supporting defined lifecycle events.
+
+Required hook categories:
+
+**Agent hooks**
+- Before agent instantiation.
+- After agent instantiation.
+- Before agent execution.
+- After agent execution.
+- Before agent termination.
+- After agent termination.
+
+**Task and workflow hooks**
+- Before task execution.
+- After task execution.
+- Before workflow transition.
+- After workflow transition.
+- Before approval.
+- After approval.
+- On rejection.
+- On cancellation.
+- On timeout.
+- On failure.
+- On recovery.
+
+**LLM hooks**
+- Before model request.
+- After model request.
+- Before response processing.
+- After response processing.
+
+**Tool hooks**
+- Before tool invocation.
+- After tool invocation.
+- On tool failure.
+
+**Knowledge and context hooks**
+- Before knowledge retrieval.
+- After knowledge retrieval.
+- Before context assembly.
+- After context assembly.
+
+**Engineering hooks**
+- Before artifact creation.
+- After artifact creation.
+- Before file modification.
+- After file modification.
+- Before build.
+- After build.
+- Before test.
+- After test.
+- Before commit.
+- After commit.
+- Before pull request.
+- After pull request.
+- Before deployment.
+- After deployment.
+
+Hooks must support:
+- Registration and discovery.
+- Typed event/context contracts.
+- Execution ordering and priorities.
+- Conditional execution and filtering.
+- Timeout and resource limits.
+- Error-handling policies.
+- Enable/disable controls.
+- Versioning and compatibility.
+- Execution tracing and audit.
+
+Define hook failure behaviour according to risk classification: block, warn or continue.
+
+Mandatory security, authorization and approval controls must not depend solely on hooks. They must remain enforced by trusted platform components even if hooks are missing, disabled or fail.
+
+## 7. Middleware and Interceptors
+
+Implement middleware for reusable cross-cutting processing.
+
+Support middleware pipelines for:
+- API requests.
+- Workflow execution.
+- Agent execution.
+- LLM requests and responses.
+- Tool invocation.
+- Artifact processing.
 
 Examples:
+- Authentication and authorization.
+- Request validation.
+- Rate limiting.
+- Logging and tracing.
+- Cost tracking.
+- Context injection.
+- Output validation.
+- Policy evaluation.
+- Sensitive-data redaction.
 
+Implement interceptors for inspecting or transforming interactions at defined boundaries.
+
+Define deterministic execution order, error propagation, timeout behaviour and security restrictions.
+
+Do not confuse hooks, middleware and interceptors. Each must have a distinct responsibility and interface.
+
+## 8. Event-Driven Architecture
+
+Implement typed events and controlled event communication.
+
+Support:
+- Event publishers and subscribers.
+- Event registration and routing.
+- Event schemas and versioning.
+- Correlation and causation IDs.
+- Durable delivery where required.
+- Duplicate-event protection.
+- Retry and dead-letter handling.
+- Event ordering where necessary.
+- Failure recovery.
+- Event audit.
+
+Examples:
+- AgentCreated.
+- AgentExecutionStarted.
+- AgentExecutionCompleted.
+- TaskAssigned.
+- ToolInvoked.
+- PolicyEvaluated.
+- ApprovalRequested.
+- ApprovalGranted.
+- ArtifactGenerated.
+- ValidationFailed.
+- WorkflowCompleted.
+- DeploymentCompleted.
+
+Use synchronous communication when immediate results are required and asynchronous event delivery when decoupling and durability are beneficial.
+
+Do not introduce distributed messaging infrastructure prematurely.
+
+## 9. Plugin and Extension Framework
+
+EAEH must support extensibility without requiring changes to the core runtime for every new capability.
+
+Support three extension mechanisms:
+
+1. Trusted in-process Rust extensions.
+2. Sandboxed WASM extensions.
+3. External-process extensions communicating through controlled APIs or messaging.
+
+Implement:
+- Plugin manifests.
+- Registration and discovery.
+- Versioning and compatibility.
+- Dependencies.
+- Configuration.
+- Permissions and capabilities.
+- Lifecycle management.
+- Health status.
+- Resource limits.
+- Execution isolation.
+- Validation and audit.
+- Enable/disable and retirement.
+
+Use signed manifests or equivalent integrity controls where appropriate.
+
+Plugins must not bypass authorization, policies, approval gates or isolation boundaries.
+
+# PART 5 – AGENTS, TOOLS AND INTELLIGENT EXECUTION
+
+## 10. Agent Runtime
+
+Implement a standardized agent runtime.
+
+An agent definition should identify:
+- Unique identifier and version.
+- Purpose and responsibilities.
+- Capabilities.
+- Skills.
+- Model preferences.
+- Allowed tools.
+- Required context.
+- Input/output schemas.
+- Permissions.
+- Execution constraints.
+- Evaluation criteria.
+
+Support agent registration, discovery, instantiation, execution, communication, supervision, checkpointing, recovery and termination.
+
+Use typed contracts rather than relying exclusively on free-form text.
+
+### Agent autonomy levels
+
+Support configurable autonomy levels:
+
+- Level 0: Read-only analysis.
+- Level 1: Recommendations and proposed actions.
+- Level 2: Modifications within an isolated workspace.
+- Level 3: Execution of authorized tools and workflows.
+- Level 4: Authorized external side effects.
+
+Enforce autonomy levels through deterministic permissions and policies.
+
+Do not rely on prompts alone.
+
+## 11. Agent Communication and Delegation
+
+Implement controlled inter-agent communication.
+
+Support:
+- Task delegation.
+- Typed task contracts.
+- Message schemas.
+- Context handover.
+- Result handover.
+- Ownership and responsibility.
+- Execution correlation.
+- Timeouts and cancellation.
+- Delegation authorization.
+- Communication audit.
+
+Avoid unrestricted agent-to-agent conversations.
+
+Prevent circular delegation, unlimited recursion, uncontrolled agent spawning and duplicate work.
+
+## 12. Task Scheduling and Supervision
+
+Implement:
+- Task queue and scheduler.
+- Task prioritization.
+- Dependency management.
+- Concurrency control.
+- Execution assignment.
+- Resource allocation.
+- Execution status.
+- Pause, resume and cancellation.
+- Stalled-task detection.
+- Infinite-loop detection.
+- Repeated-failure detection.
+- Agent supervision.
+- Escalation to humans.
+
+Enforce limits for:
+- Execution duration.
+- Tokens.
+- Cost.
+- Tool invocations.
+- Agent concurrency.
+- CPU and memory.
+- Delegation depth.
+- Correction attempts.
+
+## 13. Tool Gateway and Tool Registry
+
+Agents must not directly access arbitrary system capabilities.
+
+All tool operations must go through a governed Tool Gateway.
+
+Support:
+- Tool registration and discovery.
+- Typed input/output contracts.
+- Tool schemas.
+- Tool versioning.
+- Authentication and authorization.
+- Capability scopes.
+- Input/output validation.
+- Pre/post-tool hooks.
+- Middleware and interceptors.
+- Rate limits.
+- Timeouts.
+- Retries.
+- Execution isolation.
+- Result normalization.
+- Error handling.
+- Audit and tracing.
+
+Classify tools according to their side effects and risk.
+
+Examples:
+- Read-only tools.
+- Workspace modification tools.
+- Build and test tools.
+- Git tools.
+- External API tools.
+- Cloud infrastructure tools.
+- Deployment tools.
+
+Sensitive operations require deterministic policy checks and the appropriate human authorization.
+
+Support MCP integration through controlled client/server adapters where appropriate. Do not make the core runtime dependent on MCP.
+
+# PART 6 – CONTEXT, PROMPTS, MODELS, KNOWLEDGE AND SKILLS
+
+## 14. Context Engineering
+
+Implement a dedicated context engineering subsystem.
+
+Support:
+- Context assembly.
+- Context selection and prioritization.
+- Context retrieval.
+- Context filtering.
+- Context compression and summarization.
+- Token-budget management.
+- Context provenance.
+- Freshness and expiration.
+- Conflict detection.
+- Context caching.
+- Context snapshots.
+- Permission-aware retrieval.
+- Project and tenant isolation.
+
+Distinguish:
+- Execution memory.
+- Workflow memory.
+- Project memory.
+- Enterprise knowledge.
+- Agent-specific memory.
+
+Memory must be permission-aware, governed and traceable.
+
+Do not allow agent memory or retrieved content to silently override enterprise standards or system instructions.
+
+## 15. Prompt and Instruction Management
+
+Prompts must be managed as versioned platform assets rather than scattered through source code.
+
+Support:
+- System instruction templates.
+- Agent instructions.
+- Task templates.
+- Prompt composition.
+- Variables and schemas.
+- Versioning.
+- Validation.
+- Testing.
+- Evaluation.
+- Approval and rollback.
+- Change history.
+
+Define instruction precedence explicitly.
+
+Distinguish trusted system instructions, enterprise policies, agent instructions, skills and retrieved knowledge.
+
+Retrieved content must be treated as untrusted data, never as instructions with authority to override platform policies.
+
+## 16. LLM Provider and Model Management
+
+Implement provider-independent model management.
+
+Support:
+- Provider registry.
+- Model registry.
+- Model capability discovery.
+- Task-based model routing.
+- Quality/cost/latency selection.
+- Context-window management.
+- Fallback and retry.
+- Rate-limit management.
+- Model health monitoring.
+- Token and cost budgets.
+- Model version tracking.
+- Embedding and reranking models.
+- Evaluation and benchmarking.
+- Data residency and privacy policies.
+
+Track model and provider versions for every significant execution.
+
+Do not automatically select the most expensive model for every task.
+
+## 17. Enterprise Knowledge Management
+
+Knowledge is a first-class governed capability.
+
+Sources may include:
+- BRDs and business processes.
+- Business rules and domain definitions.
+- HLDs, LLDs and ADRs.
+- API specifications and data models.
+- Architecture principles.
+- Security, cloud and compliance standards.
+- Approved libraries and reference implementations.
+- Engineering, testing and CI/CD standards.
+
+Implement:
+- Source registration.
+- Ingestion and parsing.
+- Classification.
+- Metadata.
+- Versioning.
+- Validation.
+- Indexing.
+- Hybrid/vector retrieval where appropriate.
+- Reranking where beneficial.
+- Provenance and citations.
+- Access control.
+- Update, retirement and deletion.
+- Knowledge freshness and conflict detection.
+
+Support enterprise, domain, project, team and workflow scopes.
+
+Prevent cross-project and cross-tenant leakage. Mandatory enterprise standards cannot be overridden by project-specific settings.
+
+## 18. Skills Management
+
+Skills are reusable engineering capabilities, not merely agent-specific prompt text.
+
+Examples:
 - BRD analysis.
 - Requirements decomposition.
-- HLD generation.
-- HLD compliance assessment.
-- LLD generation.
-- Java development.
-- Spring Boot development.
-- API design.
-- Database design.
+- HLD/LLD generation.
+- Architecture compliance.
+- Java/Spring development.
+- API/database design.
 - Security assessment.
 - Code review.
-- Unit testing.
-- Integration testing.
-- CI/CD configuration.
-- Cloud architecture assessment.
+- Testing.
+- CI/CD.
+- Cloud architecture.
 
-Skills must support:
+Support:
+- Registration and discovery.
+- Versioning and lifecycle.
+- Dependencies and compatibility.
+- Required knowledge and tools.
+- Typed input/output contracts.
+- Permissions and execution constraints.
+- Validation and retirement.
 
-- Registration.
-- Versioning.
-- Metadata.
-- Dependencies.
-- Required knowledge.
-- Required tools.
-- Input and output contracts.
-- Execution constraints.
-- Permissions.
-- Validation.
-- Retirement.
+Skills must be reusable across agent types.
 
-Agents should discover and use skills dynamically based on task requirements.
+Record the skill versions used for important executions.
 
-Avoid tightly coupling skills to one specific agent.
+# PART 7 – VALIDATION, FEEDBACK AND ENGINEERING WORKSPACES
 
-## 6.3 Knowledge and Skill Traceability
+## 19. Validation Framework
 
-For every important agent execution, record:
+Build a reusable validation framework rather than embedding validation logic separately inside every agent.
 
-- Knowledge sources retrieved.
-- Knowledge versions.
-- Skills selected.
-- Skill versions.
-- Model and provider.
-- Tool invocations.
-- Applicable policies.
-- Resulting artifacts.
-
-Generated engineering artifacts must be traceable to their source requirements, knowledge and applicable standards.
-
----
-
-# 7. MULTI-PROJECT AND ENTERPRISE DESIGN
-
-Design EAEH for multiple projects and teams.
-
-Each project must be independently configurable.
-
-Project configuration should include:
-
-- Project identity.
-- Business domain.
-- Technology stack.
-- Architecture style.
-- Git repositories.
-- Engineering standards.
-- Project knowledge.
-- Approved skills.
-- Allowed agents.
-- Model policies.
-- Security requirements.
-- Execution limits.
-- Approval roles.
-- Workflow configuration.
-
-Support enterprise-wide standards inherited by projects, with controlled project-specific extensions.
-
-Do not allow a project to override mandatory enterprise security or governance policies.
-
-Design for future multi-tenancy without unnecessarily implementing distributed enterprise infrastructure in Phase 1.
-
----
-
-# 8. SECURITY AND GOVERNANCE PRINCIPLES
-
-Security and governance must be designed into the platform from the beginning.
-
-Mandatory requirements:
-
-- Authentication.
-- Role-based access control.
-- Project-level authorization.
-- Least privilege.
-- Secure secrets management.
-- Execution isolation.
-- Data protection.
-- Secure communication.
-- Audit logging.
-- Policy enforcement.
-- Approval integrity.
+Support:
 - Input validation.
 - Output validation.
-- Dependency security.
-- Tool authorization.
-- Network restrictions.
-- Resource quotas.
+- Schema validation.
+- Artifact validation.
+- Requirements validation.
+- Architecture validation.
+- Coding-standard validation.
+- Security validation.
+- Policy validation.
+- Traceability validation.
+- Test-result validation.
+- Quality gates.
 
-Consider prompt injection, malicious documents, compromised skills, malicious tool responses and untrusted repository content.
+Support deterministic validators and LLM-assisted semantic validators.
 
-Treat external content as untrusted data, not instructions that can override system policies.
+LLM evaluation must not replace deterministic enforcement of critical controls.
 
-An agent must never gain additional privileges merely because a document, prompt or tool response requests them.
+Each validator must define its inputs, outputs, configuration, severity, execution conditions, failure behaviour and evidence.
 
-The policy engine must remain independent of LLM decisions.
+## 20. Feedback and Correction Engine
 
-Use defense in depth.
-
----
-
-# 9. IMPLEMENTATION PHASES
-
-Implement EAEH incrementally through the following eight phases.
-
-Do not combine phases merely to accelerate delivery.
-
-Every phase must produce working software, automated tests, documentation and a phase completion report.
-
-## PHASE 1 – CORE HARNESS FOUNDATION
-
-### Objective
-
-Build the foundational Rust-first runtime and execution infrastructure.
-
-### Scope
+Support controlled iterative improvement.
 
 Implement:
+- Validation feedback.
+- Defect classification.
+- Error and failure analysis.
+- Bounded correction attempts.
+- Agent reassignment.
+- Corrective task generation.
+- Regression validation.
+- Human escalation.
+- Approved feedback recording.
+
+Never allow unlimited correction loops.
+
+Do not automatically apply corrections that exceed the agent's authorized scope.
+
+## 21. Workspace and Artifact Management
+
+Implement isolated engineering workspaces.
+
+Support:
+- Workspace creation and cleanup.
+- Repository checkout.
+- Branch management.
+- Git worktrees where appropriate.
+- File access restrictions.
+- Code modifications.
+- Patch and diff generation.
+- Build and test execution.
+- Dependency management.
+- Artifact versioning.
+- Artifact provenance.
+- Controlled artifact exchange.
+
+Prevent conflicting concurrent modifications.
+
+Agents should not independently modify a shared workspace without explicit coordination and locking/ownership controls where necessary.
+
+# PART 8 – SECURITY, GOVERNANCE AND RELIABILITY
+
+## 22. Enterprise Security
+
+Security must be designed into every phase.
+
+### Identity and authorization
+- Authentication extension points.
+- Enterprise identity integration.
+- RBAC and appropriate ABAC capabilities.
+- Least privilege.
+- Project and tenant isolation.
+- Service and agent identities.
+- Separation of duties.
+- Authorization on sensitive operations.
+
+### Secrets and sensitive data
+- Secrets-provider abstraction.
+- No hardcoded credentials.
+- Encryption in transit and at rest.
+- Sensitive-data redaction.
+- Data classification.
+- Retention and deletion.
+- Residency controls.
+- Credential rotation.
+
+### Prompt and agent security
+
+Defend against:
+- Direct and indirect prompt injection.
+- Malicious retrieved documents.
+- Unauthorized tool invocation.
+- Data exfiltration.
+- Cross-project context leakage.
+- Privilege escalation.
+- Malicious tool outputs.
+- Uncontrolled delegation.
+
+Treat external content and tool outputs as untrusted.
+
+### Tool and plugin security
+
+Use capability-based permissions, typed contracts, allowlists, resource limits, isolation and audit.
+
+### Threat modelling
+
+Maintain threat models for important components and trust boundaries.
+
+Record threats, mitigations, residual risks and security test evidence.
+
+Apply dependency scanning, vulnerability management, supply-chain security and SBOM practices.
+
+## 23. Governance and Policy Engine
+
+Implement a deterministic policy subsystem supporting:
+- Policy registration and discovery.
+- Versioning.
+- Policy evaluation.
+- Enforcement points.
+- Policy inheritance.
+- Conflict resolution.
+- Risk classification.
+- Decision records.
+- Approval requirements.
+- Separation of duties.
+- Audit.
 
-1. Rust project foundation and workspace structure.
-2. Core runtime.
-3. Configuration management.
-4. Logging and error handling.
-5. LLM provider abstraction and initial provider adapter.
-6. Hybrid orchestration foundation.
-7. Deterministic workflow engine foundation.
-8. Agent definition and registration foundation.
-9. Agent discovery.
-10. Dynamic agent instantiation foundation.
-11. Agent lifecycle management.
-12. Multi-agent communication foundation.
-13. Isolated execution provider abstraction and initial implementation.
-14. Execution resource limits.
-15. Basic policy enforcement foundation.
-16. Human approval gate foundation.
-17. Workflow persistence.
-18. Workflow recovery foundation.
-19. Audit and observability foundation.
-20. CLI and/or REST API for core platform operations.
-21. Automated testing infrastructure.
-
-### Important boundaries
-
-Phase 1 is NOT expected to deliver:
-
-- Complete enterprise knowledge management.
-- Complete skills management.
-- BRD analysis.
-- HLD generation.
-- LLD generation.
-- Production code generation workflows.
-- Complete software testing orchestration.
-- Git and CI/CD lifecycle automation.
-- Production release management.
-
-However, Phase 1 must provide the necessary architectural extension points for these capabilities.
-
-### Phase 1 acceptance criteria
-
-Demonstrate that:
-
-- EAEH starts successfully.
-- Configuration works.
-- LLM connectivity works through the provider abstraction.
-- Agents can be registered and discovered.
-- Agents can be dynamically instantiated.
-- Multiple agents can collaborate.
-- Agents execute within isolated environments.
-- Workflow state persists.
-- Interrupted workflows can recover.
-- Human approval gates are enforced.
-- Unauthorized actions are rejected.
-- Audit records are generated.
-- Core APIs/CLI work.
-- Automated tests pass.
-
-### Expected deliverables
-
-- Working Rust-first runtime.
-- Core orchestration foundation.
-- Agent lifecycle management.
-- Isolated execution foundation.
-- Governance foundation.
-- Persistence and observability.
-- Automated test suite.
-- Phase 1 completion documentation.
-
-## PHASE 2 – ENTERPRISE KNOWLEDGE AND SKILLS MANAGEMENT
-
-### Objective
-
-Build the enterprise intelligence foundation.
-
-### Scope
-
-Implement:
-
-1. Knowledge source registration.
-2. Document ingestion.
-3. Document parsing.
-4. Metadata extraction.
-5. Knowledge classification.
-6. Knowledge versioning.
-7. Knowledge indexing.
-8. Retrieval architecture.
-9. Vector search integration where appropriate.
-10. Hybrid retrieval.
-11. Reranking integration where appropriate.
-12. Knowledge provenance.
-13. Knowledge access control.
-14. Knowledge lifecycle management.
-15. Skill registration.
-16. Skill discovery.
-17. Skill versioning.
-18. Skill dependency management.
-19. Skill validation.
-20. Skill-to-agent association.
-21. Dynamic skill selection.
-22. Knowledge and skill execution traceability.
-23. Project-level knowledge isolation.
-24. Knowledge and skill administration interfaces.
+Policies must be independently enforceable.
 
-### Architectural requirements
+An agent may recommend an action, but the policy engine determines whether it is permitted.
 
-Use a provider-independent retrieval architecture.
+## 24. Durable Workflow and Execution Reliability
 
-Do not tightly couple the core to a specific vector database.
+Support:
+- Durable execution state.
+- Checkpoints.
+- Idempotency.
+- Retry with backoff and jitter.
+- Timeouts.
+- Cancellation.
+- Concurrency control.
+- Duplicate-event protection.
+- Failure classification.
+- Recovery.
+- Compensation or rollback for applicable side effects.
+- Human intervention.
+- Execution budgets.
 
-Support future retrieval strategies, including metadata filtering, lexical retrieval, semantic retrieval and hybrid retrieval.
+Prevent uncontrolled retries, infinite loops and duplicate side effects.
 
-Skills must be reusable across different agent types.
+Define consistency and recovery behaviour for interrupted workflows.
 
-Enterprise knowledge and project knowledge must have clear access boundaries.
+## 25. Observability and Operations
 
-### Phase 2 acceptance criteria
-
-Demonstrate that:
-
-- Knowledge sources can be registered.
-- Documents can be ingested.
-- Knowledge can be versioned.
-- Knowledge can be retrieved.
-- Access policies are enforced.
-- Skills can be registered and versioned.
-- Agents can discover and use skills.
-- Agents can retrieve relevant knowledge.
-- Knowledge and skill usage is traceable.
-- Updates and retirement work correctly.
-
-## PHASE 3 – REQUIREMENTS ENGINEERING AND ARCHITECTURE GENERATION
-
-### Objective
-
-Enable EAEH to transform business requirements into approved engineering designs.
+Implement structured logging, metrics and distributed tracing.
 
-### Scope
+Track:
+- Workflow execution.
+- Agent lifecycle.
+- Tool calls.
+- Model usage and cost.
+- Execution latency.
+- Failure rates.
+- Resource consumption.
+- Approval delays.
+- Policy decisions.
+- Evaluation results.
+- Security events.
 
-Implement:
+Use correlation and causation IDs across workflows, agents, tools and artifacts.
 
-1. BRD ingestion.
-2. BRD structural analysis.
-3. Business requirement extraction.
-4. Functional requirement extraction.
-5. Non-functional requirement extraction.
-6. Business rule identification.
-7. Dependency identification.
-8. Ambiguity and conflict detection.
-9. Missing requirement identification.
-10. Requirements traceability.
-11. Requirements validation.
-12. Business Analyst Agent.
-13. Requirements Engineer Agent.
-14. Solution Architect Agent.
-15. HLD generation.
-16. Architecture diagrams.
-17. Architecture decision records.
-18. Technology recommendations based on enterprise knowledge.
-19. Enterprise standards compliance assessment.
-20. Architecture risk analysis.
-21. HLD review and approval.
-22. LLD generation.
-23. API contract generation.
-24. Data model generation.
-25. Component design.
-26. Sequence diagrams.
-27. Deployment design.
-28. LLD review and approval.
-29. Revision and resubmission workflows.
-30. Artifact versioning and traceability.
+Define health checks, alerting, operational dashboards and service-level indicators/objectives as appropriate.
 
-### Mandatory governance
-
-HLD approval must be completed before LLD generation.
-
-LLD approval must be completed before software development begins.
-
-Rejected documents must return to the appropriate revision stage.
-
-Do not allow an agent to bypass approval gates.
-
-### Phase 3 acceptance criteria
+Plan for backup, restore, disaster recovery, incident response and operational access control.
 
-Demonstrate that:
+## 26. Data and API Architecture
 
-- A BRD can be ingested.
-- Requirements are extracted.
-- Ambiguities and missing requirements are identified.
-- Requirements are traceable.
-- HLD can be generated.
-- HLD can be reviewed and approved.
-- LLD can be generated after HLD approval.
-- LLD can be reviewed and approved.
-- Enterprise knowledge and skills influence the outputs.
-- Architecture decisions and sources are traceable.
+Design versioned APIs with:
+- Authentication and authorization.
+- Input validation.
+- Consistent error handling.
+- Pagination.
+- Compatibility controls.
+- Rate limits.
 
-## PHASE 4 – MULTI-AGENT SOFTWARE DEVELOPMENT
+For persistence:
+- Define entity ownership and lifecycle.
+- Use explicit schema migrations.
+- Protect referential integrity.
+- Handle concurrent workflow updates.
+- Define transaction and consistency boundaries.
+- Support backup and restore.
+- Avoid unnecessary duplication.
+- Protect sensitive information.
 
-### Objective
+Maintain architecture fitness tests for important structural constraints.
 
-Enable governed software development based on approved LLDs.
+# PART 9 – TECHNOLOGY STRATEGY
 
-### Scope
+## 27. Rust-First Implementation
 
-Implement:
+Rust is the primary implementation language for core runtime, orchestration, agent management, workflow state, policy enforcement, APIs, execution coordination and related infrastructure.
 
-1. Development task decomposition.
-2. Codebase analysis.
-3. Repository context acquisition.
-4. Project technology detection.
-5. Development agent selection.
-6. Dynamic development agent instantiation.
-7. Isolated coding workspaces.
-8. Code generation.
-9. Code modification.
-10. Dependency management.
-11. Build execution.
-12. Compiler integration.
-13. Language-specific tool adapters.
-14. Coding standard enforcement.
-15. Architecture compliance validation.
-16. Code review agents.
-17. Developer feedback and correction loops.
-18. Source-to-requirement traceability.
-19. LLD-to-code traceability.
+Evaluate Tokio, Axum, Serde, SQLx, tracing and OpenTelemetry as candidate technologies.
 
-### Language extensibility
-
-Support multiple programming languages through pluggable engineering adapters.
-
-Do not hardcode Java-specific logic into the core runtime.
-
-Use deterministic development tools for syntax, compilation and static checks.
-
-Use LLM-assisted analysis for contextual and semantic assessments.
-
-### Phase 4 acceptance criteria
-
-Demonstrate that:
-
-- Approved LLDs can drive development tasks.
-- Relevant agents and skills are selected dynamically.
-- Code is generated in isolated environments.
-- Project standards are applied.
-- Code is traceable to requirements and LLDs.
-- Code review is performed.
-- Development failures can be handled and retried.
-
-## PHASE 5 – TESTING AND QUALITY ENGINEERING
-
-### Objective
-
-Implement comprehensive software quality validation.
-
-### Scope
-
-Implement:
-
-1. Test planning.
-2. Test case generation.
-3. Unit test generation.
-4. Integration test generation.
-5. API testing.
-6. Contract testing.
-7. Functional testing.
-8. Regression testing.
-9. Performance testing integration.
-10. Security testing integration.
-11. Code quality assessment.
-12. Coverage reporting.
-13. Defect identification.
-14. Failure analysis.
-15. Automated correction loops where authorized.
-16. Test evidence management.
-17. Requirements-to-test traceability.
-18. Quality gates.
-
-### Important requirements
-
-Use actual testing frameworks and execution tools.
-
-Do not rely exclusively on LLM claims that generated code is correct.
-
-Tests must be executed and their results captured.
-
-Critical quality failures must block progression according to policy.
-
-### Phase 5 acceptance criteria
-
-Demonstrate that:
-
-- Test plans are generated.
-- Test cases are generated.
-- Tests are executed.
-- Results are captured.
-- Defects are identified.
-- Quality policies are enforced.
-- Test coverage and traceability are available.
-
-## PHASE 6 – GIT AND CI/CD INTEGRATION
-
-### Objective
-
-Enable controlled software delivery through source control and automated pipelines.
-
-### Scope
-
-Implement:
-
-1. Git provider abstraction.
-2. Repository registration.
-3. Branch management.
-4. Feature branch creation.
-5. Commit management.
-6. Pull request creation.
-7. Pull request review.
-8. Branch protection awareness.
-9. Merge approval enforcement.
-10. CI/CD integration.
-11. Build pipeline execution.
-12. Test pipeline execution.
-13. Security pipeline integration.
-14. Pipeline result collection.
-15. Pipeline failure analysis.
-16. Artifact registration.
-17. Commit and artifact traceability.
-
-Support workflows such as:
-
-Feature → Develop → Master
-
-Do not hardcode a single branching strategy.
-
-Make branching policies configurable per enterprise or project.
-
-### Mandatory governance
-
-Agents may create branches, commits and pull requests within their permissions.
-
-Agents must not bypass protected-branch controls.
-
-Required human approvals must remain enforceable by the source control platform and EAEH governance layer.
-
-### Phase 6 acceptance criteria
-
-Demonstrate that:
-
-- Repositories can be registered.
-- Branches can be created.
-- Changes can be committed.
-- Pull requests can be created.
-- CI/CD pipelines can be triggered.
-- Pipeline results can be retrieved.
-- Required approvals are enforced.
-- Branch protection is respected.
-
-## PHASE 7 – RELEASE AND DEPLOYMENT MANAGEMENT
-
-### Objective
-
-Enable governed software release and deployment.
-
-### Scope
-
-Implement:
-
-1. Release planning.
-2. Release artifact management.
-3. Release versioning.
-4. Environment management.
-5. Deployment configuration.
-6. Deployment approvals.
-7. Deployment orchestration.
-8. Infrastructure integration.
-9. Configuration and secret management.
-10. Deployment validation.
-11. Smoke testing.
-12. Health verification.
-13. Rollback orchestration.
-14. Release audit.
-15. Deployment traceability.
-16. Post-deployment verification.
-
-Support environments such as:
-
-Development → QA → Staging → Production
-
-### Mandatory governance
-
-Production deployment must require explicit authorization according to configured policies.
-
-Agents must not independently authorize production deployment.
-
-### Phase 7 acceptance criteria
-
-Demonstrate that:
-
-- Release artifacts can be registered.
-- Releases can be prepared.
-- Deployments can be initiated.
-- Approval policies are enforced.
-- Deployment results are recorded.
-- Failed deployments can be handled.
-- Rollback mechanisms are available and tested.
-
-## PHASE 8 – ENTERPRISE SCALE AND ADVANCED CAPABILITIES
-
-### Objective
-
-Prepare EAEH for enterprise-wide adoption.
-
-### Scope
-
-Implement and improve:
-
-1. Multi-project management.
-2. Multi-team management.
-3. Enterprise tenant isolation.
-4. Advanced role-based access control.
-5. Enterprise identity integration.
-6. Advanced policy management.
-7. Distributed execution.
-8. Scalable worker management.
-9. Agent capacity management.
-10. Advanced model routing.
-11. Cost optimization.
-12. Enterprise observability.
-13. Knowledge federation.
-14. Advanced audit and reporting.
-15. Enterprise administration.
-16. High availability.
-17. Disaster recovery.
-18. Performance optimization.
-19. Operational resilience.
-20. Enterprise deployment models.
-
-### Phase 8 acceptance criteria
-
-Demonstrate that:
-
-- Multiple projects operate independently.
-- Project data and execution are isolated.
-- Enterprise policies are consistently enforced.
-- Platform capacity can scale.
-- Observability and audit cover enterprise operations.
-- Recovery and availability requirements are met.
-- Enterprise administration is operational.
-
----
-
-# 10. CROSS-PHASE ARCHITECTURAL CONSISTENCY
-
-Every implementation phase must preserve the approved architecture.
-
-Before implementing a new phase:
-
-1. Review previous phase completion reports.
-2. Review outstanding action items.
-3. Review existing architecture decisions.
-4. Review dependencies.
-5. Inspect the actual source code.
-6. Identify required extensions.
-7. Identify potential breaking changes.
-8. Explain proposed architectural changes.
-9. Obtain approval for material architectural deviations.
-
-Do not redesign completed modules unnecessarily.
-
-Do not duplicate existing capabilities.
-
-Do not introduce circular dependencies.
-
-Do not tightly couple unrelated modules.
-
-Prefer clear interfaces and replaceable implementations.
-
-Keep the core runtime independent of domain-specific workflows.
-
----
-
-# 11. GLOBAL IMPLEMENTATION RULES
-
-These rules apply to every phase.
-
-## 11.1 Inspect Before Implementing
-
-Before changing code:
-
-- Inspect the repository.
-- Understand existing modules.
-- Read existing documentation.
-- Identify current dependencies.
-- Review tests.
-- Understand existing architecture decisions.
-
-Do not assume the repository is empty.
-
-Do not overwrite existing working implementations without justification.
-
-## 11.2 Architecture Before Code
-
-Before implementing each phase:
-
-1. Explain the phase architecture.
-2. Identify affected modules.
-3. Explain data flows.
-4. Explain interfaces.
-5. Explain dependencies.
-6. Explain security boundaries.
-7. Identify risks.
-8. Present implementation tasks.
-
-For material architectural changes, document an ADR.
-
-## 11.3 Incremental Implementation
-
-Implement in small, verifiable increments.
-
-Do not generate large amounts of unverified code.
-
-After each meaningful implementation increment:
-
-- Compile.
-- Run relevant tests.
-- Validate interfaces.
-- Review error handling.
-- Check security implications.
-
-## 11.4 Code Quality
-
-Maintain:
-
-- Clear module boundaries.
-- Strong typing.
-- Explicit error handling.
-- Consistent naming.
-- Appropriate documentation.
-- Testability.
-- Maintainability.
-- Minimal unnecessary dependencies.
-
-Avoid oversized modules and monolithic services.
-
-## 11.5 No Fake Implementations
-
-Never create placeholder functionality and describe it as completed.
-
-If an external integration is not available:
-
-- Implement the appropriate interface where approved.
-- Clearly identify the missing implementation.
-- Document how it will be completed.
-- Do not report it as operational.
-
-Do not use mock responses as proof of real integration.
-
-Mocks are acceptable for isolated unit tests when explicitly identified.
-
-## 11.6 No Invented Enterprise Standards
-
-Do not invent enterprise architecture, cloud, security or coding standards.
-
-Use supplied and approved sources.
-
-When a required standard is unavailable, identify the gap rather than fabricating a standard.
-
-## 11.7 Configuration and Secrets
-
-Keep environment-specific configuration outside source code.
-
-Never commit secrets, API keys, tokens or passwords.
-
-Provide safe example configuration files.
-
-Use a suitable secrets management mechanism.
-
-## 11.8 Dependency Management
-
-Select dependencies based on:
-
+Do not introduce a dependency without evaluating:
 - Maturity.
 - Security.
-- Compatibility.
-- Licensing.
 - Maintenance.
-- Performance.
-- Architectural suitability.
+- Licensing.
+- Compatibility.
+- Operational complexity.
 
-Document significant dependency choices.
+### Language independence
 
----
+EAEH must support different programming languages through adapters. Do not modify the Rust core every time a new language is added.
 
-# 12. MANDATORY STAGE COMPLETION DOCUMENTATION
+### Provider independence
 
-At the end of EVERY phase, produce a dedicated Markdown completion document.
+Core orchestration must not depend on one LLM provider.
 
-This is a mandatory implementation deliverable.
+### Integration independence
 
-Create:
+Git, CI/CD, storage, execution and external tools must use replaceable adapters.
+
+### Deployment strategy
+
+Do not assume microservices are required. Begin with modular boundaries and introduce distributed deployment when scale, reliability or organizational requirements justify it.
+
+# PART 10 – EIGHT-PHASE IMPLEMENTATION ROADMAP
+
+## 28. Phase 1 – Core Harness Foundation
+
+Implement:
+- Rust core runtime.
+- Hybrid orchestration foundation.
+- Durable workflow state foundation.
+- Agent registry and definitions.
+- Agent discovery and dynamic lifecycle.
+- Multi-agent communication foundation.
+- Isolated execution provider abstraction and initial implementation.
+- Basic policy and approval framework.
+- Hook framework and core lifecycle hooks.
+- Middleware and interceptor foundation.
+- Typed event model and core event delivery.
+- Plugin/extension contracts and registry foundation.
+- Tool registry and secure basic tool gateway.
+- Execution budgets and basic supervision.
+- Context and prompt management foundations.
+- LLM provider abstraction.
+- Core validation framework contracts.
+- Basic workspace and artifact management.
+- Persistence and recovery.
+- Basic audit and observability.
+- CLI/API foundation.
+- Automated test infrastructure.
+
+Phase 1 establishes reusable primitives. It must not attempt to implement every domain-specific integration.
+
+Do not deliver complete knowledge/skills management, BRD analysis, HLD/LLD generation, full software development workflows, comprehensive testing orchestration, Git/CI/CD or release management in this phase.
+
+## 29. Phase 2 – Enterprise Knowledge and Skills Management
+
+Implement:
+- Knowledge source registration.
+- Ingestion and parsing.
+- Classification and metadata.
+- Versioning and validation.
+- Indexing and retrieval.
+- Hybrid/vector search where appropriate.
+- Reranking where beneficial.
+- Provenance and access control.
+- Knowledge lifecycle.
+- Skills registry and discovery.
+- Skill versioning and dependencies.
+- Skill contracts and validation.
+- Dynamic skill selection.
+- Context assembly using governed knowledge.
+- Project and tenant isolation.
+- Knowledge/skill traceability.
+
+## 30. Phase 3 – Requirements Engineering and Architecture Generation
+
+Implement:
+- BRD ingestion and analysis.
+- Requirements decomposition.
+- Functional and non-functional requirements.
+- Business rules and domain concepts.
+- Ambiguity, conflict and missing requirement detection.
+- Requirements traceability.
+- Business Analyst and Requirements Engineer capabilities.
+- Solution Architect capabilities.
+- HLD generation.
+- Architecture diagrams.
+- ADR generation.
+- Standards compliance.
+- Risk and trade-off analysis.
+- HLD validation and human approval.
+- LLD generation.
+- Component, API and data design.
+- Sequence and deployment diagrams.
+- LLD validation and human approval.
+- Revision and rejection workflows.
+
+This is the first phase in which BRD analysis and HLD/LLD generation become usable.
+
+## 31. Phase 4 – Multi-Agent Software Development
+
+Implement:
+- Codebase analysis.
+- Context acquisition.
+- Task decomposition.
+- Agent selection.
+- Isolated development workspaces.
+- Code generation and modification.
+- Language/tool adapters.
+- Build and compiler integration.
+- Architecture and coding-standard validation.
+- Code review.
+- Feedback and correction.
+- Requirement-to-source traceability.
+
+## 32. Phase 5 – Testing and Quality Engineering
+
+Implement:
+- Test planning.
+- Test case generation.
+- Unit testing.
+- Integration testing.
+- API and contract testing.
+- Functional and regression testing.
+- Performance testing.
+- Security testing.
+- Coverage and quality analysis.
+- Defect and failure analysis.
+- Authorized correction loops.
+- Evaluation framework.
+- Quality gates.
+- Test evidence and traceability.
+
+## 33. Phase 6 – Git and CI/CD Integration
+
+Implement:
+- Git provider abstraction.
+- Repository management.
+- Branch operations.
+- Commit management.
+- Pull request creation.
+- Review workflows.
+- Branch protection integration.
+- CI/CD pipeline execution.
+- Build, test and security result collection.
+- Artifact registration.
+- Pipeline traceability.
+
+## 34. Phase 7 – Release and Deployment Management
+
+Implement:
+- Release planning.
+- Version and artifact management.
+- Environment management.
+- Deployment configuration.
+- Deployment approvals.
+- Infrastructure integration.
+- Secrets and configuration.
+- Deployment orchestration.
+- Smoke and health testing.
+- Rollback and recovery.
+- Release/deployment audit.
+- Post-deployment verification.
+
+## 35. Phase 8 – Enterprise Scale and Advanced Capabilities
+
+Implement:
+- Advanced IAM/RBAC.
+- Multi-project, team and tenant management.
+- Distributed execution and workers.
+- Capacity and workload management.
+- Advanced model routing and cost governance.
+- Knowledge federation.
+- Enterprise reporting.
+- Administration.
+- High availability.
+- Disaster recovery.
+- Resilience and performance optimization.
+
+Foundational security, authorization, isolation, secrets protection and audit must exist from Phase 1. Phase 8 enhances them; it must not introduce them for the first time.
+
+# PART 11 – TESTING AND QUALITY ENGINEERING
+
+## 36. Testing Strategy
+
+Create a comprehensive, automated and repeatable testing strategy.
+
+Include:
+- Unit tests.
+- Component tests.
+- Integration tests.
+- API and contract tests.
+- End-to-end tests.
+- Security and authorization tests.
+- Isolation tests.
+- Failure and recovery tests.
+- Performance and load tests where appropriate.
+- Regression tests.
+- Agent evaluation tests.
+- Architecture fitness tests.
+
+Important test scenarios:
+- An agent cannot invoke unauthorized tools.
+- An agent cannot access another project's data.
+- Prompt injection cannot authorize prohibited actions.
+- Approval gates cannot be bypassed through direct API calls.
+- Agents cannot self-approve.
+- Duplicate events do not cause duplicate side effects.
+- Interrupted workflows recover correctly.
+- Execution budgets are enforced.
+- Secrets are not exposed in logs or agent context.
+- Plugins cannot bypass policies.
+- Hook failure follows its defined error policy.
+- Untrusted tool output cannot change system instructions.
+- Concurrent workspace changes are controlled.
+- Model/provider failures follow fallback policies.
+
+Every test must specify:
+- Objective.
+- Prerequisites.
+- Configuration.
+- Sample data.
+- Exact execution instructions.
+- Expected behaviour.
+- Pass/fail criteria.
+- Evidence.
+
+Never fabricate test results or commands.
+
+## 37. Agent Evaluation
+
+Create an evaluation framework supporting:
+- Task-specific evaluation datasets.
+- Expected outputs and acceptance criteria.
+- Requirements coverage.
+- Architecture compliance.
+- Tool-use correctness.
+- Hallucination and unsupported-claim detection.
+- Security and policy compliance.
+- Prompt/skill regression.
+- Model comparison.
+- Human evaluation.
+
+Record model, model version, prompt/skill versions, evaluation dataset and results.
+
+LLM-as-judge may supplement evaluation but must not be the sole acceptance mechanism for critical controls.
+
+# PART 12 – MANDATORY DOCUMENTATION AND PHASE GOVERNANCE
+
+## 38. Architecture Documentation
+
+Maintain:
+- `docs/architecture/` – Architecture overview, components, runtime, agents, orchestration, hooks, middleware, events, plugins, tools, isolation, context, knowledge, skills, security, data and integrations.
+- `docs/architecture/adr/` – Architecture Decision Records.
+- `docs/implementation/ROADMAP.md`
+- `docs/implementation/ACTION-ITEMS.md`
+- `docs/implementation/TEST-STRATEGY.md`
+
+Update documentation as implementation evolves.
+
+## 39. Mandatory Phase Completion Report
+
+At the end of every phase generate:
 
 `docs/implementation/stages/PHASE-<NN>-COMPLETION.md`
 
-Examples:
+Generate it from actual source code, configurations, tests and execution evidence.
 
-- PHASE-01-COMPLETION.md
-- PHASE-02-COMPLETION.md
-- PHASE-03-COMPLETION.md
-- PHASE-04-COMPLETION.md
-- PHASE-05-COMPLETION.md
-- PHASE-06-COMPLETION.md
-- PHASE-07-COMPLETION.md
-- PHASE-08-COMPLETION.md
+Include:
 
-Do not overwrite previous phase completion reports.
+1. Executive summary.
+2. Expected versus actual deliverables.
+3. Architecture and implementation summary.
+4. Component responsibilities and data flows.
+5. Implementation inventory.
+6. Acceptance criteria and statuses:
+   - IMPLEMENTED AND VERIFIED.
+   - IMPLEMENTED BUT NOT VERIFIED.
+   - PARTIALLY IMPLEMENTED.
+   - NOT IMPLEMENTED.
+   - BLOCKED.
+7. Step-by-step testing instructions with exact commands and expected outputs.
+8. Actual test results and evidence.
+9. Installation, configuration, startup, shutdown and usage instructions.
+10. Security and governance assessment.
+11. Known limitations, defects, risks and technical debt.
+12. Next-phase scope, dependencies and acceptance criteria.
+13. Action register: ID, description, priority, dependency, responsible role, target phase and status.
+14. Phase exit decision and rationale.
 
-## 12.1 Required completion document sections
+Never fabricate commands, endpoints, evidence or completion status.
 
-Every completion document must contain:
+## 40. Phase Completion Procedure
 
-### A. Executive Summary
+At the end of every phase:
 
-- Phase objective.
-- Expected deliverables.
-- Actual deliverables.
-- Implementation status.
-- Acceptance status.
-- Important limitations.
+1. Stop implementation.
+2. Review approved scope and acceptance criteria.
+3. Inspect actual source and configuration.
+4. Verify architecture and security boundaries.
+5. Identify missing capabilities.
+6. Execute automated tests.
+7. Execute phase-specific functional and integration tests.
+8. Execute security and governance tests.
+9. Record actual results and evidence.
+10. Resolve in-scope defects.
+11. Rerun affected and regression tests.
+12. Update architecture documentation.
+13. Generate the completion report.
+14. Update roadmap and action register.
+15. Prepare the next-phase plan.
+16. Present the exit decision.
+17. Wait for explicit authorization.
 
-### B. Architecture and Implementation Summary
-
-- Components introduced.
-- Components modified.
-- Responsibilities.
-- Communication.
-- Data flows.
-- Architectural decisions.
-- Security considerations.
-- Architecture diagrams where useful.
-
-### C. Implementation Inventory
-
-- New files.
-- Modified files.
-- Modules.
-- APIs.
-- CLI commands.
-- Database changes.
-- Configuration changes.
-- Dependencies.
-- Tests.
-- Documentation.
-
-### D. Capabilities and Acceptance Criteria
-
-Map every planned capability to actual implementation.
-
-Use:
-
-- IMPLEMENTED AND VERIFIED.
-- IMPLEMENTED BUT NOT VERIFIED.
-- PARTIALLY IMPLEMENTED.
-- NOT IMPLEMENTED.
-- BLOCKED.
-
-### E. Step-by-Step Testing Guide
-
-This section is mandatory.
-
-For every significant capability, provide:
-
-1. Test ID.
-2. Test name.
-3. Objective.
-4. Prerequisites.
-5. Environment requirements.
-6. Sample test data.
-7. Exact commands.
-8. API requests or CLI operations.
-9. Expected outputs.
-10. Expected system behaviour.
-11. PASS/FAIL criteria.
-12. Logs and evidence to inspect.
-13. Troubleshooting instructions.
-
-Include relevant unit, integration, functional, security, authorization, recovery, performance and end-to-end tests.
-
-Use only actual implemented commands and interfaces.
-
-Never invent commands or endpoints.
-
-### F. Actual Test Execution Results
-
-Provide:
-
-| Test ID | Test description | Result | Evidence | Defect |
-|---|---|---|---|---|
-
-Report:
-
-- Total tests.
-- Passed.
-- Failed.
-- Blocked.
-- Not tested.
-- Coverage where measurable.
-- Outstanding defects.
-
-Never fabricate test results.
-
-### G. How to Use the Implemented Capabilities
-
-Explain:
-
-- Installation.
-- Configuration.
-- Startup.
-- Shutdown.
-- CLI.
-- APIs.
-- Sample requests.
-- Sample responses.
-- Operational procedures.
-- What can be used now.
-- What belongs to future phases.
-
-### H. Security and Governance
-
-Document:
-
-- Authentication.
-- Authorization.
-- Isolation.
-- Secrets.
-- Audit.
-- Approval enforcement.
-- Security test results.
-- Known security limitations.
-
-### I. Known Limitations and Technical Debt
-
-Identify:
-
-- Incomplete functionality.
-- Defects.
-- Deferred decisions.
-- Performance limitations.
-- Security risks.
-- Workarounds.
-- Architectural concerns.
-
-### J. Next Implementation Stage
-
-Explain:
-
-- Next phase objective.
-- Expected functionality.
-- Dependencies.
-- Architectural prerequisites.
-- Components to extend.
-- Components to introduce.
-- Integration requirements.
-- Acceptance criteria.
-
-### K. Action Items
-
-Use:
-
-| ID | Action | Description | Priority | Dependency | Responsible role | Target phase | Status |
-|---|---|---|---|---|---|---|---|
-
-Classify actions as:
-
-- Mandatory before next phase.
-- Recommended improvements.
-- Deferred technical debt.
-- Operational activities.
-- Future enhancements.
-
-Carry forward unresolved action items.
-
-### L. Phase Exit Decision
-
-Use one of:
-
+Exit decisions:
 - READY FOR NEXT PHASE.
 - READY WITH ACCEPTED EXCEPTIONS.
 - NOT READY – ACTION REQUIRED.
 - BLOCKED.
 
-Explain the decision.
-
-A critical security, governance or acceptance failure must prevent an unconditional READY decision.
-
----
-
-# 13. CROSS-PHASE DOCUMENTATION
-
-Maintain the following documents throughout implementation.
-
-## 13.1 Roadmap
-
-File:
-
-`docs/implementation/ROADMAP.md`
-
-Maintain:
-
-- All phases.
-- Objectives.
-- Capabilities.
-- Dependencies.
-- Acceptance criteria.
-- Status.
-- Completion report links.
-- Next steps.
-
-## 13.2 Action Item Register
-
-File:
-
-`docs/implementation/ACTION-ITEMS.md`
-
-Maintain a consolidated register of actions from all phases.
-
-Never silently remove unresolved actions.
-
-Record when an item is completed or formally deferred.
-
-## 13.3 Test Strategy
-
-File:
-
-`docs/implementation/TEST-STRATEGY.md`
-
-Maintain:
-
-- Testing architecture.
-- Test categories.
-- Test environments.
-- Test data strategy.
-- Security testing.
-- Integration testing.
-- End-to-end testing.
-- Regression testing.
-- Test evidence management.
-
-## 13.4 Architecture Documentation
-
-Maintain the actual architecture documentation under:
-
-`docs/architecture/`
-
-Include:
-
-- Architecture overview.
-- Component architecture.
-- Runtime architecture.
-- Agent architecture.
-- Orchestration architecture.
-- Execution isolation architecture.
-- Knowledge architecture.
-- Skills architecture.
-- Security architecture.
-- Data architecture.
-- Integration architecture.
-- Architecture decision records.
-
-Update these documents whenever implementation materially changes the architecture.
-
----
-
-# 14. MANDATORY PHASE COMPLETION PROCESS
-
-At the end of each phase:
-
-1. Stop implementation.
-2. Review approved phase scope.
-3. Inspect the actual implementation.
-4. Verify architecture compliance.
-5. Identify missing functionality.
-6. Execute automated tests.
-7. Execute phase-specific functional tests.
-8. Execute relevant security tests.
-9. Record actual results.
-10. Resolve defects within the approved scope.
-11. Rerun affected and regression tests.
-12. Update architecture documentation.
-13. Generate the phase completion Markdown.
-14. Update the roadmap.
-15. Update the action-item register.
-16. Prepare the next phase implementation plan.
-17. Present the phase exit decision.
-18. Wait for explicit user authorization.
-
-Do not automatically begin the next phase.
-
 Implementation completion, phase acceptance and authorization to proceed are separate events.
 
----
+Never automatically begin the next phase.
 
-# 15. PHASE DEFINITION OF DONE
+## 41. Definition of Done
 
 A phase is complete only when:
+- Approved scope is delivered.
+- Components are implemented.
+- Acceptance criteria are verified.
+- Required automated tests pass.
+- Mandatory security and governance tests pass.
+- No unresolved critical defects remain.
+- Testing and operational instructions are documented.
+- Actual results and evidence are recorded.
+- Completion report is generated.
+- Architecture documents and registers are updated.
+- Next-phase plan is prepared.
+- Exit decision is presented.
 
-1. Approved scope has been implemented.
-2. Required components exist.
-3. Acceptance criteria have been verified.
-4. Required automated tests pass.
-5. Mandatory security and governance tests pass.
-6. No unresolved critical defects remain.
-7. Actual testing instructions are documented.
-8. Actual test results are recorded.
-9. Operational instructions are documented.
-10. Phase completion Markdown is generated.
-11. Architecture documentation is updated.
-12. Roadmap is updated.
-13. Action items are updated.
-14. Next phase plan is documented.
-15. Phase exit decision is presented.
+# PART 13 – ENGINEERING EXECUTION RULES
 
-A phase must never be declared complete merely because source code was generated.
+## 42. Global Engineering Rules
 
----
+1. Inspect the repository, source code, documentation, configuration, tests and dependencies before proposing changes.
+2. Initial repository assessment must be read-only.
+3. Do not modify code before presenting the assessment and architecture proposal.
+4. Identify reusable existing components.
+5. Present modules, responsibilities, interfaces, data flows, dependencies and security boundaries.
+6. Record significant architectural decisions in ADRs.
+7. Implement incrementally.
+8. Compile and test after meaningful changes.
+9. Use strong typing and explicit error handling.
+10. Avoid circular dependencies and unnecessary duplication.
+11. Do not introduce unnecessary infrastructure.
+12. Do not invent enterprise standards.
+13. Never commit credentials or secrets.
+14. Evaluate dependencies for security, maturity, licensing and maintenance.
+15. Preserve approved architectural decisions.
+16. Clearly distinguish implemented, verified, partial, planned and blocked functionality.
+17. Never report mocks or placeholders as completed capabilities.
+18. Document deviations and obtain approval.
 
-# 16. EXECUTION STRATEGY FOR CLAUDE CODE
+## 43. Initial Repository Assessment – No Code Changes
 
-Follow a controlled phased implementation strategy.
+When starting in an existing repository, do not immediately implement Phase 1.
 
-## Step 1 – Initial Repository Assessment
+First perform a read-only assessment.
 
-Inspect the existing repository.
+Present:
 
-Determine:
+1. Repository structure.
+2. Existing technologies and architectural patterns.
+3. Existing modules and capabilities.
+4. Reusable components.
+5. Gaps against the EAEH vision.
+6. Proposed target architecture.
+7. Component/module breakdown.
+8. Interfaces and data flows.
+9. Hooks, middleware, event and plugin architecture.
+10. Agent runtime and tool gateway design.
+11. Context, prompt and model management design.
+12. Workflow and persistence strategy.
+13. Security boundaries and threat considerations.
+14. Observability and testing strategy.
+15. Phase 1 implementation plan.
+16. Phase 1 acceptance criteria and test scenarios.
+17. Risks, dependencies and unresolved architecture decisions.
 
-- Current structure.
-- Existing code.
-- Existing architecture.
-- Existing tests.
-- Dependencies.
-- Build system.
-- Development environment.
+Do not invent repository contents. Label assumptions and unknowns clearly.
 
-Do not modify anything during the initial assessment.
+Wait for approval before modifying code.
 
-## Step 2 – Architecture and Implementation Planning
+## 44. Phase 1 Implementation Execution
 
-Prepare:
+After architecture and Phase 1 scope approval:
 
-- Proposed architecture.
-- Module breakdown.
-- Technology decisions.
-- Repository structure.
-- Phase dependencies.
-- Implementation plan.
-- Risks.
-- Initial architecture decision records.
+1. Establish the approved baseline.
+2. Update architecture documentation.
+3. Create the Phase 1 implementation plan.
+4. Implement incrementally.
+5. Compile and test regularly.
+6. Maintain automated regression coverage.
+7. Verify security and governance controls.
+8. Test extension mechanisms and failure behaviour.
+9. Record test evidence.
+10. Generate the mandatory Phase 1 completion report.
+11. Present the phase exit decision.
+12. Stop and wait for explicit authorization.
 
-Explain how the selected architecture supports all eight phases.
+Apply the same process to subsequent phases.
 
-## Step 3 – Implement Phase 1 Only
+# PART 14 – FINAL ARCHITECTURAL PRINCIPLE
 
-Do not implement Phase 2 or later functionality.
+Build EAEH as a reusable, extensible, deterministic-governed, AI-enabled enterprise engineering harness.
 
-Implement Phase 1 according to its scope and acceptance criteria.
+The platform must make it possible to determine:
 
-Keep future phases in mind when designing interfaces and extension points.
+- What task was performed and why.
+- Which workflow and agents were involved.
+- Which hooks, middleware and plugins executed.
+- Which tools were invoked.
+- Which models, prompts, skills and knowledge versions were used.
+- Which policies and approvals applied.
+- Which artifacts were generated or modified.
+- Which tests and evaluations were executed.
+- Whether the outcome met acceptance criteria.
+- Who authorized consequential actions.
 
-## Step 4 – Test Phase 1
+The core harness must remain reusable across engineering workflows, programming languages, LLM providers and enterprise environments.
 
-Execute the Phase 1 test strategy.
+Do not sacrifice security, governance, traceability, reliability or engineering integrity for the appearance of autonomy.
 
-Demonstrate:
-
-- Runtime.
-- Agent registration.
-- Dynamic instantiation.
-- Multi-agent collaboration.
-- Isolated execution.
-- Approval enforcement.
-- Persistence.
-- Recovery.
-- Auditability.
-- CLI/API functionality.
-
-## Step 5 – Generate Phase 1 Completion Package
-
-Generate:
-
-`docs/implementation/stages/PHASE-01-COMPLETION.md`
-
-Update:
-
-- `docs/implementation/ROADMAP.md`
-- `docs/implementation/ACTION-ITEMS.md`
-- `docs/implementation/TEST-STRATEGY.md`
-
-Provide actual commands and step-by-step instructions for operating and testing Phase 1.
-
-## Step 6 – Present Phase 1 Handover
-
-Explain:
-
-- What has been implemented.
-- How to start the platform.
-- How to use its current functionality.
-- How to execute tests.
-- What is not yet supported.
-- Outstanding issues.
-- What Phase 2 will deliver.
-- What I need to do next.
-
-## Step 7 – Wait for Authorization
-
-Do not start Phase 2 until I explicitly authorize it.
-
-Repeat the same process for every subsequent phase.
-
----
-
-# 17. EXPECTED FIRST RESPONSE
-
-Before writing implementation code, respond with:
-
-1. Your understanding of the EAEH vision.
-2. The proposed high-level architecture.
-3. How the five mandatory architectural decisions are addressed.
-4. The proposed Rust workspace and repository structure.
-5. Major component responsibilities.
-6. LLM integration architecture.
-7. Dynamic agent lifecycle design.
-8. Execution isolation design.
-9. Knowledge and skills management architecture.
-10. Security and governance architecture.
-11. Data and persistence architecture.
-12. Observability architecture.
-13. Eight-phase implementation roadmap.
-14. Phase dependencies.
-15. Key architecture risks and mitigation strategies.
-16. Phase 1 implementation plan.
-17. Phase 1 acceptance criteria.
-18. Phase 1 test strategy.
-
-Clearly identify architectural decisions that still require my approval.
-
-Do not begin Phase 1 implementation until the initial architecture and implementation plan have been presented and approved.
-
----
-
-# 18. FINAL INSTRUCTIONS
-
-Build EAEH as a serious enterprise engineering platform.
-
-Prioritize:
-
-- Architectural integrity.
-- Rust-first implementation.
-- Hybrid orchestration.
-- Dynamic agent instantiation.
-- Isolated execution.
-- Multi-agent collaboration.
-- Mandatory human governance.
-- Enterprise knowledge management.
-- Reusable skill management.
-- Language-independent engineering.
-- Security by design.
-- Full traceability.
-- Extensibility.
-- Operational reliability.
-- Testability.
-- Maintainability.
-
-Do not optimize for producing the largest amount of code in the shortest time.
-
-Optimize for building a platform that can evolve safely across all eight phases.
-
-Always distinguish implemented functionality from planned functionality.
-
-Always provide evidence for completion.
-
-Always document how to test and use each phase.
-
-Never proceed to the next phase without explicit authorization.
-
-Your immediate task is to assess the repository, present the proposed architecture and prepare the Phase 1 implementation plan. Do not start coding until the architecture is approved.
+**Start with repository assessment. Do not write code until the architecture and Phase 1 implementation proposal have been presented and approved.**
