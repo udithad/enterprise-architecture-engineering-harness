@@ -1,0 +1,306 @@
+
+== 0. one-time platform setup (administrator)
+Stored profile 'admin' for 'admin' (roles: admin); default profile.
+The token was not displayed. You can now delete /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/admin.token.
+
+== 1. bootstrap the project (one command; external_ai; Claude Code + GitHub Copilot)
+EAEH project bootstrap – simple-springboot-api
+  • project 'simple-springboot-api' created (01a1d39c-b6e5-76d5-ad0f-ba10e0a6ae7e)
+  • operator 'dev': created
+  •   token issued and stored as profile 'developer' (not displayed)
+  • knowledge_steward 'steward': created
+  •   token issued and stored as profile 'steward' (not displayed)
+  • approver 'approver': created
+  •   token issued and stored as profile 'approver' (not displayed)
+  • default profile is now 'developer' (administrative commands select the admin profile automatically; approvals need --as approver)
+  • project profile knowledge simple-springboot-api-docs/project-profile@v1: active
+  • knowledge simple-springboot-api-docs/project-bootstrap@v1: active
+  • BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1: active (confidential, project-only)
+  • skill code-implementation@^1: registered – code-implementation@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/code-implementation.json – awaiting human approval
+  • skill hld-design@^1: registered – hld-design@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/hld-design.json – awaiting human approval
+  • skill implementation-planning@^1: registered – implementation-planning@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/implementation-planning.json – awaiting human approval
+  • skill lld-design@^1: registered – lld-design@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/lld-design.json – awaiting human approval
+  • skill requirements-analysis@^1: registered – requirements-analysis@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/requirements-analysis.json – awaiting human approval
+  • manifest written: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api/.eaeh/project.toml
+  • AI client integration: Claude Code: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api/CLAUDE.md, /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api/.mcp.json
+  • AI client integration: GitHub Copilot (VS Code): /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api/.github/copilot-instructions.md, /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api/.vscode/mcp.json
+  • execution mode: external_ai – AI reasoning is done by your connected AI client (Claude Code or GitHub Copilot) under your own subscription and its usage limits; EAEH makes no model API calls
+
+Project 'simple-springboot-api': NOT READY  (5 blocking, 3 warning(s))
+  ok    [project] project 'simple-springboot-api' registered (01a1d39c-b6e5-76d5-ad0f-ba10e0a6ae7e)
+  ok    [workspace] workspace associated: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api
+  ok    [workspace] git repository detected
+  ok    [identity] authenticated as 'admin' with access to the project
+  ok    [roles] developer 'dev' can run workflows (operator)
+  ok    [roles] 1 approver(s) responsible for approval gates
+  ok    [roles] knowledge steward 'steward'
+  ok    [workflows] requirements.analysis@1.0.0 registered (1 human approval gate(s))
+  ok    [agents] requirements.analysis/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] requirements.analysis/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [workflows] engineering.design@1.0.0 registered (3 human approval gate(s))
+  ok    [agents] engineering.design/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] engineering.design/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [agents] engineering.design/hld: agent solution-architect@1.0.0 with its tools
+  ok    [agents] engineering.design/lld: agent software-designer@1.0.0 with its tools
+  ok    [workflows] engineering.delivery-unverified@1.0.0 registered (2 human approval gate(s))
+  ok    [agents] engineering.delivery-unverified/plan: agent delivery-planner@1.0.0 with its tools
+  ok    [agents] engineering.delivery-unverified/implement: agent software-engineer@1.0.0 with its tools
+  BLOCK [skills] code-implementation@^1 v1.0.0 awaits human approval (approval 01a1d39c-b7aa-7289-90b2-433b543c4850; used by software-engineer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] hld-design@^1 v1.0.0 awaits human approval (approval 01a1d39c-b7a6-7312-87b2-dbbe11e9ece3; used by solution-architect)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] implementation-planning@^1 v1.0.0 awaits human approval (approval 01a1d39c-b799-72c6-bac8-2d77a44454e1; used by delivery-planner)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] lld-design@^1 v1.0.0 awaits human approval (approval 01a1d39c-b795-77f6-9dbc-91a08744af9c; used by software-designer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] requirements-analysis@^1 v1.0.0 awaits human approval (approval 01a1d39c-b790-7784-b3eb-3e2be44b5256; used by business-analyst, requirements-engineer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  ok    [knowledge] BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1 readable by the developer (20 sections)
+  ok    [knowledge] retrieval available
+  WARN  [knowledge] no approved mandatory enterprise standards are visible; designs will not be checked against standards
+         → eaeh project init … --standard <file> (or steward: eaeh knowledge ingest --mandatory …); then an approver runs `eaeh approval review`
+  ok    [execution] mode external_ai: AI reasoning is done by your connected AI client (Claude Code or GitHub Copilot) under your own subscription and its usage limits; EAEH makes no model API calls
+  ok    [execution] enabled model providers are not registered in this mode (no fallback): replay
+  ok    [execution] agent stages are handed off to your AI client through EAEH (eaeh_task_get / eaeh_task_submit)
+  ok    [client] Claude Code: EAEH MCP server configured in .mcp.json
+  ok    [client] GitHub Copilot (VS Code agent mode): EAEH MCP server configured in .vscode/mcp.json
+  ok    [delivery] deliver becomes available after a design run succeeds
+  WARN  [delivery] build and test verification is DEFERRED: EAEH will not run the build or the tests; the delivery bundle is marked unverified
+         → set up isolated build execution, then re-run `eaeh project init --build-verification required --build-program <program> --build-arg …`
+  ok    [governance] audit chain valid (62 records)
+  WARN  [governance] the BRD (confidential) is handed to your AI client, which sends it to its model provider under your subscription's terms
+         → confirm this is allowed for the project (A-33); classify the BRD as restricted to block the hand-off
+(exit 7: 7 = not ready yet)
+   generated: ./.eaeh/project.toml ./.github/copilot-instructions.md ./.mcp.json ./.vscode/mcp.json ./BRD-Simple-Spring-Boot-API.md ./CLAUDE.md ./PROJECT-BOOTSTRAP.md 
+
+== 2. readiness (before approvals)
+Project 'simple-springboot-api': NOT READY  (5 blocking, 3 warning(s))
+  ok    [project] project 'simple-springboot-api' registered (01a1d39c-b6e5-76d5-ad0f-ba10e0a6ae7e)
+  ok    [workspace] workspace associated: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api
+  ok    [workspace] git repository detected
+  ok    [identity] authenticated as 'dev' with access to the project
+  ok    [roles] developer 'dev' can run workflows (operator)
+  ok    [roles] 1 approver(s) responsible for approval gates
+  ok    [roles] knowledge steward 'steward'
+  ok    [workflows] requirements.analysis@1.0.0 registered (1 human approval gate(s))
+  ok    [agents] requirements.analysis/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] requirements.analysis/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [workflows] engineering.design@1.0.0 registered (3 human approval gate(s))
+  ok    [agents] engineering.design/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] engineering.design/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [agents] engineering.design/hld: agent solution-architect@1.0.0 with its tools
+  ok    [agents] engineering.design/lld: agent software-designer@1.0.0 with its tools
+  ok    [workflows] engineering.delivery-unverified@1.0.0 registered (2 human approval gate(s))
+  ok    [agents] engineering.delivery-unverified/plan: agent delivery-planner@1.0.0 with its tools
+  ok    [agents] engineering.delivery-unverified/implement: agent software-engineer@1.0.0 with its tools
+  BLOCK [skills] code-implementation@^1 v1.0.0 awaits human approval (approval 01a1d39c-b7aa-7289-90b2-433b543c4850; used by software-engineer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] hld-design@^1 v1.0.0 awaits human approval (approval 01a1d39c-b7a6-7312-87b2-dbbe11e9ece3; used by solution-architect)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] implementation-planning@^1 v1.0.0 awaits human approval (approval 01a1d39c-b799-72c6-bac8-2d77a44454e1; used by delivery-planner)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] lld-design@^1 v1.0.0 awaits human approval (approval 01a1d39c-b795-77f6-9dbc-91a08744af9c; used by software-designer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] requirements-analysis@^1 v1.0.0 awaits human approval (approval 01a1d39c-b790-7784-b3eb-3e2be44b5256; used by business-analyst, requirements-engineer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  ok    [knowledge] BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1 readable by the developer (20 sections)
+  ok    [knowledge] retrieval available
+  WARN  [knowledge] no approved mandatory enterprise standards are visible; designs will not be checked against standards
+         → eaeh project init … --standard <file> (or steward: eaeh knowledge ingest --mandatory …); then an approver runs `eaeh approval review`
+  ok    [execution] mode external_ai: AI reasoning is done by your connected AI client (Claude Code or GitHub Copilot) under your own subscription and its usage limits; EAEH makes no model API calls
+  ok    [execution] enabled model providers are not registered in this mode (no fallback): replay
+  ok    [execution] agent stages are handed off to your AI client through EAEH (eaeh_task_get / eaeh_task_submit)
+  ok    [client] Claude Code: EAEH MCP server configured in .mcp.json
+  ok    [client] GitHub Copilot (VS Code agent mode): EAEH MCP server configured in .vscode/mcp.json
+  ok    [delivery] deliver becomes available after a design run succeeds
+  WARN  [delivery] build and test verification is DEFERRED: EAEH will not run the build or the tests; the delivery bundle is marked unverified
+         → set up isolated build execution, then re-run `eaeh project init --build-verification required --build-program <program> --build-arg …`
+  ok    [governance] audit chain valid (64 records)
+  WARN  [governance] the BRD (confidential) is handed to your AI client, which sends it to its model provider under your subscription's terms
+         → confirm this is allowed for the project (A-33); classify the BRD as restricted to block the hand-off
+(exit 7)
+
+== 3. required skills reviewed and approved by the human approver
+Skills required by requirements.analysis, engineering.design, engineering.delivery-unverified:
+  code-implementation@^1       {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39c-b7aa-7289-90b2-433b543c4850","digest":"f830d19ce420c048b93f6dafe5f4dea11e0b7710cb94065a500dc1e4873f4791"}
+  hld-design@^1                {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39c-b7a6-7312-87b2-dbbe11e9ece3","digest":"ec8f3d5f37f56f9688ff03df106e0967abb7104481178c4a4b8fb59286ff359c"}
+  implementation-planning@^1   {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39c-b799-72c6-bac8-2d77a44454e1","digest":"8bd93653689f70069a274c8ea615ffd064e2a7ec1f4b5af307033ad3384c3b8f"}
+  lld-design@^1                {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39c-b795-77f6-9dbc-91a08744af9c","digest":"6a02a45b6ae24ae810a663b501c88bd1565ee4cd3df20852a08ee973a650fab7"}
+  requirements-analysis@^1     {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39c-b790-7784-b3eb-3e2be44b5256","digest":"7b708c9f375d304690f2022baaff4a15f6b8c173c62276fdb59e3bccceeb93f0"}
+Approver action: `eaeh approval review --as <approver-profile>`
+
+[skill] code-implementation@1.0.0 – Implement an approved plan as source code and automated tests in the governed workspace.
+  approval 01a1d39c-b7aa-7289-90b2-433b543c4850
+    required tools: fs.write, fs.read
+    max risk: workspace_write
+    task kinds: implementation
+    instructions: Implement the approved plan in input.inputs.plan for the requirements in input.inputs.requirements and the design in input.inputs.lld. Write every file with fs.write into the task workspace (repository-relative paths, e.g. pom.xml, src/main/java/…, src/test/java/…); read back with fs.read/fs.list wh
+    registered by: admin
+    definition digest: f830d19ce420c048b93f6dafe5f4dea11e0b7710cb94065a500dc1e4873f4791
+
+[skill] hld-design@1.0.0 – Produce a governed, standards-compliant high-level design.
+  approval 01a1d39c-b7a6-7312-87b2-dbbe11e9ece3
+    required tools: knowledge.search
+    max risk: read_only
+    task kinds: hld-design
+    instructions: Design the system for the approved requirements in input.inputs.requirements. Allocate every Must requirement to a component, interface or decision. Record each significant decision with alternatives and consequences, identify risks with mitigations and trade-offs with the chosen option. For every M
+    registered by: admin
+    definition digest: ec8f3d5f37f56f9688ff03df106e0967abb7104481178c4a4b8fb59286ff359c
+
+[skill] implementation-planning@1.0.0 – Plan the implementation of an approved design as small, traceable tasks.
+  approval 01a1d39c-b799-72c6-bac8-2d77a44454e1
+    required tools: knowledge.search
+    max risk: read_only
+    task kinds: implementation-planning
+    instructions: Plan the implementation of the approved design in input.inputs (requirements, hld, lld). Produce tasks T-001, T-002, … Each task names the requirement ids it implements (only ids from input.inputs.requirements), the HLD/LLD components it touches, the repository-relative source files it creates or ch
+    registered by: admin
+    definition digest: 8bd93653689f70069a274c8ea615ffd064e2a7ec1f4b5af307033ad3384c3b8f
+
+[skill] lld-design@1.0.0 – Refine an approved HLD into a low-level design.
+  approval 01a1d39c-b795-77f6-9dbc-91a08744af9c
+    required tools: knowledge.search
+    max risk: read_only
+    task kinds: lld-design
+    instructions: Refine the approved HLD in input.inputs.hld for the requirements in input.inputs.requirements. Design every service, web/mobile app, gateway and batch component of the HLD (use the HLD component ids), its modules, API operations (HTTP method + path, request/response entity names defined in 'data'), 
+    registered by: admin
+    definition digest: 6a02a45b6ae24ae810a663b501c88bd1565ee4cd3df20852a08ee973a650fab7
+
+[skill] requirements-analysis@1.0.0 – Derive traceable requirements from a governed BRD.
+  approval 01a1d39c-b790-7784-b3eb-3e2be44b5256
+    required tools: knowledge.read
+    max risk: read_only
+    task kinds: requirements-analysis, requirements-review
+    instructions: Read the whole BRD with knowledge.read using the document citation in input.inputs.brd.document. Derive functional and non-functional requirements (one obligation each, MoSCoW priority, testable acceptance criteria), business rules and domain concepts. Every item cites the BRD sections it comes from
+    registered by: admin
+    definition digest: 7b708c9f375d304690f2022baaff4a15f6b8c173c62276fdb59e3bccceeb93f0
+Decisions recorded as 'approver':
+  code-implementation@1.0.0 – Implement an approved plan as source code and automated tests in the governed workspace. – "approved"
+  hld-design@1.0.0 – Produce a governed, standards-compliant high-level design. – "approved"
+  implementation-planning@1.0.0 – Plan the implementation of an approved design as small, traceable tasks. – "approved"
+  lld-design@1.0.0 – Refine an approved HLD into a low-level design. – "approved"
+  requirements-analysis@1.0.0 – Derive traceable requirements from a governed BRD. – "approved"
+
+== 2b. readiness (after approvals)
+Project 'simple-springboot-api': READY  (0 blocking, 3 warning(s))
+  ok    [project] project 'simple-springboot-api' registered (01a1d39c-b6e5-76d5-ad0f-ba10e0a6ae7e)
+  ok    [workspace] workspace associated: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-external-ai/simple-springboot-api
+  ok    [workspace] git repository detected
+  ok    [identity] authenticated as 'dev' with access to the project
+  ok    [roles] developer 'dev' can run workflows (operator)
+  ok    [roles] 1 approver(s) responsible for approval gates
+  ok    [roles] knowledge steward 'steward'
+  ok    [workflows] requirements.analysis@1.0.0 registered (1 human approval gate(s))
+  ok    [agents] requirements.analysis/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] requirements.analysis/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [workflows] engineering.design@1.0.0 registered (3 human approval gate(s))
+  ok    [agents] engineering.design/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] engineering.design/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [agents] engineering.design/hld: agent solution-architect@1.0.0 with its tools
+  ok    [agents] engineering.design/lld: agent software-designer@1.0.0 with its tools
+  ok    [workflows] engineering.delivery-unverified@1.0.0 registered (2 human approval gate(s))
+  ok    [agents] engineering.delivery-unverified/plan: agent delivery-planner@1.0.0 with its tools
+  ok    [agents] engineering.delivery-unverified/implement: agent software-engineer@1.0.0 with its tools
+  ok    [skills] code-implementation@^1 approved (v1.0.0; used by software-engineer)
+  ok    [skills] hld-design@^1 approved (v1.0.0; used by solution-architect)
+  ok    [skills] implementation-planning@^1 approved (v1.0.0; used by delivery-planner)
+  ok    [skills] lld-design@^1 approved (v1.0.0; used by software-designer)
+  ok    [skills] requirements-analysis@^1 approved (v1.0.0; used by business-analyst, requirements-engineer)
+  ok    [knowledge] BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1 readable by the developer (20 sections)
+  ok    [knowledge] retrieval available
+  WARN  [knowledge] no approved mandatory enterprise standards are visible; designs will not be checked against standards
+         → eaeh project init … --standard <file> (or steward: eaeh knowledge ingest --mandatory …); then an approver runs `eaeh approval review`
+  ok    [execution] mode external_ai: AI reasoning is done by your connected AI client (Claude Code or GitHub Copilot) under your own subscription and its usage limits; EAEH makes no model API calls
+  ok    [execution] enabled model providers are not registered in this mode (no fallback): replay
+  ok    [execution] agent stages are handed off to your AI client through EAEH (eaeh_task_get / eaeh_task_submit)
+  ok    [client] Claude Code: EAEH MCP server configured in .mcp.json
+  ok    [client] GitHub Copilot (VS Code agent mode): EAEH MCP server configured in .vscode/mcp.json
+  ok    [delivery] deliver becomes available after a design run succeeds
+  WARN  [delivery] build and test verification is DEFERRED: EAEH will not run the build or the tests; the delivery bundle is marked unverified
+         → set up isolated build execution, then re-run `eaeh project init --build-verification required --build-program <program> --build-arg …`
+  ok    [governance] audit chain valid (76 records)
+  WARN  [governance] the BRD (confidential) is handed to your AI client, which sends it to its model provider under your subscription's terms
+         → confirm this is allowed for the project (A-33); classify the BRD as restricted to block the hand-off
+
+== 4. BRD identified
+[brd]
+path = "BRD-Simple-Spring-Boot-API.md"
+citation = "simple-springboot-api-brd/brd-simple-spring-boot-api@v1"
+
+== 5–8. start BRD → requirements → HLD → LLD (plan, then run); agent stages are handed to the AI client
+Activity 'design': BRD → requirements → HLD → LLD, each approved by a human
+Workflow: engineering.design  input: {"brd":"simple-springboot-api-brd/brd-simple-spring-boot-api@v1"}
+Stages:
+  - brd                    tool      (deterministic tool brd.sections)
+  - analyse                agent    business-analyst@1.0.0 skills=requirements-analysis@^1 (task requirements-analysis; quality gate 'requirements')
+  - refine                 agent    requirements-engineer@1.0.0 skills=requirements-analysis@^1 (task requirements-review; quality gate 'requirements')
+  - render_requirements    tool      (deterministic tool requirements.render)
+  - approve_requirements   approval  (approvers: approver)
+  - hld                    agent    solution-architect@1.0.0 skills=hld-design@^1 (task hld-design; quality gate 'hld')
+  - render_hld             tool      (deterministic tool architecture.render)
+  - approve_hld            approval  (approvers: approver)
+  - lld                    agent    software-designer@1.0.0 skills=lld-design@^1 (task lld-design; quality gate 'lld')
+  - render_lld             tool      (deterministic tool architecture.render)
+  - approve_lld            approval  (approvers: approver)
+Human approvals required:
+  - approve_requirements – human approver (approve / request changes ≤3 / reject)
+  - approve_hld – human approver (approve / request changes ≤3 / reject)
+  - approve_lld – human approver (approve / request changes ≤3 / reject)
+
+Prerequisites satisfied. Re-run with --yes to start this governed workflow.
+Activity 'design': BRD → requirements → HLD → LLD, each approved by a human
+Workflow: engineering.design  input: {"brd":"simple-springboot-api-brd/brd-simple-spring-boot-api@v1"}
+Stages:
+  - brd                    tool      (deterministic tool brd.sections)
+  - analyse                agent    business-analyst@1.0.0 skills=requirements-analysis@^1 (task requirements-analysis; quality gate 'requirements')
+  - refine                 agent    requirements-engineer@1.0.0 skills=requirements-analysis@^1 (task requirements-review; quality gate 'requirements')
+  - render_requirements    tool      (deterministic tool requirements.render)
+  - approve_requirements   approval  (approvers: approver)
+  - hld                    agent    solution-architect@1.0.0 skills=hld-design@^1 (task hld-design; quality gate 'hld')
+  - render_hld             tool      (deterministic tool architecture.render)
+  - approve_hld            approval  (approvers: approver)
+  - lld                    agent    software-designer@1.0.0 skills=lld-design@^1 (task lld-design; quality gate 'lld')
+  - render_lld             tool      (deterministic tool architecture.render)
+  - approve_lld            approval  (approvers: approver)
+Human approvals required:
+  - approve_requirements – human approver (approve / request changes ≤3 / reject)
+  - approve_hld – human approver (approve / request changes ≤3 / reject)
+  - approve_lld – human approver (approve / request changes ≤3 / reject)
+
+Started 01a1d39c-bcb1-739c-b60a-b89f99b46da6.
+Workflow 01a1d39c-bcb1-739c-b60a-b89f99b46da6 (engineering.design) – status: waiting_external  stage: analyse
+  brd → analyse [succeeded] by system:workflow-engine
+Waiting for the external AI client: task 01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8 (requirements-analysis, agent business-analyst@1.0.0) at stage 'analyse'.
+  → AI client (Claude Code / Copilot): eaeh_task_get 01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8 → eaeh_task_tool … → eaeh_task_submit 01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8; terminal: eaeh task show 01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8, eaeh task tool 01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8 <tool> --input '<json>', eaeh task submit 01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8 --output <file.json>
+
+== 5–6. [AI client: this Claude Code session] business-analyst and requirements-engineer hand-offs
+   (package read with 'eaeh task show', BRD read with 'eaeh task tool <id> knowledge.read', drafts checked with 'eaeh task tool <id> design.check', submitted with 'eaeh task submit <id> --client claude-code')
+   01a1d39c-bcbd-722b-be52-3ebb3a1f1bc8 requirements-analysis  business-analyst@1.0.0         accepted submissions=1 client=claude-code
+   01a1d39d-bd36-71f0-aea4-a803050f67c6 requirements-review    requirements-engineer@1.0.0    accepted submissions=1 client=claude-code
+Workflow 01a1d39c-bcb1-739c-b60a-b89f99b46da6 (engineering.design) – status: waiting_approval  stage: approve_requirements
+  brd → analyse [succeeded] by system:workflow-engine
+  analyse → refine [succeeded] by system:workflow-engine
+  refine → render_requirements [succeeded] by system:workflow-engine
+  render_requirements → approve_requirements [succeeded] by system:workflow-engine
+Waiting for human approval at 'approve_requirements' (approval 01a1d39e-06b7-76f8-9f11-928cc8e12ba0).
+  → review: eaeh artifact export 01a1d39e-06a8-71bd-b04c-2bb8a661943a --out review/approve_requirements
+  → approver decides: eaeh approval decide 01a1d39e-06b7-76f8-9f11-928cc8e12ba0 --decision approve|request_changes|reject --comments "…" --artifact-hash 19d1443704b2869f987970eff348f81bb48f0830b54d5ac9c5e5d13d2e4ae5d7 --as <approver-profile>
+
+== interim report (run waits at approve_requirements for a human approver)
+
+== 13. artifacts, traceability, approvals, hand-offs, audit and model usage
+
+   approve_requirements   pending            decided None
+   skill                  approved           decided 2026-11-13T06:33:46.464899Z
+   skill                  approved           decided 2026-11-13T06:33:46.494619Z
+   skill                  approved           decided 2026-11-13T06:33:46.530556Z
+   skill                  approved           decided 2026-11-13T06:33:46.560052Z
+   skill                  approved           decided 2026-11-13T06:33:46.591208Z
+   hand-off requirements-analysis      business-analyst@1.0.0       accepted  submissions=1 client=claude-code
+   hand-off requirements-review        requirements-engineer@1.0.0  accepted  submissions=1 client=claude-code
+eaeh: acting as profile 'admin' (admin; automatically selected: only stored identity permitted to audit.read)
+   audit records: 87; actions: agent.execute, agent.instantiate, approval.decide, approval.request, artifact.create, external_task.accept, external_task.handoff, external_task.submit, external_task.tool, identity.bootstrap, knowledge.ingest, knowledge.read, knowledge.search, knowledge.source.register, principal.create, project.create, project.set_domain, skill.register, token.issue, tool.invoke, workflow.await_external, workflow.quality_gate, workflow.start, workflow.transition, workspace.create
+   audit chain valid=True records=128
+   EAEH-managed model usage rows: 0
+   model.invoke audit records:    0
+   model invoked events:          0
+   secrets in generated files: CLAUDE.md:0 .mcp.json:0 .vscode/mcp.json:0 .github/copilot-instructions.md:0 .eaeh/project.toml:0

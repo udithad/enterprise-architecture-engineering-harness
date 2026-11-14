@@ -1,0 +1,23 @@
+# EAEH Phase 3 design demo (real server, no model provider – live run authorised but not executed: no key supplied) — 2026-11-12T18:14:22Z
+== 1. steward ingests the demonstration standard (approved) and the BRD (project-scoped, confidential)
+   standard: approved
+   BRD: status=active chunks=8 classification=confidential
+== 2. steward registers the Phase 3 skills; approver approves each (digest-bound)
+   requirements-analysis: approved
+   hld-design: approved
+   lld-design: approved
+== 3. operator starts engineering.design
+   workflow: status=failed state=failed
+   final: failed – analyse: unavailable: no registered model satisfies the routing requirements
+   NOTE: no model provider is enabled in this run (no API key supplied). The agent steps
+         are verified deterministically in tests/tests/design_demo.rs. To run live:
+         EAEH_DEMO_LIVE=1 EAEH_ANTHROPIC_KEY_FILE=~/.eaeh/anthropic.key scripts/demo-design.sh
+== 4. traceability from the BRD 'Payments' section
+   (no links – nothing approved)
+== 5. model usage (from the governed usage records)
+   no model calls
+   egress denials: 0
+== 6. audit chain
+   valid=True records=65
+== key/token literals in server log: 0
+== DEMO COMPLETE (live model: false)

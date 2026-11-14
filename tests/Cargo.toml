@@ -1,0 +1,36 @@
+[package]
+name = "eaeh-acceptance"
+description = "Workspace-level acceptance suites: architecture fitness, end-to-end, security/governance."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+eaeh-core.workspace = true
+eaeh-store.workspace = true
+eaeh-events.workspace = true
+eaeh-governance.workspace = true
+eaeh-extensibility.workspace = true
+eaeh-tools.workspace = true
+eaeh-intelligence.workspace = true
+eaeh-agents.workspace = true
+eaeh-validation.workspace = true
+eaeh-workflow.workspace = true
+eaeh-runtime.workspace = true
+eaeh-knowledge.workspace = true
+eaeh-skills.workspace = true
+eaeh-testkit.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+chrono.workspace = true

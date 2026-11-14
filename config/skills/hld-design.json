@@ -1,0 +1,42 @@
+{
+  "id": "hld-design",
+  "version": "1.0.0",
+  "description": "Produce a governed, standards-compliant high-level design.",
+  "capabilities": [
+    "hld-design"
+  ],
+  "task_kinds": [
+    "hld-design"
+  ],
+  "instructions": "Design the system for the approved requirements in input.inputs.requirements. Allocate every Must requirement to a component, interface or decision. Record each significant decision with alternatives and consequences, identify risks with mitigations and trade-offs with the chosen option. For every MANDATORY ENTERPRISE STANDARD in your instructions add a compliance entry citing the standard exactly (source/subject@vN) \u2013 compliant with evidence, deviation with justification and a decision id, or not_applicable with a reason \u2013 and list it in 'citations'. Use lower-case slug ids for actors, components and nodes. Run design.check with {document, context: {requirements}} before answering and fix every error.",
+  "required_knowledge": [
+    {
+      "query": "architecture standards decisions",
+      "k": 3
+    }
+  ],
+  "required_tools": [
+    "knowledge.search"
+  ],
+  "max_risk": "read_only",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "document",
+      "components",
+      "citations"
+    ],
+    "properties": {
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "evaluation_criteria": [
+    "passes the deterministic quality gate",
+    "citations are retrieved sources only"
+  ]
+}

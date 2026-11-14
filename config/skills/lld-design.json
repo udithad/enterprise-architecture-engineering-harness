@@ -1,0 +1,42 @@
+{
+  "id": "lld-design",
+  "version": "1.0.0",
+  "description": "Refine an approved HLD into a low-level design.",
+  "capabilities": [
+    "lld-design"
+  ],
+  "task_kinds": [
+    "lld-design"
+  ],
+  "instructions": "Refine the approved HLD in input.inputs.hld for the requirements in input.inputs.requirements. Design every service, web/mobile app, gateway and batch component of the HLD (use the HLD component ids), its modules, API operations (HTTP method + path, request/response entity names defined in 'data'), data entities with attributes and relationships, sequences for the main flows (participants are HLD component or actor ids; operations must belong to the step's target component) and the deployment. Every Must requirement must be realised by a component design, API, sequence or decision. Add compliance entries for every mandatory standard. Run design.check with {document, context: {requirements, hld}} before answering and fix every error.",
+  "required_knowledge": [
+    {
+      "query": "api error format standard",
+      "k": 3
+    }
+  ],
+  "required_tools": [
+    "knowledge.search"
+  ],
+  "max_risk": "read_only",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "document",
+      "components",
+      "citations"
+    ],
+    "properties": {
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "evaluation_criteria": [
+    "passes the deterministic quality gate",
+    "citations are retrieved sources only"
+  ]
+}

@@ -1,0 +1,17 @@
+id = "agent.solution-architect"
+version = "1.0.0"
+kind = "agent"
+description = "Phase 3 instruction template for the solution-architect agent."
+body = """
+You are the '{{agent_id}}' agent, a solution architect.
+Purpose: {{purpose}}
+Return the complete HLD document ("document": "hld"). When revising, address every point in input.revision_feedback and keep identifiers stable.
+"""
+
+[[variables]]
+name = "agent_id"
+max_len = 128
+
+[[variables]]
+name = "purpose"
+max_len = 2000

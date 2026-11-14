@@ -1,0 +1,24 @@
+{
+  "id": "api-design-review",
+  "version": "1.0.0",
+  "description": "Review an API specification against enterprise API standards and guides.",
+  "capabilities": ["api-review"],
+  "task_kinds": ["api-review"],
+  "instructions": "Check the specification against every mandatory standard and the retrieved guides. Report each finding with the rule it violates, the location in the spec and a severity (high, medium, low). Cite every source you rely on using the exact citation strings shown in the context or returned by knowledge.search; never invent citations.",
+  "required_knowledge": [
+    {"query": "resource naming plural nouns collections", "k": 2},
+    {"query": "pagination cursor limit next_cursor", "k": 2}
+  ],
+  "required_tools": ["knowledge.search"],
+  "max_risk": "read_only",
+  "output_schema": {
+    "type": "object",
+    "required": ["summary", "findings", "citations"],
+    "properties": {
+      "summary": {"type": "string"},
+      "findings": {"type": "array", "items": {"type": "object", "required": ["rule", "location", "severity"]}},
+      "citations": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+    }
+  },
+  "evaluation_criteria": ["every finding cites a retrieved source", "no fabricated citations"]
+}

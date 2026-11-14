@@ -1,0 +1,8 @@
+# EAEH Phase 3 analyzer evaluation — 2026-11-12T18:00:43Z — cargo test -p eaeh-requirements --test analyzer_eval -- --nocapture
+ANALYZER-EVAL miss ambiguity predicted=false label=true: The report must be generated in a timely manner.
+ANALYZER-EVAL miss ambiguity predicted=false label=true: The system must handle large files.
+ANALYZER-EVAL miss ambiguity predicted=true label=false: The system must provide a fast-track lane for VIP customers.
+ANALYZER-EVAL ambiguity n=24 tp=12 fp=1 fn=2 tn=9 precision=0.923 recall=0.857
+ANALYZER-EVAL miss pair expected=conflict got=none: 'Guests may check out without an account.' / 'Customers must register before placing an order.'
+ANALYZER-EVAL pairs n=8 correct=7 accuracy=0.875
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s

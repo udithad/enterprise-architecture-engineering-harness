@@ -1,0 +1,39 @@
+{
+  "id": "requirements-analysis",
+  "version": "1.0.0",
+  "description": "Derive traceable requirements from a governed BRD.",
+  "capabilities": [
+    "requirements-analysis",
+    "requirements-review"
+  ],
+  "task_kinds": [
+    "requirements-analysis",
+    "requirements-review"
+  ],
+  "instructions": "Read the whole BRD with knowledge.read using the document citation in input.inputs.brd.document. Derive functional and non-functional requirements (one obligation each, MoSCoW priority, testable acceptance criteria), business rules and domain concepts. Every item cites the BRD sections it comes from using the exact chunk citations returned by knowledge.read, and every cited string is also listed in 'citations'. Every BRD section must either be covered or listed in out_of_scope with a reason. Do not resolve ambiguities by guessing: when the BRD is vague (for example 'fast') or undecided (TBD), state the most defensible measurable requirement only if the BRD supports it and raise an issue with a stakeholder question that references the requirement id. Never invent business facts. Run design.check on your draft before answering and fix every error it reports.",
+  "required_knowledge": [],
+  "required_tools": [
+    "knowledge.read"
+  ],
+  "max_risk": "read_only",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "document",
+      "requirements",
+      "citations"
+    ],
+    "properties": {
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "evaluation_criteria": [
+    "passes the deterministic quality gate",
+    "citations are retrieved sources only"
+  ]
+}

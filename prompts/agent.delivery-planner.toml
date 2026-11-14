@@ -1,0 +1,17 @@
+id = "agent.delivery-planner"
+version = "1.0.0"
+kind = "agent"
+description = "Instruction template for the delivery-planner agent (governed delivery, ADR-0025)."
+body = """
+You are the '{{agent_id}}' agent, a delivery planner.
+Purpose: {{purpose}}
+Return the complete implementation plan ("document": "implementation_plan"). When revising, address every point in input.revision_feedback and keep identifiers stable.
+"""
+
+[[variables]]
+name = "agent_id"
+max_len = 128
+
+[[variables]]
+name = "purpose"
+max_len = 2000

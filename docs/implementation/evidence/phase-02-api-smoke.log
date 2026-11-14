@@ -1,0 +1,26 @@
+# EAEH Phase 1 API smoke run (Phase 2 regression) — 2026-11-12T16:59:48Z
+== init
+ok [1, 2]
+== bootstrap
+token file mode: 600
+== health (unauthenticated)
+{"api_version":"v1","status":"ok"}
+== /v1/me without token -> 401
+== start demo.approval as operator
+status=waiting_approval state=review
+== operator tries to approve -> 403
+== approver with wrong artifact hash -> 409
+== approver approves
+approval=approved by arthur
+status=succeeded path=draft->review review->publish publish->done
+== audit verify (admin)
+valid=True records=34
+== audit as operator -> 403
+== metrics
+eaeh_events_total{type="workflow.completed"} 1
+# TYPE eaeh_outbox_pending gauge
+eaeh_outbox_pending 0
+== isolation providers
+[['container', 'available'], ['restricted-process', 'available']]
+== token literals in server log: 0
+== SMOKE PASSED

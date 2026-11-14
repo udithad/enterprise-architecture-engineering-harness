@@ -1,0 +1,88 @@
+{
+  "id": "engineering.task",
+  "version": "1.0.0",
+  "description": "Agentic task (requires a registered model provider): plan, analyze, design, human review, implement.",
+  "initial": "plan",
+  "states": [
+    {
+      "name": "plan",
+      "type": "planned",
+      "allowed_task_kinds": [
+        "analyze"
+      ],
+      "max_steps": 3,
+      "max_autonomy": "read_only",
+      "artifact": "task/plan.json",
+      "transitions": {
+        "succeeded": "design",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "design",
+      "type": "agent_task",
+      "task_kind": "design",
+      "capabilities": [
+        "design"
+      ],
+      "max_autonomy": "workspace_modify",
+      "artifact": "task/design.json",
+      "timeout_secs": 1800,
+      "transitions": {
+        "succeeded": "review",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "review",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "design",
+      "transitions": {
+        "approved": "implement",
+        "rejected": "design"
+      }
+    },
+    {
+      "name": "implement",
+      "type": "agent_task",
+      "task_kind": "implement",
+      "capabilities": [
+        "implement"
+      ],
+      "max_autonomy": "workspace_modify",
+      "artifact": "task/implementation.json",
+      "requires_approval_of": [
+        "review"
+      ],
+      "timeout_secs": 1800,
+      "transitions": {
+        "succeeded": "done",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "done",
+      "type": "terminal",
+      "outcome": "succeeded"
+    },
+    {
+      "name": "failed",
+      "type": "terminal",
+      "outcome": "failed"
+    }
+  ],
+  "budget": {
+    "tool_calls": 50,
+    "model_calls": 30,
+    "tokens": 500000,
+    "cost_micros": 20000000,
+    "wall_clock_ms": 1800000,
+    "delegation_depth": 2,
+    "concurrent_agents": 4,
+    "correction_attempts": 2,
+    "agent_steps": 60
+  }
+}

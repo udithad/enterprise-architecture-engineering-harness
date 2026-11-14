@@ -1,0 +1,28 @@
+[package]
+name = "eaeh-workspace"
+description = "EAEH workspaces (path confinement, ownership locks, atomic writes) and content-addressed artifacts with provenance."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-store.workspace = true
+eaeh-events.workspace = true
+eaeh-extensibility.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+libc.workspace = true
+async-trait.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,0 +1,31 @@
+[package]
+name = "eaeh-workflow"
+description = "EAEH deterministic workflow engine and hybrid orchestration: validated definitions, durable instances, approval gates, planner proposals, retry/timeout/cancel, recovery."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-store.workspace = true
+eaeh-events.workspace = true
+eaeh-governance.workspace = true
+eaeh-extensibility.workspace = true
+eaeh-workspace.workspace = true
+eaeh-validation.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+semver.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

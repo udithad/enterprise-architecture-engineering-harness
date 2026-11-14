@@ -1,0 +1,175 @@
+{
+  "id": "delivery-planner",
+  "version": "1.0.0",
+  "purpose": "Turn approved requirements, HLD and LLD into an implementation plan of small, traceable tasks with the files and tests each produces.",
+  "responsibilities": [
+    "implementation planning",
+    "task decomposition",
+    "requirement coverage",
+    "test planning"
+  ],
+  "capabilities": [
+    "implementation-planning"
+  ],
+  "skills": [
+    "implementation-planning@^1"
+  ],
+  "model": {
+    "capabilities": [
+      "tools"
+    ],
+    "min_quality": 0,
+    "preferred": [],
+    "max_output_tokens": 24000
+  },
+  "allowed_tools": [
+    "knowledge.search",
+    "knowledge.read"
+  ],
+  "required_context": [],
+  "instructions_prompt": "agent.delivery-planner",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "title",
+      "tasks",
+      "citations"
+    ],
+    "properties": {
+      "document": {
+        "const": "implementation_plan"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "summary": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "tasks": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 100,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "title",
+            "requirements",
+            "files",
+            "tests"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^T-[0-9]{3}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 4000
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "minItems": 1
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "tests": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            }
+          }
+        }
+      },
+      "risks": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      },
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    }
+  },
+  "autonomy": "read_only",
+  "delegation": {
+    "may_delegate_to": [],
+    "max_children": 0
+  },
+  "constraints": {
+    "tool_calls": 40,
+    "model_calls": 16,
+    "tokens": 1500000,
+    "cost_micros": 5000000,
+    "wall_clock_ms": 3600000,
+    "delegation_depth": 1,
+    "concurrent_agents": 1,
+    "correction_attempts": 3,
+    "agent_steps": 12
+  },
+  "evaluation_criteria": [
+    "every Must requirement is covered by a task",
+    "tasks name concrete files and tests",
+    "no invented requirements"
+  ],
+  "output_validators": [
+    {
+      "validator": "delivery.plan",
+      "context": {
+        "requirements": "/inputs/requirements"
+      }
+    }
+  ]
+}

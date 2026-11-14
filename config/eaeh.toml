@@ -1,0 +1,110 @@
+# EAEH Phase 1 configuration. Relative paths resolve against this file's directory.
+# No credentials belong in this file. Secrets are read from EAEH_SECRET_* variables.
+
+[storage]
+data_dir = "../.eaeh-data"
+
+[definitions]
+prompts_dir = "../prompts"
+agents_dir = "agents"
+workflows_dir = "../workflows"
+policies_dir = "policies"
+skills_dir = "skills"
+
+[isolation]
+process_enabled = true
+container_enabled = true
+container_runtime = "podman"
+container_image = "docker.io/library/alpine:3.20"
+container_user = "65534:65534"
+exec_allowed_programs = ["/bin/echo", "/bin/ls", "/bin/cat", "/usr/bin/wc"]
+exec_timeout_secs = 120
+exec_memory_mb = 256
+
+[plugins]
+require_signature = true
+grantable = ["register_hooks", "register_validators"]
+
+[plugins.trusted_keys]
+
+[api]
+bind = "127.0.0.1:8080"
+max_body_bytes = 1048576
+requests_per_minute = 600
+
+[supervision]
+interval_secs = 30
+stall_after_secs = 7200
+max_failed_tasks_per_instance = 10
+dispatch_interval_ms = 1000
+
+[models]
+timeout_secs = 120
+context_max_tokens = 100000
+circuit_failure_threshold = 3
+circuit_cooldown_secs = 30
+max_delegation_depth = 3
+
+[log]
+format = "json"
+filter = "info,sqlx=warn"
+
+[knowledge]
+embedding_dims = 384
+retrieval_k = 4
+max_document_bytes = 1048576
+chunk_chars = 1200
+human_max_classification = "confidential"
+agent_max_classification = "confidential"
+exclude_stale_standards = false
+
+# Who performs AI reasoning (ADR-0025).
+#   external_ai     – your connected AI client (Claude Code, GitHub Copilot) does it under
+#                     your own subscription; EAEH registers NO model provider (even if one is
+#                     enabled below) and makes no model API calls. Default for IDE work.
+#   direct_provider – EAEH calls the enabled [providers.*] itself (separate API key, billed
+#                     by the provider). Used when the section is absent.
+#   deterministic   – only [providers.replay] (recorded fixtures, NOT AI): tests and demos.
+[execution]
+mode = "external_ai"
+
+# Automated execution (ADR-0026): a background worker runs each AI task through the
+# installed Claude Code CLI (`claude -p`), signed in with YOUR Claude subscription.
+# EAEH never calls a model API in this mode, never uses an API key, and refuses to run
+# Claude Code if it is signed in with API-key / cloud-provider credentials.
+[execution.coordinator]
+auto_start = true            # start the worker when a run waits for the AI (workflow run, review)
+provider = "claude_code"     # the only automated provider (GitHub Copilot: interactive only)
+# claude_path = "/usr/local/bin/claude"   # default: `claude` on PATH
+# model = "sonnet"                        # default: your Claude Code setting
+task_timeout_secs = 1800     # one AI attempt; the session is stopped after this
+max_attempts = 3             # attempts per task (bounded; then the task stops as `exhausted`)
+backoff_secs = 30            # first retry delay, doubled per attempt
+poll_interval_ms = 3000
+lease_secs = 120             # a worker silent this long is presumed dead; its task is recovered
+notify = true                # desktop notification when a document needs review
+
+# Model providers are used only in direct_provider mode (replay also in deterministic mode).
+# The Anthropic API key is read ONLY from the environment variable
+# EAEH_SECRET_ANTHROPIC_API_KEY. Replay (ADR-0023) is NOT AI: recorded responses for
+# offline acceptance scenarios and demos; provenance records the cassette hash.
+[providers.replay]
+enabled = false
+cassette = ""
+
+[providers.anthropic]
+enabled = false
+base_url = "https://api.anthropic.com"
+api_version = "2026-10-21"
+timeout_secs = 300
+max_retries = 2
+refusal_fallback = true
+
+[[providers.anthropic.models]]
+id = "claude-opus-5-5"
+context_window = 1000000
+max_output_tokens = 128000
+input_cost_per_mtok_micros = 4000000
+output_cost_per_mtok_micros = 20000000
+quality_tier = 9
+capabilities = ["tools", "json"]

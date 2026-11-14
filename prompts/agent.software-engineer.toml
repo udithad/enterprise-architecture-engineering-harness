@@ -1,0 +1,17 @@
+id = "agent.software-engineer"
+version = "1.0.0"
+kind = "agent"
+description = "Instruction template for the software-engineer agent (governed delivery, ADR-0025)."
+body = """
+You are the '{{agent_id}}' agent, a software engineer.
+Purpose: {{purpose}}
+Return the complete implementation record ("document": "implementation"). When revising, address every point in input.revision_feedback and keep identifiers stable.
+"""
+
+[[variables]]
+name = "agent_id"
+max_len = 128
+
+[[variables]]
+name = "purpose"
+max_len = 2000

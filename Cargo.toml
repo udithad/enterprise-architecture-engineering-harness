@@ -1,0 +1,72 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "tests"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "Apache-2.0"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+
+[workspace.dependencies]
+# Internal crates
+eaeh-core = { path = "crates/eaeh-core" }
+eaeh-store = { path = "crates/eaeh-store" }
+eaeh-events = { path = "crates/eaeh-events" }
+eaeh-governance = { path = "crates/eaeh-governance" }
+eaeh-extensibility = { path = "crates/eaeh-extensibility" }
+eaeh-isolation = { path = "crates/eaeh-isolation" }
+eaeh-workspace = { path = "crates/eaeh-workspace" }
+eaeh-tools = { path = "crates/eaeh-tools" }
+eaeh-intelligence = { path = "crates/eaeh-intelligence" }
+eaeh-validation = { path = "crates/eaeh-validation" }
+eaeh-agents = { path = "crates/eaeh-agents" }
+eaeh-workflow = { path = "crates/eaeh-workflow" }
+eaeh-runtime = { path = "crates/eaeh-runtime" }
+eaeh-api = { path = "crates/eaeh-api" }
+eaeh-testkit = { path = "crates/eaeh-testkit" }
+eaeh-knowledge = { path = "crates/eaeh-knowledge" }
+eaeh-skills = { path = "crates/eaeh-skills" }
+eaeh-provider-anthropic = { path = "crates/eaeh-provider-anthropic" }
+eaeh-requirements = { path = "crates/eaeh-requirements" }
+eaeh-architecture = { path = "crates/eaeh-architecture" }
+eaeh-engineering = { path = "crates/eaeh-engineering" }
+
+# Third-party (evaluated in ADR-0003)
+tokio = { version = "1.54", features = ["rt-multi-thread", "macros", "sync", "time", "process", "signal", "fs", "io-util", "net"] }
+tokio-util = { version = "0.7.20", features = ["rt"] }
+async-trait = "0.1.92"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "1.2"
+thiserror = "2.0.21"
+uuid = { version = "1.29", features = ["v7", "serde"] }
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "serde", "std"] }
+sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros", "chrono", "json"] }
+sha2 = "0.11.1"
+ed25519-dalek = "3.0.0"
+getrandom = "0.4.3"
+semver = { version = "1.0.28", features = ["serde"] }
+jsonschema = { version = "0.61.2", default-features = false }
+axum = { version = "0.8.9", default-features = false, features = ["json", "query", "tokio", "http1", "macros"] }
+tower = { version = "0.5.3", features = ["util"] }
+clap = { version = "4.6", features = ["derive", "env"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter", "fmt"] }
+libc = "0.2"
+tempfile = "3.27"
+assert_cmd = "2.2"
+http-body-util = "0.1.5"
+# Phase 2: HTTP client for the model provider adapter only (ADR-0015)
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "json"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }

@@ -1,0 +1,22 @@
+# Additional developer-experience commands (acceptance environment, after dx-onboarding) — 2026-11-12T22:20:13Z
+$ eaeh auth use steward
+Default profile: steward
+$ eaeh auth use developer
+Default profile: developer
+$ eaeh workflow resume <succeeded run>
+{
+  "error": {
+    "code": "conflict",
+    "message": "workflow 01a1d1d8-b1c5-72a2-a94c-fe563762eba0 is succeeded and cannot be resumed; start a new run with `eaeh workflow run <activity> --yes`"
+  }
+}
+$ eaeh --as approver workflow run requirements
+Project 'simple-springboot-api': NOT READY  (1 blocking, 2 warning(s))
+  BLOCK [identity] 'approver' cannot start workflows (needs role operator)
+         → run as the developer: --as developer (principal 'dev')
+Not started: resolve the blocking items above, then re-run this command.
+$ eaeh principal grant --id steward
+eaeh: acting as profile 'admin' (admin; automatically selected: only stored identity permitted to principal.manage)
+'steward' already has access to 01a1d1d8-ac39-711f-94f3-eaadc8e37728
+$ eaeh auth renew --profile steward
+Renewed profile 'steward' (new token stored, previous token revoked); expires 2026-12-12T22:20:13.786025Z.

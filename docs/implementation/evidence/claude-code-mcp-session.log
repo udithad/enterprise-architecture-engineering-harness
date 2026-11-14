@@ -1,0 +1,43 @@
+# Real Claude Code session against the EAEH MCP server (headless, read-only tools)
+# Command (run in target/demo-external-ai/simple-springboot-api, EAEH_HOME set to the demo home):
+#   claude -p "Using only the eaeh MCP tools (read-only), report ... Do not start, submit or change anything." \
+#     --mcp-config .mcp.json --strict-mcp-config \
+#     --allowedTools mcp__eaeh__eaeh_project_context,mcp__eaeh__eaeh_readiness,mcp__eaeh__eaeh_task_list,mcp__eaeh__eaeh_pending_approvals,mcp__eaeh__eaeh_workflow_status \
+#     --max-turns 10 --output-format json
+# Claude Code version: 2.1.323
+# result: subtype=success is_error=False turns=6 duration_ms=13331
+
+I only used read-only EAEH tools (`eaeh_project_context`, `eaeh_readiness`, `eaeh_task_list`, `eaeh_pending_approvals`). Nothing was started, submitted or changed.
+
+## 1. Execution mode and who pays for AI reasoning
+- **Mode:** `external_ai`. Claude Code and GitHub Copilot are the clients it expects.
+- **Who pays:** you do. Your connected AI client (here, Claude Code) does the reasoning under your own subscription and its usage limits. EAEH makes no model API calls itself, and no fallback model provider is registered in this mode.
+
+## 2. Readiness: **READY** (0 blocking, 3 warnings)
+All checks passed: project, workspace, git, identity, roles, workflows, agents, all 5 required skills (approved, v1.0.0), BRD access, retrieval, MCP client config, and the audit chain (128 records, valid).
+
+There are three warnings. None of them blocks work:
+
+| Area | Warning | Fix from EAEH |
+|---|---|---|
+| knowledge | No approved mandatory enterprise standards, so designs won't be checked against any standards | `eaeh project init … --standard <file>` (or steward: `eaeh knowledge ingest --mandatory …`), then an approver runs `eaeh approval review` |
+| delivery | Build and test verification is **deferred**: EAEH won't run the build or tests, and the delivery bundle will be marked unverified | Set up isolated build execution, then `eaeh project init --build-verification required --build-program <program> --build-arg …` |
+| governance | The BRD is classified confidential and is passed to your AI client, which sends it to its model provider | Confirm this is allowed for the project (A-33), or classify the BRD as restricted to block the hand-off |
+
+Delivery only becomes available after a design run succeeds.
+
+## 3. Open hand-off tasks
+**None.** `eaeh_task_list` reports "nothing waits for you."
+
+## 4. Pending human approvals
+There is one workflow gate. No skills or standards approvals are pending.
+
+- **Gate:** `approve_requirements`
+- **Workflow run:** `01a1d39c-bcb1-739c-b60a-b89f99b46da6`
+- **Artifact:** `01a1d39e-06a8-71bd-b04c-2bb8a661943a` (hash `19d14437…e4ae5d7`)
+- **Required role:** `approver`
+
+Approver command (a human approver must run this; I can't approve):
+```
+eaeh approval decide 01a1d39e-06b7-76f8-9f11-928cc8e12ba0 --decision approve|request_changes|reject --comments "…" --artifact-hash 19d1443704b2869f987970eff348f81bb48f0830b54d5ac9c5e5d13d2e4ae5d7 --as <approver-profile>
+```

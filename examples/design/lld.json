@@ -1,0 +1,321 @@
+{
+  "document": "lld",
+  "title": "Order management – low-level design (demonstration)",
+  "summary": "Detailed design refining the approved HLD.",
+  "components": [
+    {
+      "component": "web-shop",
+      "description": "Server-rendered UI.",
+      "modules": [
+        {
+          "name": "checkout",
+          "responsibility": "Cart checkout and confirmation page"
+        },
+        {
+          "name": "order-history",
+          "responsibility": "Order list and status"
+        },
+        {
+          "name": "shipment",
+          "responsibility": "Warehouse shipment screen"
+        }
+      ],
+      "requirements": [
+        "REQ-F-004"
+      ]
+    },
+    {
+      "component": "order-service",
+      "description": "Owns the order lifecycle.",
+      "modules": [
+        {
+          "name": "api",
+          "responsibility": "REST controllers and problem+json error mapping"
+        },
+        {
+          "name": "domain",
+          "responsibility": "Order aggregate, business rules BR-001..BR-003, status transitions"
+        },
+        {
+          "name": "payments",
+          "responsibility": "Payment-provider client using tokens only"
+        },
+        {
+          "name": "persistence",
+          "responsibility": "Repository with optimistic locking"
+        }
+      ],
+      "requirements": [
+        "REQ-NF-001",
+        "REQ-NF-002",
+        "REQ-NF-003"
+      ]
+    }
+  ],
+  "apis": [
+    {
+      "id": "op-place-order",
+      "component": "order-service",
+      "method": "POST",
+      "path": "/orders",
+      "summary": "Place an order and take payment",
+      "request": "PlaceOrderRequest",
+      "response": "Order",
+      "errors": [
+        "400 validation (problem+json)",
+        "402 payment declined (problem+json)"
+      ],
+      "requirements": [
+        "REQ-F-001",
+        "REQ-F-002",
+        "REQ-F-006"
+      ]
+    },
+    {
+      "id": "op-get-order",
+      "component": "order-service",
+      "method": "GET",
+      "path": "/orders/{orderId}",
+      "summary": "Get one order with status",
+      "response": "Order",
+      "errors": [
+        "404 not found (problem+json)"
+      ],
+      "requirements": [
+        "REQ-F-004"
+      ]
+    },
+    {
+      "id": "op-cancel-order",
+      "component": "order-service",
+      "method": "POST",
+      "path": "/orders/{orderId}/cancellation",
+      "summary": "Cancel an unshipped order",
+      "response": "Order",
+      "errors": [
+        "409 already shipped (problem+json)"
+      ],
+      "requirements": [
+        "REQ-F-003"
+      ]
+    },
+    {
+      "id": "op-ship-order",
+      "component": "order-service",
+      "method": "POST",
+      "path": "/orders/{orderId}/shipment",
+      "summary": "Record shipment (warehouse staff)",
+      "response": "Order",
+      "errors": [
+        "409 invalid status (problem+json)"
+      ],
+      "requirements": [
+        "REQ-F-005"
+      ]
+    }
+  ],
+  "data": [
+    {
+      "name": "Order",
+      "owner": "order-service",
+      "description": "Order aggregate root.",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "orderNumber",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "customerId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": true,
+          "description": "PLACED|PAID|SHIPPED|DELIVERED|CANCELLED"
+        },
+        {
+          "name": "paymentToken",
+          "type": "string",
+          "description": "Provider token, never a card number"
+        },
+        {
+          "name": "version",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "relationships": [
+        {
+          "target": "OrderLine",
+          "cardinality": "one_to_many",
+          "description": "contains"
+        }
+      ]
+    },
+    {
+      "name": "OrderLine",
+      "owner": "order-service",
+      "attributes": [
+        {
+          "name": "productId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "quantity",
+          "type": "int",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "PlaceOrderRequest",
+      "owner": "order-service",
+      "attributes": [
+        {
+          "name": "lines",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "paymentToken",
+          "type": "string",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "sequences": [
+    {
+      "id": "S-001",
+      "title": "Place order",
+      "requirements": [
+        "REQ-F-001",
+        "REQ-F-002",
+        "REQ-F-006"
+      ],
+      "steps": [
+        {
+          "from": "customer",
+          "to": "web-shop",
+          "message": "Checkout cart"
+        },
+        {
+          "from": "web-shop",
+          "to": "order-service",
+          "message": "POST /orders",
+          "operation": "op-place-order"
+        },
+        {
+          "from": "order-service",
+          "to": "payment-provider",
+          "message": "Authorise payment with token"
+        },
+        {
+          "from": "order-service",
+          "to": "order-db",
+          "message": "Insert order (status PAID)"
+        },
+        {
+          "from": "order-service",
+          "to": "web-shop",
+          "message": "201 Order with order number"
+        }
+      ]
+    },
+    {
+      "id": "S-002",
+      "title": "Record shipment",
+      "requirements": [
+        "REQ-F-005"
+      ],
+      "steps": [
+        {
+          "from": "warehouse-staff",
+          "to": "web-shop",
+          "message": "Mark order shipped"
+        },
+        {
+          "from": "web-shop",
+          "to": "order-service",
+          "message": "POST /orders/{orderId}/shipment",
+          "operation": "op-ship-order"
+        },
+        {
+          "from": "order-service",
+          "to": "order-db",
+          "message": "Update status (optimistic lock)"
+        }
+      ]
+    }
+  ],
+  "deployment": [
+    {
+      "id": "app-cluster",
+      "name": "Application cluster",
+      "environment": "production",
+      "technology": "2 replicas per component in 2 zones",
+      "hosts": [
+        "web-shop",
+        "order-service"
+      ]
+    },
+    {
+      "id": "db-cluster",
+      "name": "Database service",
+      "environment": "production",
+      "technology": "Managed relational database, multi-zone",
+      "hosts": [
+        "order-db"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "LD-001",
+      "title": "Optimistic locking for status transitions",
+      "status": "accepted",
+      "context": "Customers and warehouse staff may change the same order concurrently.",
+      "decision": "Each order carries a version; updates use compare-and-set and return 409 on conflict.",
+      "alternatives": [
+        {
+          "option": "Pessimistic row locks",
+          "pros": [
+            "Simple reasoning"
+          ],
+          "cons": [
+            "Lock contention, timeouts"
+          ]
+        }
+      ],
+      "consequences": [
+        "Clients must retry on 409"
+      ],
+      "requirements": [
+        "REQ-F-003",
+        "REQ-F-005"
+      ]
+    }
+  ],
+  "compliance": [
+    {
+      "standard": "demo-api-standards/error-format@v1",
+      "status": "compliant",
+      "justification": "Every operation's errors are application/problem+json with type, title, status and trace_id.",
+      "components": [
+        "order-service"
+      ]
+    }
+  ],
+  "citations": [
+    "demo-api-standards/error-format@v1"
+  ]
+}

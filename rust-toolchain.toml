@@ -1,0 +1,5 @@
+# Exact toolchain pin for reproducible builds (ADR-0007).
+[toolchain]
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

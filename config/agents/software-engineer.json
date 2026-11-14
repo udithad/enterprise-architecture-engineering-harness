@@ -1,0 +1,178 @@
+{
+  "id": "software-engineer",
+  "version": "1.0.0",
+  "purpose": "Implement an approved implementation plan in the task workspace: source code, build files and automated tests, traceable to requirements.",
+  "responsibilities": [
+    "code implementation",
+    "test implementation",
+    "build configuration",
+    "traceability"
+  ],
+  "capabilities": [
+    "implementation"
+  ],
+  "skills": [
+    "code-implementation@^1"
+  ],
+  "model": {
+    "capabilities": [
+      "tools"
+    ],
+    "min_quality": 0,
+    "preferred": [],
+    "max_output_tokens": 24000
+  },
+  "allowed_tools": [
+    "fs.read",
+    "fs.list",
+    "fs.write",
+    "knowledge.search"
+  ],
+  "required_context": [],
+  "instructions_prompt": "agent.software-engineer",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "summary",
+      "files",
+      "tests",
+      "citations"
+    ],
+    "properties": {
+      "document": {
+        "const": "implementation"
+      },
+      "summary": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+      },
+      "files": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 300,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "requirements"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "purpose": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "unit",
+                "integration",
+                "other"
+              ]
+            }
+          }
+        }
+      },
+      "tests": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 300,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "requirements"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "purpose": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "unit",
+                "integration",
+                "other"
+              ]
+            }
+          }
+        }
+      },
+      "notes": {
+        "type": "string",
+        "maxLength": 8000
+      },
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    }
+  },
+  "autonomy": "workspace_modify",
+  "delegation": {
+    "may_delegate_to": [],
+    "max_children": 0
+  },
+  "constraints": {
+    "tool_calls": 200,
+    "model_calls": 16,
+    "tokens": 1500000,
+    "cost_micros": 5000000,
+    "wall_clock_ms": 3600000,
+    "delegation_depth": 1,
+    "concurrent_agents": 1,
+    "correction_attempts": 3,
+    "agent_steps": 60
+  },
+  "evaluation_criteria": [
+    "every Must functional requirement is implemented and tested",
+    "only workspace files are written",
+    "build files follow the stack"
+  ],
+  "output_validators": [
+    {
+      "validator": "delivery.implementation",
+      "context": {
+        "requirements": "/inputs/requirements"
+      }
+    }
+  ]
+}

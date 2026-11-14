@@ -1,0 +1,55 @@
+{
+  "id": "knowledge.review",
+  "version": "1.0.0",
+  "description": "Phase 2 demo: an agent reviews an API spec with an approved skill and governed enterprise knowledge; a human approves the cited review.",
+  "initial": "review",
+  "states": [
+    {
+      "name": "review",
+      "type": "agent_task",
+      "task_kind": "api-review",
+      "capabilities": [
+        "api-review"
+      ],
+      "max_autonomy": "read_only",
+      "artifact": "review/api-review.json",
+      "timeout_secs": 1800,
+      "transitions": {
+        "succeeded": "approve",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "approve",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "review",
+      "transitions": {
+        "approved": "done",
+        "rejected": "review"
+      }
+    },
+    {
+      "name": "done",
+      "type": "terminal",
+      "outcome": "succeeded"
+    },
+    {
+      "name": "failed",
+      "type": "terminal",
+      "outcome": "failed"
+    }
+  ],
+  "budget": {
+    "tool_calls": 50,
+    "model_calls": 30,
+    "tokens": 1000000,
+    "cost_micros": 50000000,
+    "wall_clock_ms": 3600000,
+    "delegation_depth": 1,
+    "concurrent_agents": 2,
+    "correction_attempts": 2,
+    "agent_steps": 20
+  }
+}

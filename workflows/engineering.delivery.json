@@ -1,0 +1,163 @@
+{
+  "id": "engineering.delivery",
+  "version": "1.0.0",
+  "description": "Governed software delivery: approved design \u2192 implementation plan \u2192 approval \u2192 implementation with tests in the governed workspace \u2192 source bundle \u2192 build and tests executed by EAEH (exec.run, isolated) \u2192 approval \u2192 export.",
+  "initial": "plan",
+  "states": [
+    {
+      "name": "plan",
+      "type": "agent_task",
+      "task_kind": "implementation-planning",
+      "capabilities": [
+        "implementation-planning"
+      ],
+      "max_autonomy": "read_only",
+      "artifact": "delivery/implementation-plan.json",
+      "inputs": {
+        "requirements": {
+          "$input": "/requirements"
+        },
+        "hld": {
+          "$input": "/hld"
+        },
+        "lld": {
+          "$input": "/lld"
+        },
+        "project": {
+          "$input": "/project"
+        }
+      },
+      "quality_gate": {
+        "gate": "delivery-plan",
+        "context": {
+          "requirements": {
+            "$input": "/requirements"
+          }
+        }
+      },
+      "timeout_secs": 3600,
+      "transitions": {
+        "succeeded": "approve_plan",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "approve_plan",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "plan",
+      "max_revisions": 3,
+      "transitions": {
+        "approved": "implement",
+        "changes_requested": "plan",
+        "rejected": "rejected"
+      }
+    },
+    {
+      "name": "implement",
+      "type": "agent_task",
+      "task_kind": "implementation",
+      "capabilities": [
+        "implementation"
+      ],
+      "max_autonomy": "workspace_modify",
+      "requires_approval_of": [
+        "approve_plan"
+      ],
+      "artifact": "delivery/implementation.json",
+      "inputs": {
+        "plan": {
+          "$output": "plan"
+        },
+        "requirements": {
+          "$input": "/requirements"
+        },
+        "lld": {
+          "$input": "/lld"
+        },
+        "project": {
+          "$input": "/project"
+        }
+      },
+      "quality_gate": {
+        "gate": "delivery",
+        "context": {
+          "requirements": {
+            "$input": "/requirements"
+          }
+        }
+      },
+      "timeout_secs": 3600,
+      "transitions": {
+        "succeeded": "snapshot",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "snapshot",
+      "type": "tool_step",
+      "tool": "delivery.snapshot",
+      "input": {
+        "implementation": {
+          "$output": "implement"
+        }
+      },
+      "artifact": "delivery/source",
+      "bundle": true,
+      "transitions": {
+        "succeeded": "build_test",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "build_test",
+      "type": "tool_step",
+      "tool": "exec.run",
+      "input": {
+        "$input": "/build"
+      },
+      "requires_approval_of": [
+        "approve_plan"
+      ],
+      "quality_gate": {
+        "gate": "build",
+        "context": {}
+      },
+      "timeout_secs": 1800,
+      "transitions": {
+        "succeeded": "approve_delivery",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "approve_delivery",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "snapshot",
+      "max_revisions": 3,
+      "transitions": {
+        "approved": "done",
+        "changes_requested": "implement",
+        "rejected": "rejected"
+      }
+    },
+    {
+      "name": "done",
+      "type": "terminal",
+      "outcome": "succeeded"
+    },
+    {
+      "name": "rejected",
+      "type": "terminal",
+      "outcome": "failed"
+    },
+    {
+      "name": "failed",
+      "type": "terminal",
+      "outcome": "failed"
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "id": "planner",
+  "version": "1.0.0",
+  "purpose": "Decompose a task into a small number of typed steps for the workflow engine to validate.",
+  "responsibilities": [
+    "planning"
+  ],
+  "capabilities": [
+    "plan"
+  ],
+  "skills": [],
+  "model": {
+    "capabilities": [
+      "tools"
+    ],
+    "min_quality": 0,
+    "preferred": [],
+    "max_output_tokens": 4096
+  },
+  "allowed_tools": [],
+  "required_context": [],
+  "instructions_prompt": "agent.planner",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "steps"
+    ],
+    "properties": {
+      "steps": {
+        "type": "array",
+        "maxItems": 20,
+        "items": {
+          "type": "object",
+          "required": [
+            "task_kind",
+            "capabilities",
+            "input",
+            "risk"
+          ],
+          "properties": {
+            "task_kind": {
+              "type": "string"
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "input": {
+              "type": "object"
+            },
+            "risk": {
+              "enum": [
+                "read_only",
+                "workspace_write",
+                "build_test"
+              ]
+            }
+          }
+        }
+      },
+      "rationale": {
+        "type": "string"
+      }
+    }
+  },
+  "autonomy": "recommend",
+  "delegation": {
+    "may_delegate_to": [],
+    "max_children": 0
+  },
+  "constraints": {
+    "tool_calls": 50,
+    "model_calls": 30,
+    "tokens": 500000,
+    "cost_micros": 20000000,
+    "wall_clock_ms": 1800000,
+    "delegation_depth": 2,
+    "concurrent_agents": 4,
+    "correction_attempts": 2,
+    "agent_steps": 20
+  },
+  "evaluation_criteria": []
+}

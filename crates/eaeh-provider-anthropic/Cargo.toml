@@ -1,0 +1,27 @@
+[package]
+name = "eaeh-provider-anthropic"
+description = "EAEH production ModelProvider adapter for the Anthropic Messages API (raw HTTPS; credentials only via the secrets provider; never sends sampling parameters)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-intelligence.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+
+[dev-dependencies]
+axum.workspace = true
+tokio.workspace = true
+serde_json.workspace = true

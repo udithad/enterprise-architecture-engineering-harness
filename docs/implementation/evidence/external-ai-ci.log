@@ -1,0 +1,131 @@
+# scripts/ci.sh — 2026-11-13T06:45:32Z — external AI execution enhancement
+==> toolchain
+==> fmt
+==> clippy
+==> build
+==> test
+     Running unittests src/lib.rs (target/debug/deps/eaeh_acceptance-eda7581a426394ff)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/design_demo.rs (target/debug/deps/design_demo-bb6cc5b5567ee41a)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+     Running tests/e2e.rs (target/debug/deps/e2e-a44689df4afd7994)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.18s
+     Running tests/external_ai.rs (target/debug/deps/external_ai-3a9eb5d12c4b0811)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.33s
+     Running tests/fitness.rs (target/debug/deps/fitness-1d173433f0d88ed3)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+     Running tests/knowledge_demo.rs (target/debug/deps/knowledge_demo-30f155ce523f87e3)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+     Running tests/logging.rs (target/debug/deps/logging-d7345e88e866d816)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_agents-9e424f87764e9e40)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/agents.rs (target/debug/deps/agents-da7524532f096896)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+     Running tests/knowledge_agents.rs (target/debug/deps/knowledge_agents-1af2d35736c24391)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_api-bfe7f94057951367)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/api.rs (target/debug/deps/api-f66c20238cbac0ce)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.43s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_architecture-a007dc23e0b3805e)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/architecture.rs (target/debug/deps/architecture-37190e139f96e7dd)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running unittests src/main.rs (target/debug/deps/eaeh-4313b95bedae33d3)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/cli.rs (target/debug/deps/cli-e39b93d20fea8bce)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.90s
+     Running tests/dx.rs (target/debug/deps/dx-f9fc7735b4418b52)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.65s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_core-3448fd2a62b21574)
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_engineering-7c30dc4cfedf43ee)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/tools.rs (target/debug/deps/tools-6ed78d02cc2a71c2)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_events-afadd2b821dbd3bc)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.57s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_extensibility-68d192613421a328)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.63s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_governance-0207b9a08cf917b5)
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_intelligence-ce3e9548068a65e9)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+     Running tests/model_client.rs (target/debug/deps/model_client-fce02583c927929c)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_isolation-8dc8d8d53933d01e)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/container_isolation.rs (target/debug/deps/container_isolation-4bef645931ebc4cb)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.42s
+     Running tests/process_isolation.rs (target/debug/deps/process_isolation-7e92b9bc6b600780)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_knowledge-a2fa555217ab9d1f)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/knowledge.rs (target/debug/deps/knowledge-30bf25fa8e6cbb06)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+     Running tests/retrieval_eval.rs (target/debug/deps/retrieval_eval-5e04c5d31d33fcab)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_provider_anthropic-3fbe18b92188ad60)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/mock_api.rs (target/debug/deps/mock_api-ff1d6e259681024d)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_requirements-1803ac5a566ce6d2)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/analyzer_eval.rs (target/debug/deps/analyzer_eval-c89fe35f57a352a8)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/requirements.rs (target/debug/deps/requirements-74ab4d0ee471c657)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_runtime-d57d3eb62cd1527e)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/harness.rs (target/debug/deps/harness-0f192271d447aaf5)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.14s
+     Running tests/project.rs (target/debug/deps/project-1db624dfe017f972)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_skills-a728a1737341f374)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/skills.rs (target/debug/deps/skills-c959ca67b41022bd)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_store-3e6fa67f627e8542)
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_testkit-a1445472bc07e484)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_tools-b823f26e3e87ad84)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/gateway.rs (target/debug/deps/gateway-d379c0dfd5ad2083)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.73s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_validation-52f82cd94d0b11f5)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_workflow-9f05374150b2423d)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/design_flow.rs (target/debug/deps/design_flow-effb1731ab93a9d0)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+     Running tests/engine.rs (target/debug/deps/engine-4671c5879ee8b123)
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.77s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_workspace-2f0d791a88adb51e)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+==> cargo-deny
+advisories ok, bans ok, licenses ok, sources ok
+==> CI PASSED

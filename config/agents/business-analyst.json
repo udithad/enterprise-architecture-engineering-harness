@@ -1,0 +1,301 @@
+{
+  "id": "business-analyst",
+  "version": "1.0.0",
+  "purpose": "Analyse a governed business requirements document (BRD) and derive structured requirements, business rules and domain concepts with citations.",
+  "responsibilities": [
+    "BRD analysis",
+    "requirements decomposition",
+    "business rules",
+    "domain concepts"
+  ],
+  "capabilities": [
+    "requirements-analysis"
+  ],
+  "skills": [
+    "requirements-analysis@^1"
+  ],
+  "model": {
+    "capabilities": [
+      "tools"
+    ],
+    "min_quality": 0,
+    "preferred": [],
+    "max_output_tokens": 16000
+  },
+  "allowed_tools": [
+    "knowledge.read",
+    "knowledge.search",
+    "design.check"
+  ],
+  "required_context": [],
+  "instructions_prompt": "agent.business-analyst",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "title",
+      "requirements",
+      "citations"
+    ],
+    "properties": {
+      "document": {
+        "const": "requirements"
+      },
+      "title": {
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "requirements": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "title",
+            "statement",
+            "priority",
+            "sources"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^REQ-(F|NF)-[0-9]{3,}$"
+            },
+            "kind": {
+              "enum": [
+                "functional",
+                "non_functional"
+              ]
+            },
+            "category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "statement": {
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            },
+            "priority": {
+              "enum": [
+                "must",
+                "should",
+                "could",
+                "wont"
+              ]
+            },
+            "acceptance_criteria": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sources": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "business_rules": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "concepts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "business_rules": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "statement",
+            "sources"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^BR-[0-9]{3,}$"
+            },
+            "statement": {
+              "type": "string"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "domain_concepts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "definition"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "definition": {
+              "type": "string"
+            },
+            "attributes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "relationships": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "severity",
+            "description"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "ambiguity",
+                "conflict",
+                "missing",
+                "duplicate"
+              ]
+            },
+            "severity": {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "description": {
+              "type": "string"
+            },
+            "refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "question": {
+              "type": "string"
+            },
+            "origin": {
+              "enum": [
+                "agent",
+                "analyzer"
+              ]
+            }
+          }
+        }
+      },
+      "out_of_scope": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "reason"
+          ],
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "autonomy": "read_only",
+  "delegation": {
+    "may_delegate_to": [],
+    "max_children": 0
+  },
+  "constraints": {
+    "tool_calls": 40,
+    "model_calls": 16,
+    "tokens": 1500000,
+    "cost_micros": 5000000,
+    "wall_clock_ms": 3600000,
+    "delegation_depth": 1,
+    "concurrent_agents": 1,
+    "correction_attempts": 3,
+    "agent_steps": 12
+  },
+  "evaluation_criteria": [
+    "passes deterministic validation",
+    "every source citation was retrieved",
+    "no invented requirements"
+  ],
+  "output_validators": [
+    {
+      "validator": "requirements.set",
+      "context": {
+        "brd_sections": "/inputs/brd/sections"
+      }
+    }
+  ]
+}

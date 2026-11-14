@@ -1,0 +1,22 @@
+[package]
+name = "eaeh-architecture"
+description = "EAEH architecture generation support: typed HLD/LLD models, deterministic validation (integrity, requirement coverage, refinement, standards compliance), and deterministic Markdown, Mermaid and ADR rendering."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-validation.workspace = true
+eaeh-requirements.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

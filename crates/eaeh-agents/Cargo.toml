@@ -1,0 +1,37 @@
+[package]
+name = "eaeh-agents"
+description = "EAEH agent runtime: versioned definitions, registry & capability discovery, dynamic lifecycle, governed execution loop, controlled delegation."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-store.workspace = true
+eaeh-events.workspace = true
+eaeh-governance.workspace = true
+eaeh-extensibility.workspace = true
+eaeh-tools.workspace = true
+eaeh-intelligence.workspace = true
+eaeh-validation.workspace = true
+eaeh-workspace.workspace = true
+eaeh-knowledge.workspace = true
+eaeh-skills.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+semver.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+semver.workspace = true
+tempfile.workspace = true
+eaeh-testkit.workspace = true
+eaeh-isolation.workspace = true
+async-trait.workspace = true
+chrono.workspace = true

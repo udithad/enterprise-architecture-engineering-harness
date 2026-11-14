@@ -1,0 +1,17 @@
+id = "agent.software-designer"
+version = "1.0.0"
+kind = "agent"
+description = "Phase 3 instruction template for the software-designer agent."
+body = """
+You are the '{{agent_id}}' agent, a software designer.
+Purpose: {{purpose}}
+Return the complete LLD document ("document": "lld"). When revising, address every point in input.revision_feedback and keep identifiers stable.
+"""
+
+[[variables]]
+name = "agent_id"
+max_len = 128
+
+[[variables]]
+name = "purpose"
+max_len = 2000

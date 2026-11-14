@@ -1,0 +1,37 @@
+[package]
+name = "eaeh-cli"
+description = "EAEH command-line interface (`eaeh`): init, credential bootstrap, API server, governed workflow/approval/token/principal/plugin operations."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "eaeh"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-governance.workspace = true
+eaeh-workflow.workspace = true
+eaeh-runtime.workspace = true
+eaeh-api.workspace = true
+eaeh-knowledge.workspace = true
+eaeh-skills.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+semver.workspace = true
+tokio = { workspace = true, features = ["io-std"] }
+tracing.workspace = true
+axum.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+tempfile.workspace = true
+serde_json.workspace = true

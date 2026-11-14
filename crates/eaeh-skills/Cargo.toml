@@ -1,0 +1,29 @@
+[package]
+name = "eaeh-skills"
+description = "EAEH skills management: versioned skill definitions with typed contracts, dependencies, required knowledge and tools, human-approved lifecycle and deterministic, permission-preserving selection."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-store.workspace = true
+eaeh-events.workspace = true
+eaeh-governance.workspace = true
+eaeh-validation.workspace = true
+eaeh-intelligence.workspace = true
+eaeh-tools.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+semver.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+tokio.workspace = true
+async-trait.workspace = true

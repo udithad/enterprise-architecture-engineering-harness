@@ -1,0 +1,26 @@
+# EAEH Phase 2 knowledge demo (Phase 3 regression, real server, no live model) — 2026-11-12T18:14:03Z
+== 1. steward registers sources and ingests the demonstration corpus
+   standard: status=pending_approval
+   guide: status=active
+   guide: status=active
+   spec: status=active chunks=2
+== 2. steward cannot approve their own standard; approver approves (hash-bound)
+   steward approve -> 403
+   approver approve -> 200
+== 3. steward registers the api-design-review skill; approver approves
+   skill approval: approved
+   skills: api-design-review@1.0.0=approved
+== 4. cited, scoped search as the operator
+   demo-api-guides/resource-naming@v1#0  score=0.03279
+   demo-api-specs/orders-api@v1#0  score=0.03226
+   demo-api-guides/resource-naming@v1#1  score=0.0315
+== 5. operator starts knowledge.review (agent + approved skill + enterprise knowledge)
+   workflow status: failed
+   reason: review: unavailable: no registered model satisfies the routing requirements
+   NOTE: no model provider is enabled (live calls not authorised). The agent step is
+         verified deterministically in tests/tests/knowledge_demo.rs. To run it live:
+         EAEH_DEMO_LIVE=1 EAEH_SECRET_ANTHROPIC_API_KEY=... scripts/demo-knowledge.sh
+== 6. audit chain
+   valid=True records=61
+== key/token literals in server log: 0
+== DEMO COMPLETE (live model: false)

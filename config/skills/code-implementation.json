@@ -1,0 +1,46 @@
+{
+  "id": "code-implementation",
+  "version": "1.0.0",
+  "description": "Implement an approved plan as source code and automated tests in the governed workspace.",
+  "capabilities": [
+    "implementation"
+  ],
+  "task_kinds": [
+    "implementation"
+  ],
+  "instructions": "Implement the approved plan in input.inputs.plan for the requirements in input.inputs.requirements and the design in input.inputs.lld. Write every file with fs.write into the task workspace (repository-relative paths, e.g. pom.xml, src/main/java/\u2026, src/test/java/\u2026); read back with fs.read/fs.list when needed. Write automated tests for every Must functional requirement. Do not add dependencies, infrastructure or security features the requirements exclude. The final answer lists every source file and every test file you wrote, each with the requirement ids it implements or verifies; listed files must exist in the workspace. When revising, address every point in input.revision_feedback.",
+  "required_knowledge": [
+    {
+      "query": "project stack constraints build tool",
+      "k": 3
+    }
+  ],
+  "required_tools": [
+    "fs.write",
+    "fs.read"
+  ],
+  "max_risk": "workspace_write",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "document",
+      "files",
+      "tests"
+    ],
+    "properties": {
+      "files": {
+        "type": "array",
+        "minItems": 1
+      },
+      "tests": {
+        "type": "array",
+        "minItems": 1
+      }
+    }
+  },
+  "evaluation_criteria": [
+    "passes the delivery quality gate",
+    "listed files exist in the workspace",
+    "tests cover every Must functional requirement"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Orders API (demonstration)", "description": "Fixture spec with deliberate design issues for the review demo."},
+  "paths": {
+    "/order": {
+      "get": {
+        "operationId": "listOrders",
+        "summary": "List orders",
+        "parameters": [{"name": "page", "in": "query"}],
+        "responses": {"200": {"description": "orders"}, "500": {"description": "validation failed", "content": {"text/plain": {}}}}
+      }
+    }
+  }
+}

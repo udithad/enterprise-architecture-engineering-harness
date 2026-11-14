@@ -1,0 +1,379 @@
+# scripts/demo-onboarding.sh (deterministic mode regression) — 2026-11-13T06:45:33Z
+
+== 0. one-time platform setup (administrator)
+Stored profile 'admin' for 'admin' (roles: admin); default profile.
+The token was not displayed. You can now delete /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/admin.token.
+
+== 1. register/bootstrap the project (one command)
+EAEH project bootstrap – simple-springboot-api
+  • project 'simple-springboot-api' created (01a1d39b-d6eb-7715-94f8-080c1452fc4d)
+  • operator 'dev': created
+  •   token issued and stored as profile 'developer' (not displayed)
+  • knowledge_steward 'steward': created
+  •   token issued and stored as profile 'steward' (not displayed)
+  • approver 'approver': created
+  •   token issued and stored as profile 'approver' (not displayed)
+  • default profile is now 'developer' (administrative commands select the admin profile automatically; approvals need --as approver)
+  • project profile knowledge simple-springboot-api-docs/project-profile@v1: active
+  • knowledge simple-springboot-api-docs/project-bootstrap@v1: active
+  • BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1: active (confidential, project-only)
+  • skill hld-design@^1: registered – hld-design@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/hld-design.json – awaiting human approval
+  • skill lld-design@^1: registered – lld-design@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/lld-design.json – awaiting human approval
+  • skill requirements-analysis@^1: registered – requirements-analysis@1.0.0 from /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/config/skills/requirements-analysis.json – awaiting human approval
+  • manifest written: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/simple-springboot-api/.eaeh/project.toml
+  • AI client integration: Claude Code: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/simple-springboot-api/CLAUDE.md, /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/simple-springboot-api/.mcp.json
+  • execution mode: deterministic – no AI is used: EAEH replays recorded fixtures (testing and demos only; not AI-generated)
+
+Project 'simple-springboot-api': NOT READY  (3 blocking, 2 warning(s))
+  ok    [project] project 'simple-springboot-api' registered (01a1d39b-d6eb-7715-94f8-080c1452fc4d)
+  ok    [workspace] workspace associated: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/simple-springboot-api
+  ok    [workspace] git repository detected
+  ok    [identity] authenticated as 'admin' with access to the project
+  ok    [roles] developer 'dev' can run workflows (operator)
+  ok    [roles] 1 approver(s) responsible for approval gates
+  ok    [roles] knowledge steward 'steward'
+  ok    [workflows] requirements.analysis@1.0.0 registered (1 human approval gate(s))
+  ok    [agents] requirements.analysis/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] requirements.analysis/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [workflows] engineering.design@1.0.0 registered (3 human approval gate(s))
+  ok    [agents] engineering.design/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] engineering.design/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [agents] engineering.design/hld: agent solution-architect@1.0.0 with its tools
+  ok    [agents] engineering.design/lld: agent software-designer@1.0.0 with its tools
+  BLOCK [skills] hld-design@^1 v1.0.0 awaits human approval (approval 01a1d39b-d76b-7122-9aeb-43e9687941c1; used by solution-architect)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] lld-design@^1 v1.0.0 awaits human approval (approval 01a1d39b-d768-7257-a6be-970dbf90e8e2; used by software-designer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] requirements-analysis@^1 v1.0.0 awaits human approval (approval 01a1d39b-d764-720b-b27f-476f368b8c58; used by business-analyst, requirements-engineer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  ok    [knowledge] BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1 readable by the developer (20 sections)
+  ok    [knowledge] retrieval available
+  WARN  [knowledge] no approved mandatory enterprise standards are visible; designs will not be checked against standards
+         → eaeh project init … --standard <file> (or steward: eaeh knowledge ingest --mandatory …); then an approver runs `eaeh approval review`
+  ok    [execution] mode deterministic: no AI is used: EAEH replays recorded fixtures (testing and demos only; not AI-generated)
+  WARN  [provider] deterministic replay provider enabled: outputs are recorded fixtures, NOT AI-generated
+         → for AI reasoning use [execution] mode = "external_ai" (or direct_provider with [providers.anthropic])
+  ok    [governance] audit chain valid (58 records)
+(exit 7: 7 = not ready yet)
+
+== 1b. repeat run is idempotent
+eaeh: acting as profile 'admin' (admin; automatically selected: only stored identity permitted to principal.manage)
+   project 'simple-springboot-api' already registered (01a1d39b-d6eb-7715-94f8-080c1452fc4d)
+   operator 'dev': existing
+     profile for 'dev' already stored
+   knowledge_steward 'steward': existing
+     profile for 'steward' already stored
+   approver 'approver': existing
+     profile for 'approver' already stored
+   project profile knowledge simple-springboot-api-docs/project-profile@v1: unchanged (active)
+   knowledge simple-springboot-api-docs/project-bootstrap@v1: unchanged (active)
+   BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1: unchanged (active) (confidential, project-only)
+   skill hld-design@^1: already_registered – {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39b-d76b-7122-9aeb-43e9687941c1","digest":"ec8f3d5f37f56f9688ff03df106e0967abb7104481178c4a4b8fb59286ff359c"}
+   skill lld-design@^1: already_registered – {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39b-d768-7257-a6be-970dbf90e8e2","digest":"6a02a45b6ae24ae810a663b501c88bd1565ee4cd3df20852a08ee973a650fab7"}
+   skill requirements-analysis@^1: already_registered – {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39b-d764-720b-b27f-476f368b8c58","digest":"7b708c9f375d304690f2022baaff4a15f6b8c173c62276fdb59e3bccceeb93f0"}
+   files: .eaeh .git .mcp.json BRD-Simple-Spring-Boot-API.md CLAUDE.md PROJECT-BOOTSTRAP.md 
+
+== 2. verify readiness
+Project 'simple-springboot-api': NOT READY  (3 blocking, 2 warning(s))
+  ok    [project] project 'simple-springboot-api' registered (01a1d39b-d6eb-7715-94f8-080c1452fc4d)
+  ok    [workspace] workspace associated: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/simple-springboot-api
+  ok    [workspace] git repository detected
+  ok    [identity] authenticated as 'dev' with access to the project
+  ok    [roles] developer 'dev' can run workflows (operator)
+  ok    [roles] 1 approver(s) responsible for approval gates
+  ok    [roles] knowledge steward 'steward'
+  ok    [workflows] requirements.analysis@1.0.0 registered (1 human approval gate(s))
+  ok    [agents] requirements.analysis/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] requirements.analysis/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [workflows] engineering.design@1.0.0 registered (3 human approval gate(s))
+  ok    [agents] engineering.design/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] engineering.design/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [agents] engineering.design/hld: agent solution-architect@1.0.0 with its tools
+  ok    [agents] engineering.design/lld: agent software-designer@1.0.0 with its tools
+  BLOCK [skills] hld-design@^1 v1.0.0 awaits human approval (approval 01a1d39b-d76b-7122-9aeb-43e9687941c1; used by solution-architect)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] lld-design@^1 v1.0.0 awaits human approval (approval 01a1d39b-d768-7257-a6be-970dbf90e8e2; used by software-designer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  BLOCK [skills] requirements-analysis@^1 v1.0.0 awaits human approval (approval 01a1d39b-d764-720b-b27f-476f368b8c58; used by business-analyst, requirements-engineer)
+         → eaeh approval review --as <approver-profile>   # an approver reviews each skill and confirms; approvers: approver
+  ok    [knowledge] BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1 readable by the developer (20 sections)
+  ok    [knowledge] retrieval available
+  WARN  [knowledge] no approved mandatory enterprise standards are visible; designs will not be checked against standards
+         → eaeh project init … --standard <file> (or steward: eaeh knowledge ingest --mandatory …); then an approver runs `eaeh approval review`
+  ok    [execution] mode deterministic: no AI is used: EAEH replays recorded fixtures (testing and demos only; not AI-generated)
+  WARN  [provider] deterministic replay provider enabled: outputs are recorded fixtures, NOT AI-generated
+         → for AI reasoning use [execution] mode = "external_ai" (or direct_provider with [providers.anthropic])
+  ok    [governance] audit chain valid (62 records)
+(exit 7)
+
+== 3. required knowledge and skills
+Credential store: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/home/credentials.json
+   admin      admin        roles=admin                        expires=2026-12-13T06:32:47.429466Z valid
+   approver   approver     roles=approver                     expires=2026-12-13T06:32:48.138103Z valid
+  *developer  dev          roles=operator                     expires=2026-12-13T06:32:48.110958Z valid
+   steward    steward      roles=knowledge_steward            expires=2026-12-13T06:32:48.123850Z valid
+Skills required by requirements.analysis, engineering.design:
+  hld-design@^1                {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39b-d76b-7122-9aeb-43e9687941c1","digest":"ec8f3d5f37f56f9688ff03df106e0967abb7104481178c4a4b8fb59286ff359c"}
+  lld-design@^1                {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39b-d768-7257-a6be-970dbf90e8e2","digest":"6a02a45b6ae24ae810a663b501c88bd1565ee4cd3df20852a08ee973a650fab7"}
+  requirements-analysis@^1     {"state":"pending_approval","version":"1.0.0","approval_id":"01a1d39b-d764-720b-b27f-476f368b8c58","digest":"7b708c9f375d304690f2022baaff4a15f6b8c173c62276fdb59e3bccceeb93f0"}
+Approver action: `eaeh approval review --as <approver-profile>`
+
+== 4. human approvals of skills (approver; each item reviewed, then confirmed)
+
+[skill] hld-design@1.0.0 – Produce a governed, standards-compliant high-level design.
+  approval 01a1d39b-d76b-7122-9aeb-43e9687941c1
+    required tools: knowledge.search
+    max risk: read_only
+    task kinds: hld-design
+    instructions: Design the system for the approved requirements in input.inputs.requirements. Allocate every Must requirement to a component, interface or decision. Record each significant decision with alternatives and consequences, identify risks with mitigations and trade-offs with the chosen option. For every M
+    registered by: admin
+    definition digest: ec8f3d5f37f56f9688ff03df106e0967abb7104481178c4a4b8fb59286ff359c
+
+[skill] lld-design@1.0.0 – Refine an approved HLD into a low-level design.
+  approval 01a1d39b-d768-7257-a6be-970dbf90e8e2
+    required tools: knowledge.search
+    max risk: read_only
+    task kinds: lld-design
+    instructions: Refine the approved HLD in input.inputs.hld for the requirements in input.inputs.requirements. Design every service, web/mobile app, gateway and batch component of the HLD (use the HLD component ids), its modules, API operations (HTTP method + path, request/response entity names defined in 'data'), 
+    registered by: admin
+    definition digest: 6a02a45b6ae24ae810a663b501c88bd1565ee4cd3df20852a08ee973a650fab7
+
+[skill] requirements-analysis@1.0.0 – Derive traceable requirements from a governed BRD.
+  approval 01a1d39b-d764-720b-b27f-476f368b8c58
+    required tools: knowledge.read
+    max risk: read_only
+    task kinds: requirements-analysis, requirements-review
+    instructions: Read the whole BRD with knowledge.read using the document citation in input.inputs.brd.document. Derive functional and non-functional requirements (one obligation each, MoSCoW priority, testable acceptance criteria), business rules and domain concepts. Every item cites the BRD sections it comes from
+    registered by: admin
+    definition digest: 7b708c9f375d304690f2022baaff4a15f6b8c173c62276fdb59e3bccceeb93f0
+Decisions recorded as 'approver':
+  hld-design@1.0.0 – Produce a governed, standards-compliant high-level design. – "approved"
+  lld-design@1.0.0 – Refine an approved HLD into a low-level design. – "approved"
+  requirements-analysis@1.0.0 – Derive traceable requirements from a governed BRD. – "approved"
+
+== 5. BRD identified; project ready
+[brd]
+path = "BRD-Simple-Spring-Boot-API.md"
+citation = "simple-springboot-api-brd/brd-simple-spring-boot-api@v1"
+Project 'simple-springboot-api': READY  (0 blocking, 2 warning(s))
+  ok    [project] project 'simple-springboot-api' registered (01a1d39b-d6eb-7715-94f8-080c1452fc4d)
+  ok    [workspace] workspace associated: /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/target/demo-onboarding/simple-springboot-api
+  ok    [workspace] git repository detected
+  ok    [identity] authenticated as 'dev' with access to the project
+  ok    [roles] developer 'dev' can run workflows (operator)
+  ok    [roles] 1 approver(s) responsible for approval gates
+  ok    [roles] knowledge steward 'steward'
+  ok    [workflows] requirements.analysis@1.0.0 registered (1 human approval gate(s))
+  ok    [agents] requirements.analysis/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] requirements.analysis/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [workflows] engineering.design@1.0.0 registered (3 human approval gate(s))
+  ok    [agents] engineering.design/analyse: agent business-analyst@1.0.0 with its tools
+  ok    [agents] engineering.design/refine: agent requirements-engineer@1.0.0 with its tools
+  ok    [agents] engineering.design/hld: agent solution-architect@1.0.0 with its tools
+  ok    [agents] engineering.design/lld: agent software-designer@1.0.0 with its tools
+  ok    [skills] hld-design@^1 approved (v1.0.0; used by solution-architect)
+  ok    [skills] lld-design@^1 approved (v1.0.0; used by software-designer)
+  ok    [skills] requirements-analysis@^1 approved (v1.0.0; used by business-analyst, requirements-engineer)
+  ok    [knowledge] BRD simple-springboot-api-brd/brd-simple-spring-boot-api@v1 readable by the developer (20 sections)
+  ok    [knowledge] retrieval available
+  WARN  [knowledge] no approved mandatory enterprise standards are visible; designs will not be checked against standards
+         → eaeh project init … --standard <file> (or steward: eaeh knowledge ingest --mandatory …); then an approver runs `eaeh approval review`
+  ok    [execution] mode deterministic: no AI is used: EAEH replays recorded fixtures (testing and demos only; not AI-generated)
+  WARN  [provider] deterministic replay provider enabled: outputs are recorded fixtures, NOT AI-generated
+         → for AI reasoning use [execution] mode = "external_ai" (or direct_provider with [providers.anthropic])
+  ok    [governance] audit chain valid (70 records)
+(exit 0)
+
+== 6. analyse the BRD and generate traceable requirements (plan, then run)
+Activity 'design': BRD → requirements → HLD → LLD, each approved by a human
+Workflow: engineering.design  input: {"brd":"simple-springboot-api-brd/brd-simple-spring-boot-api@v1"}
+Stages:
+  - brd                    tool      (deterministic tool brd.sections)
+  - analyse                agent    business-analyst@1.0.0 skills=requirements-analysis@^1 (task requirements-analysis; quality gate 'requirements')
+  - refine                 agent    requirements-engineer@1.0.0 skills=requirements-analysis@^1 (task requirements-review; quality gate 'requirements')
+  - render_requirements    tool      (deterministic tool requirements.render)
+  - approve_requirements   approval  (approvers: approver)
+  - hld                    agent    solution-architect@1.0.0 skills=hld-design@^1 (task hld-design; quality gate 'hld')
+  - render_hld             tool      (deterministic tool architecture.render)
+  - approve_hld            approval  (approvers: approver)
+  - lld                    agent    software-designer@1.0.0 skills=lld-design@^1 (task lld-design; quality gate 'lld')
+  - render_lld             tool      (deterministic tool architecture.render)
+  - approve_lld            approval  (approvers: approver)
+Human approvals required:
+  - approve_requirements – human approver (approve / request changes ≤3 / reject)
+  - approve_hld – human approver (approve / request changes ≤3 / reject)
+  - approve_lld – human approver (approve / request changes ≤3 / reject)
+
+Prerequisites satisfied. Re-run with --yes to start this governed workflow.
+Activity 'design': BRD → requirements → HLD → LLD, each approved by a human
+Workflow: engineering.design  input: {"brd":"simple-springboot-api-brd/brd-simple-spring-boot-api@v1"}
+Stages:
+  - brd                    tool      (deterministic tool brd.sections)
+  - analyse                agent    business-analyst@1.0.0 skills=requirements-analysis@^1 (task requirements-analysis; quality gate 'requirements')
+  - refine                 agent    requirements-engineer@1.0.0 skills=requirements-analysis@^1 (task requirements-review; quality gate 'requirements')
+  - render_requirements    tool      (deterministic tool requirements.render)
+  - approve_requirements   approval  (approvers: approver)
+  - hld                    agent    solution-architect@1.0.0 skills=hld-design@^1 (task hld-design; quality gate 'hld')
+  - render_hld             tool      (deterministic tool architecture.render)
+  - approve_hld            approval  (approvers: approver)
+  - lld                    agent    software-designer@1.0.0 skills=lld-design@^1 (task lld-design; quality gate 'lld')
+  - render_lld             tool      (deterministic tool architecture.render)
+  - approve_lld            approval  (approvers: approver)
+Human approvals required:
+  - approve_requirements – human approver (approve / request changes ≤3 / reject)
+  - approve_hld – human approver (approve / request changes ≤3 / reject)
+  - approve_lld – human approver (approve / request changes ≤3 / reject)
+
+Started 01a1d39b-dda9-7308-8397-7397743fe9ad.
+Workflow 01a1d39b-dda9-7308-8397-7397743fe9ad (engineering.design) – status: waiting_approval  stage: approve_requirements
+  brd → analyse [succeeded] by system:workflow-engine
+  analyse → refine [succeeded] by system:workflow-engine
+  refine → render_requirements [succeeded] by system:workflow-engine
+  render_requirements → approve_requirements [succeeded] by system:workflow-engine
+Waiting for human approval at 'approve_requirements' (approval 01a1d39b-de5c-77a6-9f51-5c61b4fe5d19).
+  → review: eaeh artifact export 01a1d39b-de45-74a4-b617-8cb9f85dc044 --out review/approve_requirements
+  → approver decides: eaeh approval decide 01a1d39b-de5c-77a6-9f51-5c61b4fe5d19 --decision approve|request_changes|reject --comments "…" --artifact-hash 02fb6f44a110718adf5f1c872762372c1642558036b79cb5fa7e5936c6f20f20 --as <approver-profile>
+
+== 7. review and approve the requirements (one request-changes round first)
+eaeh: note: this artifact version has NOT been approved at a workflow gate; use it for review only
+   exported: analysis.json, requirements.json, requirements.md
+   decision: changes_requested -> workflow waiting_approval
+   --- excerpt of the reviewed requirements.md ---
+   | # Simple Spring Boot API – requirements
+   | 
+   | Requirements derived from the simple-springboot-api BRD (local demonstration application).
+   | 
+   | | Functional | Non-functional | Business rules | Domain concepts | Must | With acceptance criteria | Open issues |
+   | |---|---|---|---|---|---|---|
+   | | 3 | 5 | 2 | 3 | 6 | 8 | 4 |
+   | 
+   | ## Functional requirements
+   | 
+   | ### REQ-F-001 – Welcome endpoint
+   | 
+   | * **Priority:** Must
+   | * **Statement:** GET /api/hello must return HTTP 200 with a JSON object containing a welcome message.
+   | * **Concepts:** Welcome message
+   | * **Sources:** simple-springboot-api-brd/brd-simple-spring-boot-api@v1#5, simple-springboot-api-brd/brd-simple-spring-boot-api@v1#16
+   | * **Acceptance criteria:**
+   |   * GET /api/hello returns status 200
+   |   * The body is JSON with a non-empty string field 'message'
+   | 
+   | ### REQ-F-002 – Application information endpoint
+   | 
+   | * **Priority:** Must
+   | * **Statement:** GET /api/info must return HTTP 200 with a JSON object containing the application name, version and description.
+   | * **Concepts:** Application information
+Workflow 01a1d39b-dda9-7308-8397-7397743fe9ad (engineering.design) – status: waiting_approval  stage: approve_requirements
+  brd → analyse [succeeded] by system:workflow-engine
+  analyse → refine [succeeded] by system:workflow-engine
+  refine → render_requirements [succeeded] by system:workflow-engine
+  render_requirements → approve_requirements [succeeded] by system:workflow-engine
+  approve_requirements → refine [changes_requested] by approver
+  refine → render_requirements [succeeded] by system:workflow-engine
+  render_requirements → approve_requirements [succeeded] by system:workflow-engine
+Waiting for human approval at 'approve_requirements' (approval 01a1d39b-e12b-7052-855f-6a52f70cb11c).
+  → review: eaeh artifact export 01a1d39b-e11e-7721-8aee-cd90bba63669 --out review/approve_requirements
+  → approver decides: eaeh approval decide 01a1d39b-e12b-7052-855f-6a52f70cb11c --decision approve|request_changes|reject --comments "…" --artifact-hash 885ea19ea58f5b1c52350d7e46d330831fb7503892e90fb7d2f6f353f0e19acf --as <approver-profile>
+eaeh: note: this artifact version has NOT been approved at a workflow gate; use it for review only
+   exported: analysis.json, requirements.json, requirements.md
+   decision: approved -> workflow waiting_approval
+
+== 8. HLD generated and approved
+eaeh: note: this artifact version has NOT been approved at a workflow gate; use it for review only
+   exported: adr/d-001-single-spring-boot-application-with-layered-pack.md, adr/d-002-in-memory-product-data-instead-of-a-database.md, adr/d-003-no-security-layer.md, adr/d-004-test-approach-with-junit-5-and-mockmvc.md, diagrams/components.mmd, diagrams/context.mmd, diagrams/deployment.mmd, hld.json, hld.md
+   decision: approved -> workflow waiting_approval
+
+== 9. LLD generated and approved
+eaeh: note: this artifact version has NOT been approved at a workflow gate; use it for review only
+   exported: adr/ld-001-java-records-and-constructor-injection.md, diagrams/component-internals.mmd, diagrams/data-model.mmd, diagrams/deployment.mmd, diagrams/sequence-s-001.mmd, diagrams/sequence-s-002.mmd, lld.json, lld.md
+   decision: approved -> workflow succeeded
+Workflow 01a1d39b-dda9-7308-8397-7397743fe9ad (engineering.design) – status: succeeded  stage: done
+  brd → analyse [succeeded] by system:workflow-engine
+  analyse → refine [succeeded] by system:workflow-engine
+  refine → render_requirements [succeeded] by system:workflow-engine
+  render_requirements → approve_requirements [succeeded] by system:workflow-engine
+  approve_requirements → refine [changes_requested] by approver
+  refine → render_requirements [succeeded] by system:workflow-engine
+  render_requirements → approve_requirements [succeeded] by system:workflow-engine
+  approve_requirements → hld [approved] by approver
+  hld → render_hld [succeeded] by system:workflow-engine
+  render_hld → approve_hld [succeeded] by system:workflow-engine
+  approve_hld → lld [approved] by approver
+  lld → render_lld [succeeded] by system:workflow-engine
+  render_lld → approve_lld [succeeded] by system:workflow-engine
+  approve_lld → done [approved] by approver
+  → inspect traceability: eaeh trace --id <item>; artifacts: eaeh artifact export <id> --out <dir>
+
+== 10–12. implementation plan, implementation, tests
+   not part of this deterministic scenario (no recorded delivery fixtures);
+   governed delivery is demonstrated in external_ai mode: scripts/demo-external-ai.sh
+
+== 13. inspect artifacts, traces, approvals and audit
+review/approve_hld/adr/d-001-single-spring-boot-application-with-layered-pack.md
+review/approve_hld/adr/d-002-in-memory-product-data-instead-of-a-database.md
+review/approve_hld/adr/d-003-no-security-layer.md
+review/approve_hld/adr/d-004-test-approach-with-junit-5-and-mockmvc.md
+review/approve_hld/diagrams/components.mmd
+review/approve_hld/diagrams/context.mmd
+review/approve_hld/diagrams/deployment.mmd
+review/approve_hld/hld.json
+review/approve_hld/hld.md
+review/approve_lld/adr/ld-001-java-records-and-constructor-injection.md
+review/approve_lld/diagrams/component-internals.mmd
+review/approve_lld/diagrams/data-model.mmd
+review/approve_lld/diagrams/deployment.mmd
+review/approve_lld/diagrams/sequence-s-001.mmd
+review/approve_lld/diagrams/sequence-s-002.mmd
+review/approve_lld/lld.json
+review/approve_lld/lld.md
+review/approve_requirements/analysis.json
+review/approve_requirements/requirements.json
+review/approve_requirements/requirements.md
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#14 -[derives]-> business_rule BR-001
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#15 -[derives]-> business_rule BR-001
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#16 -[derives]-> requirement REQ-F-001
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#16 -[derives]-> requirement REQ-F-002
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#16 -[derives]-> requirement REQ-F-003
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#16 -[derives]-> requirement REQ-NF-004
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#7 -[derives]-> business_rule BR-001
+   brd_section simple-springboot-api-brd/brd-simple-spring-boot-api@v1#7 -[derives]-> requirement REQ-F-003
+   hld_component api-app -[refined_by]-> lld_component api-app
+   lld_component api-app -[exposes]-> api_operation op-hello
+   lld_component api-app -[exposes]-> api_operation op-info
+   lld_component api-app -[exposes]-> api_operation op-products
+   lld_component api-app -[owns]-> entity ApplicationInfo
+   lld_component api-app -[owns]-> entity Product
+   lld_component api-app -[owns]-> entity WelcomeMessage
+   requirement REQ-F-001 -[allocated_to]-> hld_component api-app
+   requirement REQ-F-001 -[allocated_to]-> hld_interface I-001
+   requirement REQ-F-002 -[allocated_to]-> hld_component api-app
+   requirement REQ-F-002 -[allocated_to]-> hld_interface I-001
+   requirement REQ-F-003 -[addressed_by]-> decision D-002
+   requirement REQ-F-003 -[allocated_to]-> hld_component api-app
+   requirement REQ-F-003 -[allocated_to]-> hld_interface I-001
+   requirement REQ-F-003 -[applies]-> business_rule BR-001
+   requirement REQ-F-003 -[realised_by]-> api_operation op-products
+   requirement REQ-F-003 -[realised_by]-> sequence S-001
+   requirement REQ-NF-001 -[allocated_to]-> hld_component api-app
+   requirement REQ-NF-001 -[realised_by]-> lld_component api-app
+   requirement REQ-NF-002 -[allocated_to]-> hld_component api-app
+   requirement REQ-NF-002 -[realised_by]-> lld_component api-app
+   requirement REQ-NF-003 -[allocated_to]-> hld_component api-app
+   requirement REQ-NF-003 -[realised_by]-> lld_component api-app
+   requirement REQ-NF-004 -[realised_by]-> lld_component api-app
+   requirement REQ-NF-005 -[realised_by]-> lld_component api-app
+   approve_lld            approved           decided 2026-11-13T06:32:52.606719Z
+   approve_hld            approved           decided 2026-11-13T06:32:52.017047Z
+   approve_requirements   approved           decided 2026-11-13T06:32:51.293184Z
+   approve_requirements   changes_requested  decided 2026-11-13T06:32:50.509684Z
+   skill                  approved           decided 2026-11-13T06:32:49.372697Z
+   skill                  approved           decided 2026-11-13T06:32:49.404607Z
+   skill                  approved           decided 2026-11-13T06:32:49.434933Z
+eaeh: acting as profile 'admin' (admin; automatically selected: only stored identity permitted to audit.read)
+   audit records: 130; actions: agent.execute, agent.instantiate, approval.decide, approval.request, artifact.create, identity.bootstrap, knowledge.ingest, knowledge.read, knowledge.search, knowledge.source.register, principal.create, project.create, project.set_domain, skill.register, token.issue, tool.invoke, trace.record, workflow.complete, workflow.quality_gate, workflow.revision, workflow.start, workflow.transition, workspace.create
+   audit chain valid=True records=169
+   model usage: replay/replay version=replay-cassette-77d774216cb7fa08 calls=8 cost=$0.00  (deterministic replay – not AI)
+   secrets in generated files: CLAUDE.md:0 .mcp.json:0 .eaeh/project.toml:0
+
+== ONBOARDING SCENARIO COMPLETE (deterministic replay; delivery: see demo-external-ai.sh)

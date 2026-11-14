@@ -1,0 +1,272 @@
+{
+  "id": "engineering.design",
+  "version": "1.0.0",
+  "description": "Phase 3: BRD \u2192 requirements \u2192 HLD \u2192 LLD with deterministic quality gates and a human approval gate after each stage.",
+  "initial": "brd",
+  "states": [
+    {
+      "name": "brd",
+      "type": "tool_step",
+      "tool": "brd.sections",
+      "input": {
+        "document": {
+          "$input": "/brd"
+        }
+      },
+      "transitions": {
+        "succeeded": "analyse",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "analyse",
+      "type": "agent_task",
+      "task_kind": "requirements-analysis",
+      "capabilities": [
+        "requirements-analysis"
+      ],
+      "max_autonomy": "read_only",
+      "artifact": "design/requirements-draft.json",
+      "inputs": {
+        "brd": {
+          "$output": "brd"
+        }
+      },
+      "quality_gate": {
+        "gate": "requirements",
+        "context": {
+          "brd_sections": {
+            "$output": "brd",
+            "pointer": "/sections"
+          }
+        }
+      },
+      "timeout_secs": 3600,
+      "transitions": {
+        "succeeded": "refine",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "refine",
+      "type": "agent_task",
+      "task_kind": "requirements-review",
+      "capabilities": [
+        "requirements-review"
+      ],
+      "max_autonomy": "read_only",
+      "artifact": "design/requirements.json",
+      "inputs": {
+        "brd": {
+          "$output": "brd"
+        },
+        "draft": {
+          "$output": "analyse"
+        }
+      },
+      "quality_gate": {
+        "gate": "requirements",
+        "context": {
+          "brd_sections": {
+            "$output": "brd",
+            "pointer": "/sections"
+          }
+        }
+      },
+      "timeout_secs": 3600,
+      "transitions": {
+        "succeeded": "render_requirements",
+        "failed": "failed",
+        "timed_out": "failed"
+      }
+    },
+    {
+      "name": "render_requirements",
+      "type": "tool_step",
+      "tool": "requirements.render",
+      "input": {
+        "requirements": {
+          "$output": "refine"
+        },
+        "brd": {
+          "$output": "brd"
+        }
+      },
+      "artifact": "design/requirements",
+      "bundle": true,
+      "transitions": {
+        "succeeded": "approve_requirements",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "approve_requirements",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "render_requirements",
+      "max_revisions": 3,
+      "transitions": {
+        "approved": "hld",
+        "changes_requested": "refine",
+        "rejected": "rejected"
+      }
+    },
+    {
+      "name": "hld",
+      "type": "agent_task",
+      "task_kind": "hld-design",
+      "capabilities": [
+        "hld-design"
+      ],
+      "max_autonomy": "read_only",
+      "artifact": "design/hld-model.json",
+      "inputs": {
+        "requirements": {
+          "$output": "refine"
+        }
+      },
+      "quality_gate": {
+        "gate": "hld",
+        "context": {
+          "requirements": {
+            "$output": "refine"
+          }
+        }
+      },
+      "timeout_secs": 3600,
+      "transitions": {
+        "succeeded": "render_hld",
+        "failed": "failed",
+        "timed_out": "failed"
+      },
+      "requires_approval_of": [
+        "approve_requirements"
+      ]
+    },
+    {
+      "name": "render_hld",
+      "type": "tool_step",
+      "tool": "architecture.render",
+      "input": {
+        "model": {
+          "$output": "hld"
+        }
+      },
+      "artifact": "design/hld",
+      "bundle": true,
+      "transitions": {
+        "succeeded": "approve_hld",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "approve_hld",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "render_hld",
+      "max_revisions": 3,
+      "transitions": {
+        "approved": "lld",
+        "changes_requested": "hld",
+        "rejected": "rejected"
+      }
+    },
+    {
+      "name": "lld",
+      "type": "agent_task",
+      "task_kind": "lld-design",
+      "capabilities": [
+        "lld-design"
+      ],
+      "max_autonomy": "read_only",
+      "artifact": "design/lld-model.json",
+      "inputs": {
+        "requirements": {
+          "$output": "refine"
+        },
+        "hld": {
+          "$output": "hld"
+        }
+      },
+      "quality_gate": {
+        "gate": "lld",
+        "context": {
+          "requirements": {
+            "$output": "refine"
+          },
+          "hld": {
+            "$output": "hld"
+          }
+        }
+      },
+      "timeout_secs": 3600,
+      "transitions": {
+        "succeeded": "render_lld",
+        "failed": "failed",
+        "timed_out": "failed"
+      },
+      "requires_approval_of": [
+        "approve_requirements",
+        "approve_hld"
+      ]
+    },
+    {
+      "name": "render_lld",
+      "type": "tool_step",
+      "tool": "architecture.render",
+      "input": {
+        "model": {
+          "$output": "lld"
+        },
+        "hld": {
+          "$output": "hld"
+        }
+      },
+      "artifact": "design/lld",
+      "bundle": true,
+      "transitions": {
+        "succeeded": "approve_lld",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "approve_lld",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "render_lld",
+      "max_revisions": 3,
+      "transitions": {
+        "approved": "done",
+        "changes_requested": "lld",
+        "rejected": "rejected"
+      }
+    },
+    {
+      "name": "done",
+      "type": "terminal",
+      "outcome": "succeeded"
+    },
+    {
+      "name": "rejected",
+      "type": "terminal",
+      "outcome": "failed"
+    },
+    {
+      "name": "failed",
+      "type": "terminal",
+      "outcome": "failed"
+    }
+  ],
+  "budget": {
+    "tool_calls": 200,
+    "model_calls": 120,
+    "tokens": 12000000,
+    "cost_micros": 25000000,
+    "wall_clock_ms": 14400000,
+    "delegation_depth": 1,
+    "concurrent_agents": 1,
+    "correction_attempts": 12,
+    "agent_steps": 80
+  }
+}

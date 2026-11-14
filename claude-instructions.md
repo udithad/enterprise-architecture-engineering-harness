@@ -63,6 +63,7 @@ The following architectural decisions are explicitly approved. Do not change the
 | Software development | Multi-agent |
 | Human approvals | Gated |
 | Core implementation | Rust-first (Option A) |
+| AI execution (amended 2026-11-13, ADR-0025) | External AI execution by default for IDE-based development; direct provider optional; deterministic for testing (§3.6) |
 
 ### 3.1 Hybrid orchestration
 
@@ -94,6 +95,8 @@ Responsible for:
 - Recommendations for corrective action.
 
 The deterministic workflow and governance layers are authoritative. An LLM must never independently authorize mandatory operations or bypass deterministic controls.
+
+In `external_ai` execution mode (§3.6), the reasoning part of B is performed by the connected AI client through governed hand-offs. EAEH still selects the agent definition, skills, context, tools and permissions, and it validates every result. The client gains no authority from this.
 
 ### 3.2 Dynamic agent instantiation
 
@@ -164,6 +167,78 @@ Agents cannot approve their own work or bypass approvals.
 Record approver, role, timestamp, decision, comments, artifact version, workflow and audit event.
 
 Rejected artifacts must return to revision without losing their history.
+
+A person who submitted AI-produced work (§3.6) is a co-author of it and cannot approve it.
+
+### 3.6 External AI execution (amended 2026-11-13, ADR-0025)
+
+This decision amends the original assumption that EAEH always invokes an LLM itself (§16). It is authoritative.
+
+**Operating model**
+- **Default for IDE-based development: `external_ai`.** The developer's connected AI client performs all AI reasoning and generation under the developer's own subscription and its supported authentication: BRD analysis, requirements, HLD, LLD, agent reasoning, planning, code and test generation, and reviews.
+- **Supported clients:**
+  - Claude Code, through MCP and generated project instructions (`CLAUDE.md`, `.mcp.json`);
+  - GitHub Copilot in VS Code agent mode, through MCP (`.github/copilot-instructions.md`, `.vscode/mcp.json`).
+- **Integration contract.** It is provider-neutral: one MCP server (`eaeh mcp`) and one instruction text. Client-specific files exist only where a client requires them.
+- **EAEH's role.** EAEH is the engineering governance and orchestration layer:
+  - project registration and workspace context;
+  - governed knowledge and retrieval;
+  - skills;
+  - workflows and task specifications;
+  - agent definitions;
+  - tool gateway and authorization;
+  - deterministic policy and validation;
+  - human approval gates;
+  - traceability;
+  - audit and evidence.
+
+**Execution modes.** Installation setting `[execution] mode`; the mode in force is always visible in readiness, workflow status and the MCP project context.
+
+| Mode | AI reasoning | Model providers registered | Billing |
+|---|---|---|---|
+| `external_ai` | Connected AI client | **None** | User's AI subscription |
+| `direct_provider` | EAEH, via `ModelClient` (§16) | Enabled providers | Separate API credentials, billed by the provider |
+| `deterministic` | None: recorded fixtures (ADR-0023) | Replay only | None |
+
+`external_ai` is an explicit option, never a default fallback. `direct_provider` is the backward-compatible behaviour when the setting is absent.
+
+**No hidden model calls**
+- In `external_ai` mode EAEH must not invoke any model provider for engineering activities, must not silently fall back to direct-provider calls, and must not require an EAEH model API key.
+- Do not assume EAEH can access the client's model session or credentials.
+- A task handed off to a client must never be completed by a provider.
+- Verify this with provider instrumentation in tests: zero provider calls and zero `model_usage` records.
+
+**Task and result hand-off**
+1. EAEH prepares an authorized task package. It contains the same governed context a provider would receive: instructions, approved skills, mandatory standards, fenced untrusted data, input, output schema, allowed tools, citable sources and rules. The `model.invoke` egress policy applies, so restricted data is never handed off.
+2. The workflow suspends durably (`waiting_external`) and stays resumable.
+3. The client may call the agent's allowed tools only through the EAEH tool gateway, as the agent principal: authorized, budgeted, workspace-confined and audited.
+4. The client submits the result. EAEH validates it exactly as it validates model output: schema, skill contracts, citations, domain validators and quality gates. It records provenance: client, submitter and package hash.
+5. EAEH enforces the human approval gate. The workflow continues only after successful validation and approval.
+
+**Bootstrap and readiness**
+- Project bootstrap must:
+  - be a single, idempotent, guided command;
+  - configure the execution mode and AI client integrations;
+  - generate minimal client instructions.
+- Readiness must report Ready / Not Ready with blocking items, warnings and exact corrective commands. It covers:
+  - execution mode and billing;
+  - client configuration;
+  - skills, knowledge and roles;
+  - delivery prerequisites.
+
+**Authentication and approvals**
+- The MCP server runs as the developer's stored identity. Tokens are never printed or written to generated files.
+- Only operators may work on hand-offs (`task.execute_external`).
+- Clients have no approval capability.
+- Bulk approval requires an explicit human approver identity and per-item confirmation.
+
+**Billing boundaries.** Clearly distinguish AI subscription usage from EAEH infrastructure, storage and hosting costs. Never claim unlimited usage or guaranteed subscription coverage.
+
+**Limits that must be documented, not hidden**
+- Clients execute hand-offs sequentially. Do not claim parallel multi-agent execution in this mode.
+- Generated instructions cannot stop a client from editing files outside EAEH.
+- Client labels are self-declared.
+- Integrations not verified in a real client session must be stated as such.
 
 # PART 3 – TARGET ARCHITECTURE
 
@@ -468,6 +543,13 @@ Enforce autonomy levels through deterministic permissions and policies.
 
 Do not rely on prompts alone.
 
+In `external_ai` mode (§3.6), the agent definition still governs:
+- the hand-off package;
+- the tools the client may call on the agent's behalf (allowed tools, autonomy, budgets, workspace);
+- the output contract and validators.
+
+Only the reasoning moves to the client.
+
 ## 11. Agent Communication and Delegation
 
 Implement controlled inter-agent communication.
@@ -632,6 +714,8 @@ Support:
 Track model and provider versions for every significant execution.
 
 Do not automatically select the most expensive model for every task.
+
+Model management applies to `direct_provider` and `deterministic` modes. In `external_ai` mode (§3.6) no provider is registered. The client's model, version and cost are outside EAEH's control and are not recorded as EAEH model usage; provenance records the client label instead.
 
 ## 17. Enterprise Knowledge Management
 
@@ -1010,6 +1094,11 @@ Implement:
 This is the first phase in which BRD analysis and HLD/LLD generation become usable.
 
 ## 31. Phase 4 – Multi-Agent Software Development
+
+*Partially delivered early (ADR-0025):*
+- the governed delivery workflow: task decomposition (implementation plan), approval, implementation and tests in an isolated workspace by the AI client through governed tools, an isolated build/test step, a source bundle with requirement-to-source/test traceability, and approval and export.
+
+*Remaining Phase 4 scope:* everything below that is not in that workflow, notably codebase analysis of existing repositories, language/tool adapters, code review agents, multi-agent collaboration and verified build toolchain images.
 
 Implement:
 - Codebase analysis.

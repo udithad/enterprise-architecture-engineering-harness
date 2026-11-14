@@ -1,0 +1,69 @@
+{
+  "id": "demo.approval",
+  "version": "1.0.0",
+  "description": "Deterministic demo (no LLM): write a proposal with a governed tool step, require human approval, then publish.",
+  "initial": "draft",
+  "states": [
+    {
+      "name": "draft",
+      "type": "tool_step",
+      "tool": "fs.write",
+      "input": {
+        "path": "proposal.md",
+        "content": "# Proposal\n\nAdopt EAEH for governed engineering workflows.\n"
+      },
+      "artifact": "demo/proposal.json",
+      "transitions": {
+        "succeeded": "review",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "review",
+      "type": "approval_gate",
+      "required_role": "approver",
+      "artifact_from": "draft",
+      "transitions": {
+        "approved": "publish",
+        "rejected": "draft"
+      }
+    },
+    {
+      "name": "publish",
+      "type": "tool_step",
+      "tool": "fs.read",
+      "input": {
+        "path": "proposal.md"
+      },
+      "artifact": "demo/published.json",
+      "requires_approval_of": [
+        "review"
+      ],
+      "transitions": {
+        "succeeded": "done",
+        "failed": "failed"
+      }
+    },
+    {
+      "name": "done",
+      "type": "terminal",
+      "outcome": "succeeded"
+    },
+    {
+      "name": "failed",
+      "type": "terminal",
+      "outcome": "failed"
+    }
+  ],
+  "budget": {
+    "tool_calls": 50,
+    "model_calls": 30,
+    "tokens": 500000,
+    "cost_micros": 20000000,
+    "wall_clock_ms": 1800000,
+    "delegation_depth": 2,
+    "concurrent_agents": 4,
+    "correction_attempts": 2,
+    "agent_steps": 20
+  }
+}

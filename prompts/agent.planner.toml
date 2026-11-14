@@ -1,0 +1,18 @@
+id = "agent.planner"
+version = "1.0.0"
+kind = "agent"
+description = "Instruction template for planning agents (hybrid orchestration). Output is a proposal validated by the workflow engine."
+body = """
+You are the '{{agent_id}}' planning agent. Purpose: {{purpose}}
+Decompose the task into at most max_steps steps using only the allowed_task_kinds given in the task input.
+Return JSON: {"steps": [{"task_kind": str, "capabilities": [str], "input": object, "risk": "read_only"|"workspace_write"|"build_test"}], "rationale": str}.
+Your plan is a proposal: the workflow engine and policy engine decide whether it is executed.
+"""
+
+[[variables]]
+name = "agent_id"
+max_len = 128
+
+[[variables]]
+name = "purpose"
+max_len = 2000

@@ -1,0 +1,3582 @@
+==> toolchain
+rustc 1.99.1 (58cf8f9c3 2026-10-13)
+cargo 1.99.1 (5f94df478 2026-08-27)
+==> fmt
+==> clippy
+    Checking eaeh-cli v0.1.0 (/Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/crates/eaeh-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.28s
+==> build
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.50s
+==> test
+   Compiling eaeh-cli v0.1.0 (/Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/crates/eaeh-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.60s
+     Running unittests src/lib.rs (target/debug/deps/eaeh_acceptance-a5eb5fba5c12791f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/automated_ai.rs (target/debug/deps/automated_ai-a597fec517174856)
+
+running 9 tests
+test only_external_ai_mode_and_operators_can_run_a_coordinator ... ok
+test execution_records_hold_no_credentials ... ok
+test subscription_limits_and_sign_in_problems_block_instead_of_retrying ... ok
+test a_crashed_worker_is_recovered_by_the_next_one ... ok
+test one_worker_per_project_and_projects_are_isolated ... ok
+test requested_changes_are_corrected_automatically_and_the_old_version_is_kept ... ok
+test brd_to_lld_runs_automatically_and_people_only_decide_the_three_gates ... ok
+test failed_attempts_retry_with_backoff_then_stop_and_can_be_retried_by_a_person ... ok
+test a_stop_request_cancels_the_session_and_gives_the_attempt_back ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.72s
+
+     Running tests/design_demo.rs (target/debug/deps/design_demo-61cadbc082b1f3c7)
+
+running 3 tests
+test brds_are_project_scoped_and_classification_bounded ... ok
+test injected_brd_instructions_cannot_change_instructions_tools_or_approvals ... ok
+test brd_to_requirements_hld_and_lld_with_gates_revisions_and_traceability ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+     Running tests/e2e.rs (target/debug/deps/e2e-8d3ac7610ed35dbd)
+
+running 3 tests
+test secrets_never_reach_audit_events_or_agent_context ... ok
+test agentic_workflow_with_planning_gate_and_full_traceability ... ok
+test agent_build_tool_runs_only_inside_container_isolation ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.06s
+
+     Running tests/external_ai.rs (target/debug/deps/external_ai-7ff9d5adaa41e5f1)
+
+running 7 tests
+test deterministic_mode_registers_only_the_replay_provider ... ok
+test a_direct_provider_runtime_never_completes_a_handed_off_task ... ok
+test external_tasks_are_project_bound_and_correction_bounded ... ok
+test delivery_with_deferred_build_produces_an_approved_traceable_source_bundle ... ok
+test delivery_with_required_build_never_skips_the_build_step ... ok
+test hld_hand_off_states_the_exact_contract_and_drafts_can_be_checked_for_free ... ok
+test external_ai_lifecycle_brd_to_lld_without_any_model_call ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.55s
+
+     Running tests/fitness.rs (target/debug/deps/fitness-766d218159ed6adb)
+
+running 12 tests
+test automated_execution_has_no_model_api_path ... ok
+test governed_context_constructors_have_single_producers ... ok
+test all_database_writes_use_the_serialized_writer ... ok
+test no_credentials_in_configuration_and_prompts_are_assets ... ok
+test unsafe_code_is_confined_to_isolation ... ok
+test governance_is_separated_from_intelligent_orchestration ... ok
+test http_client_and_provider_are_confined ... ok
+test design_models_are_deterministic_and_independent_of_intelligence ... ok
+test no_internal_dependency_cycles ... ok
+test crate_dependencies_follow_the_layering ... ok
+test testkit_is_never_a_production_dependency ... ok
+test only_store_uses_sqlx_directly ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.58s
+
+     Running tests/knowledge_demo.rs (target/debug/deps/knowledge_demo-f2afc3c044b2de5d)
+
+running 1 test
+test agent_reviews_api_spec_with_approved_skill_and_enterprise_knowledge ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/logging.rs (target/debug/deps/logging-9a47a67a567d737d)
+
+running 1 test
+test logs_are_redacted_and_carry_correlation_ids ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+     Running tests/output_contracts.rs (target/debug/deps/output_contracts-7bc4f0c3a7cc19e8)
+
+running 4 tests
+test hld_contract_is_explicit_about_the_fields_that_failed ... ok
+test the_failed_hld_shape_is_reported_completely_in_one_pass ... ok
+test labelled_design_fixtures_match_the_producing_agents_schemas ... ok
+test every_agent_has_a_valid_generated_example_that_also_meets_its_skill_contracts ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_agents-17cc9a59a6815ad4)
+
+running 2 tests
+test external::tests::client_labels_are_constrained ... ok
+test external::tests::modes_parse_and_describe_who_pays ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/agents.rs (target/debug/deps/agents-1df8bd7c4e6c84be)
+
+running 6 tests
+test registration_rules_and_smallest_effective_discovery ... ok
+test depth_limit_enforced ... ok
+test dynamic_lifecycle_with_tools_hooks_and_events ... ok
+test prompt_injection_in_tool_output_cannot_escalate ... ok
+test delegation_controls ... ok
+test bounded_correction_loop_detection_and_step_budget ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.85s
+
+     Running tests/knowledge_agents.rs (target/debug/deps/knowledge_agents-1c083d32cdec0e39)
+
+running 5 tests
+test injected_knowledge_cannot_override_standards_or_instructions ... ok
+test restricted_knowledge_is_never_sent_to_external_models ... ok
+test agent_applies_standards_approved_skill_and_cited_knowledge ... ok
+test skills_require_a_configured_registry_and_must_be_approved ... ok
+test fabricated_citations_fail_validation ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_api-31efa09657621907)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/api.rs (target/debug/deps/api-3d8e39eada84804e)
+
+running 7 tests
+test authentication_and_error_contract ... ok
+test metrics_and_health_details_require_permission ... ok
+test cross_project_isolation_and_role_checks ... ok
+test knowledge_and_skill_routes_are_governed ... ok
+test request_changes_and_traceability_routes_are_governed ... ok
+test approval_gate_cannot_be_bypassed_through_the_api ... ok
+test pagination_tokens_and_rate_limits ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.43s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_architecture-a007dc23e0b3805e)
+
+running 1 test
+test mermaid::tests::labels_and_identifiers_cannot_break_out ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/architecture.rs (target/debug/deps/architecture-37190e139f96e7dd)
+
+running 8 tests
+test trace_links_connect_requirements_to_design_elements ... ok
+test hld_integrity_coverage_decisions_and_risks_are_enforced ... ok
+test lld_must_refine_the_approved_hld_and_stay_consistent ... ok
+test model_text_cannot_inject_into_diagrams_or_documents ... ok
+test rendering_is_deterministic_and_complete ... ok
+test mandatory_standards_must_be_addressed_and_deviations_need_an_adr ... ok
+test validators_report_deterministically_with_context ... ok
+test demonstration_fixtures_pass_all_deterministic_checks ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/main.rs (target/debug/deps/eaeh-fe5c415be7bf3748)
+
+running 1 test
+test credentials::tests::selection_rules ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-29a5714109cc36a0)
+
+running 2 tests
+test cli_end_to_end ... ok
+test phase3_brd_request_changes_trace_and_export ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.41s
+
+     Running tests/dx.rs (target/debug/deps/dx-1bbce34c4e2b49ab)
+
+running 8 tests
+test task_scoped_mcp_server_and_worker_commands ... ok
+test mcp_server_exposes_governed_tools_without_approval_powers ... ok
+test identity_profiles_token_lifecycle_and_diagnostics ... ok
+test bootstrap_is_one_command_repeatable_and_generates_claude_code_files ... ok
+test readiness_and_workflow_prerequisites_explain_what_is_missing ... ok
+test approval_review_needs_an_explicit_human_approver_and_confirms_each_item ... ok
+test deterministic_onboarding_and_requirements_workflow ... ok
+test external_ai_bootstrap_cli_and_mcp_hand_offs_without_model_calls ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.18s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_core-3448fd2a62b21574)
+
+running 15 tests
+test error::tests::retryability_is_limited_to_transient_kinds ... ok
+test error::tests::context_preserves_kind ... ok
+test classification::tests::ordering_and_parsing ... ok
+test hash::tests::random_bytes_differ ... ok
+test principal::tests::agent_principals_have_no_roles_and_single_project ... ok
+test ids::tests::uuid_ids_roundtrip_and_are_time_ordered ... ok
+test hash::tests::hex_roundtrip_and_known_digest ... ok
+test principal::tests::tenant_boundary_applies_even_with_all_projects ... ok
+test hash::tests::canonical_json_is_key_order_independent ... ok
+test ids::tests::slugs_reject_traversal_and_uppercase ... ok
+test risk::tests::autonomy_maps_to_monotonic_risk_ceiling ... ok
+test secret::tests::env_provider_is_prefix_restricted ... ok
+test secret::tests::redactor_handles_json_and_sensitive_keys ... ok
+test secret::tests::redactor_removes_registered_and_pattern_secrets ... ok
+test secret::tests::secret_never_formats_value ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_engineering-b6effb6be60a0bde)
+
+running 4 tests
+test delivery::tests::paths_must_stay_inside_the_repository ... ok
+test delivery::tests::build_result_blocks_unless_exit_zero ... ok
+test delivery::tests::implementation_must_implement_and_test_must_functional_requirements ... ok
+test delivery::tests::plan_must_cover_every_must_requirement_with_known_ids ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tools.rs (target/debug/deps/tools-4813ef5db8b269a8)
+
+running 2 tests
+test design_check_reports_findings_for_drafts ... ok
+test render_tools_produce_bundles_and_trace_links ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_events-3da36f4427d39ebd)
+
+running 5 tests
+test dispatcher::tests::backoff_grows_and_is_capped ... ok
+test dispatcher::tests::duplicate_publish_and_redispatch_deliver_once ... ok
+test dispatcher::tests::ordered_consumer_does_not_skip_ahead ... ok
+test dispatcher::tests::transient_failures_are_retried_then_delivered ... ok
+test dispatcher::tests::persistent_failure_is_dead_lettered_and_audited ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_extensibility-b0ffefcafb929446)
+
+running 10 tests
+test middleware::tests::short_circuit_and_errors_propagate ... ok
+test middleware::tests::deterministic_onion_order ... ok
+test hooks::tests::ordering_by_priority_then_id ... ok
+test hooks::tests::filters_disable_and_compatibility ... ok
+test hooks::tests::veto_only_honoured_at_before_points ... ok
+test interceptor::tests::chain_applies_in_order_and_stops_on_error ... ok
+test middleware::tests::pipeline_timeout ... ok
+test plugin::tests::signature_verification ... ok
+test plugin::tests::lifecycle_grants_and_phase1_kind_restriction ... ok
+test hooks::tests::failure_policies ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_governance-f67c7e843d7c20cf)
+
+running 20 tests
+test authz::tests::cross_tenant_and_cross_project_denied ... ok
+test authz::tests::knowledge_steward_cannot_approve_and_agents_only_read_knowledge ... ok
+test authz::tests::only_human_approvers_can_decide ... ok
+test budget::tests::child_limits_never_exceed_parent ... ok
+test approval::tests::self_approval_and_non_humans_rejected ... ok
+test approval::tests::approver_can_approve_with_matching_hash ... ok
+test approval::tests::artifact_hash_must_match ... ok
+test approval::tests::rerequest_supersedes_and_keeps_history ... ok
+test policy::tests::baseline_decisions ... ok
+test policy::tests::evaluation_is_deterministic ... ok
+test policy::tests::invalid_documents_rejected ... ok
+test policy::tests::project_policy_cannot_override_enterprise_deny ... ok
+test policy::tests::restricted_content_never_egresses_to_external_models ... ok
+test approval::tests::request_changes_is_limited_to_workflow_gates_and_needs_comments ... ok
+test identity::tests::expired_tokens_rejected ... ok
+test budget::tests::consumption_is_bounded_atomic_and_fail_closed ... ok
+test identity::tests::bootstrap_is_one_time_and_token_authenticates ... ok
+test identity::tests::grant_project_access_is_admin_only_tenant_bound_and_detailed_auth_reports_expiry ... ok
+test identity::tests::non_admin_cannot_manage_others_or_create_principals ... ok
+test identity::tests::revoke_rotate_and_reject_invalid ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_intelligence-2eaeb221f933050b)
+
+running 7 tests
+test context::tests::untrusted_cannot_be_constructed_as_instruction ... ok
+test embedding::tests::deterministic_normalised_and_similarity_ordered ... ok
+test prompt::tests::validation_and_rendering ... ok
+test replay::tests::replays_in_order_per_agent_and_is_labelled ... ok
+test context::tests::scope_expiry_conflicts_budget_and_redaction ... ok
+test context::tests::untrusted_content_cannot_alter_instructions ... ok
+test prompt::tests::approval_rollback_and_immutability ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/model_client.rs (target/debug/deps/model_client-f493411e1c1987af)
+
+running 6 tests
+test non_retryable_errors_do_not_fall_back ... ok
+test routes_to_cheapest_capable_model_not_most_expensive ... ok
+test falls_back_on_retryable_failure_and_records_versions ... ok
+test cost_budget_is_enforced_independently_of_tokens ... ok
+test restricted_content_is_not_sent_to_external_providers ... ok
+test all_failing_and_budget_limits ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_isolation-8dc8d8d53933d01e)
+
+running 2 tests
+test tests::process_provider_declares_honest_capabilities ... ok
+test tests::selection_refuses_instead_of_downgrading ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/container_isolation.rs (target/debug/deps/container_isolation-4bef645931ebc4cb)
+
+running 7 tests
+test environment_contains_only_explicit_variables ... ok
+test process_count_limit_is_enforced ... ok
+test filesystem_is_confined_to_workspace ... ok
+test network_access_is_denied ... ok
+test runs_as_unprivileged_user_without_capabilities ... ok
+test memory_limit_is_enforced ... ok
+test timeout_kills_and_removes_container ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.97s
+
+     Running tests/process_isolation.rs (target/debug/deps/process_isolation-7e92b9bc6b600780)
+
+running 6 tests
+test refuses_requirements_it_cannot_enforce ... ok
+test environment_is_cleared_to_allowlist ... ok
+test file_size_limit_enforced ... ok
+test output_is_bounded ... ok
+test cpu_time_limit_terminates_busy_loop ... ok
+test timeout_kills_entire_process_group ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.01s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_knowledge-83e9d9d8da6d0e4d)
+
+running 5 tests
+test parse::tests::markdown_chunks_follow_heading_paths_and_skip_code_headings ... ok
+test search::tests::rrf_rewards_agreement ... ok
+test parse::tests::long_sections_split_and_deterministic ... ok
+test search::tests::fts_query_is_neutralised ... ok
+test parse::tests::openapi_operations_and_schemas ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/knowledge.rs (target/debug/deps/knowledge-ee4529c7ab28e5e7)
+
+running 10 tests
+test rejected_standards_never_activate ... ok
+test fts_injection_cannot_break_queries_or_scope ... ok
+test documents_with_credentials_are_quarantined_and_never_retrievable ... ok
+test agent_retrieval_is_project_bound_and_ceiling_limited ... ok
+test reference_documents_are_indexed_and_searchable_with_citations ... ok
+test scope_tenant_and_classification_isolation ... ok
+test conflicts_freshness_and_standard_precedence ... ok
+test knowledge_hooks_observe_and_can_veto_retrieval ... ok
+test standards_activate_only_after_human_approval_bound_to_hash ... ok
+test versions_supersede_and_retire_and_delete_purges ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.70s
+
+     Running tests/retrieval_eval.rs (target/debug/deps/retrieval_eval-ed314630b9e24219)
+
+running 1 test
+test recall_baseline ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_provider_anthropic-3de13f2816ea7bfe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mock_api.rs (target/debug/deps/mock_api-8b0fdd8e306e1e3c)
+
+running 4 tests
+test configuration_is_validated ... ok
+test wire_format_headers_and_tool_round_trip ... ok
+test retries_429_with_retry_after_then_succeeds ... ok
+test error_mapping_and_no_credential_leakage ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_requirements-1803ac5a566ce6d2)
+
+running 3 tests
+test model::tests::citation_and_id_formats ... ok
+test analysis::tests::phrase_matching_is_whole_word ... ok
+test analysis::tests::quantities_are_normalised ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/analyzer_eval.rs (target/debug/deps/analyzer_eval-c89fe35f57a352a8)
+
+running 1 test
+test analyzer_precision_recall_baseline ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/requirements.rs (target/debug/deps/requirements-74ab4d0ee471c657)
+
+running 6 tests
+test validator_runs_in_a_fail_closed_quality_gate ... ok
+test ambiguity_is_detected_and_acknowledged_items_are_downgraded ... ok
+test uncovered_brd_sections_are_missing_requirements ... ok
+test structural_defects_are_blocking ... ok
+test well_formed_set_has_no_blocking_findings_and_full_traceability ... ok
+test conflicts_duplicates_and_numeric_conflicts_are_detected ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_runtime-5dc0dc654c302148)
+
+running 17 tests
+test coordinator::claude::tests::error_texts_are_classified ... ok
+test coordinator::claude::tests::subscription_login_is_recognised_and_api_keys_refused ... ok
+test coordinator::claude::tests::session_has_no_builtin_tools_and_only_task_scoped_mcp_tools ... ok
+test coordinator::claude::tests::the_client_environment_withholds_billing_and_eaeh_secrets ... ok
+test coordinator::claude::tests::the_environment_filter_drops_api_keys_tokens_and_secrets ... ok
+test coordinator::tests::config_limits_are_enforced ... ok
+test coordinator::tests::copilot_is_refused_not_substituted ... ok
+test coordinator::tests::failure_classes_are_bounded_and_explained ... ok
+test coordinator::tests::preflight_requires_a_subscription_login ... ok
+test coordinator::tests::the_prompt_carries_no_project_data_and_forbids_questions ... ok
+test observability::tests::log_lines_are_redacted ... ok
+test coordinator::claude::tests::fake_cli::the_session_gets_the_filtered_environment_and_no_shell_tools ... ok
+test coordinator::claude::tests::fake_cli::a_successful_session_reports_metadata ... ok
+test coordinator::claude::tests::fake_cli::usage_limits_auth_errors_and_crashes_are_classified ... ok
+test coordinator::claude::tests::fake_cli::preflight_detects_missing_cli_old_versions_and_billing ... ok
+test coordinator::claude::tests::fake_cli::a_session_on_api_key_credentials_is_stopped ... ok
+kill: 4945: No such process
+test coordinator::claude::tests::fake_cli::timeouts_and_cancellation_stop_the_process_group ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.91s
+
+     Running tests/harness.rs (target/debug/deps/harness-d84e4ed504028fe6)
+
+running 6 tests
+test config_rejects_unknown_fields_and_relative_programs ... ok
+test supervision_escalates_stalled_work ... ok
+test supervision_escalates_repeated_failures ... ok
+test plugins_require_admin_enablement_grants_and_cannot_bypass_policy ... ok
+test anthropic_provider_is_opt_in_and_needs_a_secret ... ok
+test shipped_definitions_and_demo_workflow_end_to_end ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
+
+     Running tests/project.rs (target/debug/deps/project-614a16408e884423)
+
+running 5 tests
+test manifest_roundtrip_and_discovery_from_subdirectories ... ok
+test required_skills_are_discovered_and_synced_idempotently ... ok
+test readiness_reports_missing_provider_and_unapproved_skills_with_fixes ... ok
+test readiness_enforces_responsibilities_and_isolation ... ok
+test readiness_is_ready_after_human_approvals_with_a_model ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.85s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_skills-af2ac4ca829ebbdc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/skills.rs (target/debug/deps/skills-122a27754a93b944)
+
+running 6 tests
+test registration_validation ... ok
+test rejected_skills_never_become_usable ... ok
+test skills_require_human_approval_bound_to_digest ... ok
+test dependency_cycles_are_rejected ... ok
+test skills_never_extend_agent_permissions ... ok
+test selection_is_deterministic_with_dependencies_first_and_lifecycle ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_store-e8476cb459525061)
+
+running 9 tests
+test audit::tests::chain_detects_deletion ... ok
+test tests::timestamps_roundtrip_and_sort ... ok
+test audit::tests::chain_verifies_and_detects_modification ... ok
+test tests::foreign_keys_are_enforced ... ok
+test audit::tests::rolled_back_transaction_leaves_no_audit ... ok
+test idempotency::tests::first_result_wins ... ok
+test audit::tests::details_are_redacted_before_storage ... ok
+test audit::tests::concurrent_appends_remain_gapless ... ok
+test tests::opens_and_migrates_idempotently ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_testkit-752db7e68465115e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_tools-d393a4a8dfa85322)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gateway.rs (target/debug/deps/gateway-7be84a5aabc48d80)
+
+running 10 tests
+test external_api_denied_by_default_policy ... ok
+test isolation_requirements_refused_when_unavailable ... ok
+test cross_project_access_denied ... ok
+test mandatory_controls_hold_when_hooks_missing_disabled_or_failing ... ok
+test autonomy_and_allowlist_enforced ... ok
+test budgets_enforced_and_fail_closed ... ok
+test authorized_write_then_read_is_audited_and_evented ... ok
+test high_risk_tool_requires_bound_human_approval ... ok
+test tool_output_secrets_are_redacted_and_untrusted ... ok
+test unregistered_or_contract_violating_calls_rejected ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.76s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_validation-52f82cd94d0b11f5)
+
+running 6 tests
+test shape::tests::patterns_are_sampled ... ok
+test tests::semantic_findings_are_advisory_unless_opted_in ... ok
+test schema::tests::remote_refs_are_not_fetched ... ok
+test schema::tests::compiles_and_checks ... ok
+test tests::gate_requires_deterministic_and_fails_closed ... ok
+test shape::tests::examples_are_valid_and_outlines_name_every_field ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_workflow-e7acb19f6875e8fd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/design_flow.rs (target/debug/deps/design_flow-7d47fcde0d547115)
+
+running 5 tests
+test bindings_resolve_outputs_inputs_and_artifacts ... ok
+test bundles_bind_all_files_to_one_approval_and_trace_is_recorded_on_approval ... ok
+test reject_is_final_and_gates_without_a_revision_transition_fall_back ... ok
+test quality_gate_fails_closed_before_anything_is_stored ... ok
+test request_changes_revises_with_feedback_and_is_bounded ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+
+     Running tests/engine.rs (target/debug/deps/engine-e2271fc8b479ac37)
+
+running 9 tests
+test definition_validation ... ok
+test gate_cannot_be_bypassed_by_graph ... ok
+test gate_blocks_until_human_approval_and_enforces_sod ... ok
+test start_requires_authorization_and_scope ... ok
+test rejection_returns_to_revision_with_history ... ok
+test interrupted_workflow_recovers_without_duplicate_side_effects ... ok
+test cancellation_waiting_and_running ... ok
+test hybrid_orchestration_validates_planner_proposals ... ok
+test retry_and_timeout ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.04s
+
+     Running unittests src/lib.rs (target/debug/deps/eaeh_workspace-238928f952d2f663)
+
+running 8 tests
+test locks::tests::overlap_rules ... ok
+test tests::relative_path_validation ... ok
+test workspace::tests::expired_locks_can_be_taken_over ... ok
+test workspace::tests::scope_mismatch_and_cleanup ... ok
+test workspace::tests::traversal_and_symlink_escapes_rejected ... ok
+test workspace::tests::write_requires_lock_and_read_back ... ok
+test artifacts::tests::versions_integrity_and_scope ... ok
+test workspace::tests::concurrent_holders_conflict ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+   Doc-tests eaeh_acceptance
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_agents
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_api
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_architecture
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_engineering
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_events
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_extensibility
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_governance
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_intelligence
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_isolation
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_knowledge
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_provider_anthropic
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_requirements
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_runtime
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_skills
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_store
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_testkit
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_tools
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_validation
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_workflow
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests eaeh_workspace
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+==> cargo-deny
+warning[license-not-encountered]: license was not encountered
+   ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/deny.toml:32:4
+   │
+32 │   "CC0-1.0",
+   │    ━━━━━━━ unmatched license allowance
+
+warning[duplicate]: found 2 duplicate entries for crate 'base64'
+   ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:18:1
+   │  
+18 │ ╭ base64 0.22.1 registry+https://github.com/rust-lang/crates.io-index
+19 │ │ base64 0.23.1 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰───────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ base64 v0.22.1
+     └── sqlx-core v0.9.0
+         ├── sqlx v0.9.0
+         │   └── eaeh-store v0.1.0
+         │       ├── (dev) eaeh-acceptance v0.1.0
+         │       ├── eaeh-agents v0.1.0
+         │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   └── eaeh-runtime v0.1.0
+         │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │       ├── eaeh-api v0.1.0
+         │       │       │   └── eaeh-cli v0.1.0
+         │       │       └── eaeh-cli v0.1.0 (*)
+         │       ├── eaeh-api v0.1.0 (*)
+         │       ├── eaeh-events v0.1.0
+         │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   ├── eaeh-agents v0.1.0 (*)
+         │       │   ├── eaeh-extensibility v0.1.0
+         │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   ├── eaeh-agents v0.1.0 (*)
+         │       │   │   ├── eaeh-api v0.1.0 (*)
+         │       │   │   ├── eaeh-intelligence v0.1.0
+         │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │       │   │   │   ├── eaeh-knowledge v0.1.0
+         │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-engineering v0.1.0
+         │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+         │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │       │   │   │   ├── eaeh-skills v0.1.0
+         │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+         │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │       │   │   │   └── eaeh-testkit v0.1.0
+         │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+         │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+         │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │       │   │   ├── eaeh-runtime v0.1.0 (*)
+         │       │   │   ├── eaeh-tools v0.1.0
+         │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+         │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │       │   │   │   └── eaeh-skills v0.1.0 (*)
+         │       │   │   ├── eaeh-workflow v0.1.0
+         │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   │   ├── eaeh-api v0.1.0 (*)
+         │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │       │   │   └── eaeh-workspace v0.1.0
+         │       │   │       ├── eaeh-agents v0.1.0 (*)
+         │       │   │       ├── eaeh-runtime v0.1.0 (*)
+         │       │   │       ├── eaeh-tools v0.1.0 (*)
+         │       │   │       └── eaeh-workflow v0.1.0 (*)
+         │       │   ├── eaeh-governance v0.1.0
+         │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │       │   │   ├── eaeh-agents v0.1.0 (*)
+         │       │   │   ├── eaeh-api v0.1.0 (*)
+         │       │   │   ├── eaeh-cli v0.1.0 (*)
+         │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │       │   │   ├── eaeh-runtime v0.1.0 (*)
+         │       │   │   ├── eaeh-skills v0.1.0 (*)
+         │       │   │   ├── eaeh-tools v0.1.0 (*)
+         │       │   │   └── eaeh-workflow v0.1.0 (*)
+         │       │   ├── eaeh-intelligence v0.1.0 (*)
+         │       │   ├── eaeh-knowledge v0.1.0 (*)
+         │       │   ├── eaeh-runtime v0.1.0 (*)
+         │       │   ├── eaeh-skills v0.1.0 (*)
+         │       │   ├── eaeh-tools v0.1.0 (*)
+         │       │   ├── eaeh-workflow v0.1.0 (*)
+         │       │   └── eaeh-workspace v0.1.0 (*)
+         │       ├── eaeh-extensibility v0.1.0 (*)
+         │       ├── eaeh-governance v0.1.0 (*)
+         │       ├── eaeh-intelligence v0.1.0 (*)
+         │       ├── eaeh-knowledge v0.1.0 (*)
+         │       ├── eaeh-runtime v0.1.0 (*)
+         │       ├── eaeh-skills v0.1.0 (*)
+         │       ├── eaeh-tools v0.1.0 (*)
+         │       ├── eaeh-workflow v0.1.0 (*)
+         │       └── eaeh-workspace v0.1.0 (*)
+         ├── sqlx-macros v0.9.0
+         │   └── sqlx v0.9.0 (*)
+         ├── sqlx-macros-core v0.9.0
+         │   └── sqlx-macros v0.9.0 (*)
+         └── sqlx-sqlite v0.9.0
+             ├── sqlx v0.9.0 (*)
+             └── sqlx-macros-core v0.9.0 (*)
+   ├ base64 v0.23.1
+     ├── hyper-util v0.1.21
+     │   ├── axum v0.8.9
+     │   │   ├── eaeh-api v0.1.0
+     │   │   │   └── eaeh-cli v0.1.0
+     │   │   ├── eaeh-cli v0.1.0 (*)
+     │   │   └── (dev) eaeh-provider-anthropic v0.1.0
+     │   │       └── eaeh-runtime v0.1.0
+     │   │           ├── (dev) eaeh-acceptance v0.1.0
+     │   │           ├── eaeh-api v0.1.0 (*)
+     │   │           └── eaeh-cli v0.1.0 (*)
+     │   ├── hyper-rustls v0.27.10
+     │   │   └── reqwest v0.13.5
+     │   │       └── eaeh-provider-anthropic v0.1.0 (*)
+     │   └── reqwest v0.13.5 (*)
+     └── reqwest v0.13.5 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'block-buffer'
+   ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:23:1
+   │  
+23 │ ╭ block-buffer 0.10.4 registry+https://github.com/rust-lang/crates.io-index
+24 │ │ block-buffer 0.12.1 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰─────────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ block-buffer v0.10.4
+     └── digest v0.10.7
+         └── sha2 v0.10.9
+             ├── sqlx-core v0.9.0
+             │   ├── sqlx v0.9.0
+             │   │   └── eaeh-store v0.1.0
+             │   │       ├── (dev) eaeh-acceptance v0.1.0
+             │   │       ├── eaeh-agents v0.1.0
+             │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   └── eaeh-runtime v0.1.0
+             │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │       ├── eaeh-api v0.1.0
+             │   │       │       │   └── eaeh-cli v0.1.0
+             │   │       │       └── eaeh-cli v0.1.0 (*)
+             │   │       ├── eaeh-api v0.1.0 (*)
+             │   │       ├── eaeh-events v0.1.0
+             │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   ├── eaeh-extensibility v0.1.0
+             │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   ├── eaeh-intelligence v0.1.0
+             │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-knowledge v0.1.0
+             │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-engineering v0.1.0
+             │   │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+             │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-skills v0.1.0
+             │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   └── eaeh-testkit v0.1.0
+             │   │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+             │   │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+             │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   ├── eaeh-tools v0.1.0
+             │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   └── eaeh-skills v0.1.0 (*)
+             │   │       │   │   ├── eaeh-workflow v0.1.0
+             │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   └── eaeh-workspace v0.1.0
+             │   │       │   │       ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │       ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │       ├── eaeh-tools v0.1.0 (*)
+             │   │       │   │       └── eaeh-workflow v0.1.0 (*)
+             │   │       │   ├── eaeh-governance v0.1.0
+             │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │       │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │       │   │   └── eaeh-workflow v0.1.0 (*)
+             │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   ├── eaeh-skills v0.1.0 (*)
+             │   │       │   ├── eaeh-tools v0.1.0 (*)
+             │   │       │   ├── eaeh-workflow v0.1.0 (*)
+             │   │       │   └── eaeh-workspace v0.1.0 (*)
+             │   │       ├── eaeh-extensibility v0.1.0 (*)
+             │   │       ├── eaeh-governance v0.1.0 (*)
+             │   │       ├── eaeh-intelligence v0.1.0 (*)
+             │   │       ├── eaeh-knowledge v0.1.0 (*)
+             │   │       ├── eaeh-runtime v0.1.0 (*)
+             │   │       ├── eaeh-skills v0.1.0 (*)
+             │   │       ├── eaeh-tools v0.1.0 (*)
+             │   │       ├── eaeh-workflow v0.1.0 (*)
+             │   │       └── eaeh-workspace v0.1.0 (*)
+             │   ├── sqlx-macros v0.9.0
+             │   │   └── sqlx v0.9.0 (*)
+             │   ├── sqlx-macros-core v0.9.0
+             │   │   └── sqlx-macros v0.9.0 (*)
+             │   └── sqlx-sqlite v0.9.0
+             │       ├── sqlx v0.9.0 (*)
+             │       └── sqlx-macros-core v0.9.0 (*)
+             └── sqlx-macros-core v0.9.0 (*)
+   ├ block-buffer v0.12.1
+     └── digest v0.11.3
+         ├── curve25519-dalek v5.0.0
+         │   └── ed25519-dalek v3.0.0
+         │       └── eaeh-extensibility v0.1.0
+         │           ├── (dev) eaeh-acceptance v0.1.0
+         │           ├── eaeh-agents v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   └── eaeh-runtime v0.1.0
+         │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │       ├── eaeh-api v0.1.0
+         │           │       │   └── eaeh-cli v0.1.0
+         │           │       └── eaeh-cli v0.1.0 (*)
+         │           ├── eaeh-api v0.1.0 (*)
+         │           ├── eaeh-intelligence v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   ├── eaeh-agents v0.1.0 (*)
+         │           │   ├── eaeh-knowledge v0.1.0
+         │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   │   ├── eaeh-agents v0.1.0 (*)
+         │           │   │   ├── eaeh-api v0.1.0 (*)
+         │           │   │   ├── eaeh-cli v0.1.0 (*)
+         │           │   │   ├── eaeh-engineering v0.1.0
+         │           │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   ├── eaeh-provider-anthropic v0.1.0
+         │           │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   ├── eaeh-runtime v0.1.0 (*)
+         │           │   ├── eaeh-skills v0.1.0
+         │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   │   ├── eaeh-agents v0.1.0 (*)
+         │           │   │   ├── eaeh-api v0.1.0 (*)
+         │           │   │   ├── eaeh-cli v0.1.0 (*)
+         │           │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   └── eaeh-testkit v0.1.0
+         │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │       ├── (dev) eaeh-agents v0.1.0 (*)
+         │           │       └── (dev) eaeh-runtime v0.1.0 (*)
+         │           ├── eaeh-knowledge v0.1.0 (*)
+         │           ├── eaeh-runtime v0.1.0 (*)
+         │           ├── eaeh-tools v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   ├── eaeh-agents v0.1.0 (*)
+         │           │   ├── eaeh-engineering v0.1.0 (*)
+         │           │   ├── eaeh-knowledge v0.1.0 (*)
+         │           │   ├── eaeh-runtime v0.1.0 (*)
+         │           │   └── eaeh-skills v0.1.0 (*)
+         │           ├── eaeh-workflow v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   ├── eaeh-api v0.1.0 (*)
+         │           │   ├── eaeh-cli v0.1.0 (*)
+         │           │   └── eaeh-runtime v0.1.0 (*)
+         │           └── eaeh-workspace v0.1.0
+         │               ├── eaeh-agents v0.1.0 (*)
+         │               ├── eaeh-runtime v0.1.0 (*)
+         │               ├── eaeh-tools v0.1.0 (*)
+         │               └── eaeh-workflow v0.1.0 (*)
+         └── sha2 v0.11.1
+             ├── eaeh-core v0.1.0
+             │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   ├── eaeh-agents v0.1.0 (*)
+             │   ├── eaeh-api v0.1.0 (*)
+             │   ├── eaeh-architecture v0.1.0
+             │   │   └── eaeh-engineering v0.1.0 (*)
+             │   ├── eaeh-cli v0.1.0 (*)
+             │   ├── eaeh-engineering v0.1.0 (*)
+             │   ├── eaeh-events v0.1.0
+             │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │   ├── eaeh-governance v0.1.0
+             │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   │   └── eaeh-workflow v0.1.0 (*)
+             │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   ├── eaeh-workflow v0.1.0 (*)
+             │   │   └── eaeh-workspace v0.1.0 (*)
+             │   ├── eaeh-extensibility v0.1.0 (*)
+             │   ├── eaeh-governance v0.1.0 (*)
+             │   ├── eaeh-intelligence v0.1.0 (*)
+             │   ├── eaeh-isolation v0.1.0
+             │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   └── eaeh-tools v0.1.0 (*)
+             │   ├── eaeh-knowledge v0.1.0 (*)
+             │   ├── eaeh-provider-anthropic v0.1.0 (*)
+             │   ├── eaeh-requirements v0.1.0
+             │   │   ├── eaeh-architecture v0.1.0 (*)
+             │   │   ├── eaeh-engineering v0.1.0 (*)
+             │   │   └── eaeh-runtime v0.1.0 (*)
+             │   ├── eaeh-runtime v0.1.0 (*)
+             │   ├── eaeh-skills v0.1.0 (*)
+             │   ├── eaeh-store v0.1.0
+             │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-api v0.1.0 (*)
+             │   │   ├── eaeh-events v0.1.0 (*)
+             │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │   ├── eaeh-governance v0.1.0 (*)
+             │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   ├── eaeh-workflow v0.1.0 (*)
+             │   │   └── eaeh-workspace v0.1.0 (*)
+             │   ├── eaeh-testkit v0.1.0 (*)
+             │   ├── eaeh-tools v0.1.0 (*)
+             │   ├── eaeh-validation v0.1.0
+             │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-architecture v0.1.0 (*)
+             │   │   ├── eaeh-engineering v0.1.0 (*)
+             │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   ├── eaeh-requirements v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   └── eaeh-workflow v0.1.0 (*)
+             │   ├── eaeh-workflow v0.1.0 (*)
+             │   └── eaeh-workspace v0.1.0 (*)
+             └── ed25519-dalek v3.0.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'cpufeatures'
+   ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:42:1
+   │  
+42 │ ╭ cpufeatures 0.2.17 registry+https://github.com/rust-lang/crates.io-index
+43 │ │ cpufeatures 0.3.1 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰───────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ cpufeatures v0.2.17
+     └── sha2 v0.10.9
+         ├── sqlx-core v0.9.0
+         │   ├── sqlx v0.9.0
+         │   │   └── eaeh-store v0.1.0
+         │   │       ├── (dev) eaeh-acceptance v0.1.0
+         │   │       ├── eaeh-agents v0.1.0
+         │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   └── eaeh-runtime v0.1.0
+         │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │       ├── eaeh-api v0.1.0
+         │   │       │       │   └── eaeh-cli v0.1.0
+         │   │       │       └── eaeh-cli v0.1.0 (*)
+         │   │       ├── eaeh-api v0.1.0 (*)
+         │   │       ├── eaeh-events v0.1.0
+         │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   ├── eaeh-extensibility v0.1.0
+         │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   ├── eaeh-intelligence v0.1.0
+         │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-knowledge v0.1.0
+         │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-engineering v0.1.0
+         │   │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+         │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-skills v0.1.0
+         │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   └── eaeh-testkit v0.1.0
+         │   │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+         │   │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+         │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   ├── eaeh-tools v0.1.0
+         │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   └── eaeh-skills v0.1.0 (*)
+         │   │       │   │   ├── eaeh-workflow v0.1.0
+         │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   └── eaeh-workspace v0.1.0
+         │   │       │   │       ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │       ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │       ├── eaeh-tools v0.1.0 (*)
+         │   │       │   │       └── eaeh-workflow v0.1.0 (*)
+         │   │       │   ├── eaeh-governance v0.1.0
+         │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │       │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │       │   │   └── eaeh-workflow v0.1.0 (*)
+         │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   ├── eaeh-skills v0.1.0 (*)
+         │   │       │   ├── eaeh-tools v0.1.0 (*)
+         │   │       │   ├── eaeh-workflow v0.1.0 (*)
+         │   │       │   └── eaeh-workspace v0.1.0 (*)
+         │   │       ├── eaeh-extensibility v0.1.0 (*)
+         │   │       ├── eaeh-governance v0.1.0 (*)
+         │   │       ├── eaeh-intelligence v0.1.0 (*)
+         │   │       ├── eaeh-knowledge v0.1.0 (*)
+         │   │       ├── eaeh-runtime v0.1.0 (*)
+         │   │       ├── eaeh-skills v0.1.0 (*)
+         │   │       ├── eaeh-tools v0.1.0 (*)
+         │   │       ├── eaeh-workflow v0.1.0 (*)
+         │   │       └── eaeh-workspace v0.1.0 (*)
+         │   ├── sqlx-macros v0.9.0
+         │   │   └── sqlx v0.9.0 (*)
+         │   ├── sqlx-macros-core v0.9.0
+         │   │   └── sqlx-macros v0.9.0 (*)
+         │   └── sqlx-sqlite v0.9.0
+         │       ├── sqlx v0.9.0 (*)
+         │       └── sqlx-macros-core v0.9.0 (*)
+         └── sqlx-macros-core v0.9.0 (*)
+   ├ cpufeatures v0.3.1
+     ├── curve25519-dalek v5.0.0
+     │   └── ed25519-dalek v3.0.0
+     │       └── eaeh-extensibility v0.1.0
+     │           ├── (dev) eaeh-acceptance v0.1.0
+     │           ├── eaeh-agents v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   └── eaeh-runtime v0.1.0
+     │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │       ├── eaeh-api v0.1.0
+     │           │       │   └── eaeh-cli v0.1.0
+     │           │       └── eaeh-cli v0.1.0 (*)
+     │           ├── eaeh-api v0.1.0 (*)
+     │           ├── eaeh-intelligence v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   ├── eaeh-agents v0.1.0 (*)
+     │           │   ├── eaeh-knowledge v0.1.0
+     │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   │   ├── eaeh-agents v0.1.0 (*)
+     │           │   │   ├── eaeh-api v0.1.0 (*)
+     │           │   │   ├── eaeh-cli v0.1.0 (*)
+     │           │   │   ├── eaeh-engineering v0.1.0
+     │           │   │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   ├── eaeh-provider-anthropic v0.1.0
+     │           │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   ├── eaeh-runtime v0.1.0 (*)
+     │           │   ├── eaeh-skills v0.1.0
+     │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   │   ├── eaeh-agents v0.1.0 (*)
+     │           │   │   ├── eaeh-api v0.1.0 (*)
+     │           │   │   ├── eaeh-cli v0.1.0 (*)
+     │           │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   └── eaeh-testkit v0.1.0
+     │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │       ├── (dev) eaeh-agents v0.1.0 (*)
+     │           │       └── (dev) eaeh-runtime v0.1.0 (*)
+     │           ├── eaeh-knowledge v0.1.0 (*)
+     │           ├── eaeh-runtime v0.1.0 (*)
+     │           ├── eaeh-tools v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   ├── eaeh-agents v0.1.0 (*)
+     │           │   ├── eaeh-engineering v0.1.0 (*)
+     │           │   ├── eaeh-knowledge v0.1.0 (*)
+     │           │   ├── eaeh-runtime v0.1.0 (*)
+     │           │   └── eaeh-skills v0.1.0 (*)
+     │           ├── eaeh-workflow v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   ├── eaeh-api v0.1.0 (*)
+     │           │   ├── eaeh-cli v0.1.0 (*)
+     │           │   └── eaeh-runtime v0.1.0 (*)
+     │           └── eaeh-workspace v0.1.0
+     │               ├── eaeh-agents v0.1.0 (*)
+     │               ├── eaeh-runtime v0.1.0 (*)
+     │               ├── eaeh-tools v0.1.0 (*)
+     │               └── eaeh-workflow v0.1.0 (*)
+     └── sha2 v0.11.1
+         ├── eaeh-core v0.1.0
+         │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   ├── eaeh-agents v0.1.0 (*)
+         │   ├── eaeh-api v0.1.0 (*)
+         │   ├── eaeh-architecture v0.1.0
+         │   │   └── eaeh-engineering v0.1.0 (*)
+         │   ├── eaeh-cli v0.1.0 (*)
+         │   ├── eaeh-engineering v0.1.0 (*)
+         │   ├── eaeh-events v0.1.0
+         │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │   ├── eaeh-governance v0.1.0
+         │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   │   └── eaeh-workflow v0.1.0 (*)
+         │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   ├── eaeh-workflow v0.1.0 (*)
+         │   │   └── eaeh-workspace v0.1.0 (*)
+         │   ├── eaeh-extensibility v0.1.0 (*)
+         │   ├── eaeh-governance v0.1.0 (*)
+         │   ├── eaeh-intelligence v0.1.0 (*)
+         │   ├── eaeh-isolation v0.1.0
+         │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   └── eaeh-tools v0.1.0 (*)
+         │   ├── eaeh-knowledge v0.1.0 (*)
+         │   ├── eaeh-provider-anthropic v0.1.0 (*)
+         │   ├── eaeh-requirements v0.1.0
+         │   │   ├── eaeh-architecture v0.1.0 (*)
+         │   │   ├── eaeh-engineering v0.1.0 (*)
+         │   │   └── eaeh-runtime v0.1.0 (*)
+         │   ├── eaeh-runtime v0.1.0 (*)
+         │   ├── eaeh-skills v0.1.0 (*)
+         │   ├── eaeh-store v0.1.0
+         │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-api v0.1.0 (*)
+         │   │   ├── eaeh-events v0.1.0 (*)
+         │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │   ├── eaeh-governance v0.1.0 (*)
+         │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   ├── eaeh-workflow v0.1.0 (*)
+         │   │   └── eaeh-workspace v0.1.0 (*)
+         │   ├── eaeh-testkit v0.1.0 (*)
+         │   ├── eaeh-tools v0.1.0 (*)
+         │   ├── eaeh-validation v0.1.0
+         │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-architecture v0.1.0 (*)
+         │   │   ├── eaeh-engineering v0.1.0 (*)
+         │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   ├── eaeh-requirements v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   └── eaeh-workflow v0.1.0 (*)
+         │   ├── eaeh-workflow v0.1.0 (*)
+         │   └── eaeh-workspace v0.1.0 (*)
+         └── ed25519-dalek v3.0.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'crypto-common'
+   ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:48:1
+   │  
+48 │ ╭ crypto-common 0.1.6 registry+https://github.com/rust-lang/crates.io-index
+49 │ │ crypto-common 0.2.2 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰─────────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ crypto-common v0.1.6
+     └── digest v0.10.7
+         └── sha2 v0.10.9
+             ├── sqlx-core v0.9.0
+             │   ├── sqlx v0.9.0
+             │   │   └── eaeh-store v0.1.0
+             │   │       ├── (dev) eaeh-acceptance v0.1.0
+             │   │       ├── eaeh-agents v0.1.0
+             │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   └── eaeh-runtime v0.1.0
+             │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │       ├── eaeh-api v0.1.0
+             │   │       │       │   └── eaeh-cli v0.1.0
+             │   │       │       └── eaeh-cli v0.1.0 (*)
+             │   │       ├── eaeh-api v0.1.0 (*)
+             │   │       ├── eaeh-events v0.1.0
+             │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   ├── eaeh-extensibility v0.1.0
+             │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   ├── eaeh-intelligence v0.1.0
+             │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-knowledge v0.1.0
+             │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-engineering v0.1.0
+             │   │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+             │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-skills v0.1.0
+             │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   └── eaeh-testkit v0.1.0
+             │   │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+             │   │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+             │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   ├── eaeh-tools v0.1.0
+             │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   │   └── eaeh-skills v0.1.0 (*)
+             │   │       │   │   ├── eaeh-workflow v0.1.0
+             │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   └── eaeh-workspace v0.1.0
+             │   │       │   │       ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │       ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │       ├── eaeh-tools v0.1.0 (*)
+             │   │       │   │       └── eaeh-workflow v0.1.0 (*)
+             │   │       │   ├── eaeh-governance v0.1.0
+             │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │       │   │   ├── eaeh-api v0.1.0 (*)
+             │   │       │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │       │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │       │   │   └── eaeh-workflow v0.1.0 (*)
+             │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │       │   ├── eaeh-runtime v0.1.0 (*)
+             │   │       │   ├── eaeh-skills v0.1.0 (*)
+             │   │       │   ├── eaeh-tools v0.1.0 (*)
+             │   │       │   ├── eaeh-workflow v0.1.0 (*)
+             │   │       │   └── eaeh-workspace v0.1.0 (*)
+             │   │       ├── eaeh-extensibility v0.1.0 (*)
+             │   │       ├── eaeh-governance v0.1.0 (*)
+             │   │       ├── eaeh-intelligence v0.1.0 (*)
+             │   │       ├── eaeh-knowledge v0.1.0 (*)
+             │   │       ├── eaeh-runtime v0.1.0 (*)
+             │   │       ├── eaeh-skills v0.1.0 (*)
+             │   │       ├── eaeh-tools v0.1.0 (*)
+             │   │       ├── eaeh-workflow v0.1.0 (*)
+             │   │       └── eaeh-workspace v0.1.0 (*)
+             │   ├── sqlx-macros v0.9.0
+             │   │   └── sqlx v0.9.0 (*)
+             │   ├── sqlx-macros-core v0.9.0
+             │   │   └── sqlx-macros v0.9.0 (*)
+             │   └── sqlx-sqlite v0.9.0
+             │       ├── sqlx v0.9.0 (*)
+             │       └── sqlx-macros-core v0.9.0 (*)
+             └── sqlx-macros-core v0.9.0 (*)
+   ├ crypto-common v0.2.2
+     └── digest v0.11.3
+         ├── curve25519-dalek v5.0.0
+         │   └── ed25519-dalek v3.0.0
+         │       └── eaeh-extensibility v0.1.0
+         │           ├── (dev) eaeh-acceptance v0.1.0
+         │           ├── eaeh-agents v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   └── eaeh-runtime v0.1.0
+         │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │       ├── eaeh-api v0.1.0
+         │           │       │   └── eaeh-cli v0.1.0
+         │           │       └── eaeh-cli v0.1.0 (*)
+         │           ├── eaeh-api v0.1.0 (*)
+         │           ├── eaeh-intelligence v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   ├── eaeh-agents v0.1.0 (*)
+         │           │   ├── eaeh-knowledge v0.1.0
+         │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   │   ├── eaeh-agents v0.1.0 (*)
+         │           │   │   ├── eaeh-api v0.1.0 (*)
+         │           │   │   ├── eaeh-cli v0.1.0 (*)
+         │           │   │   ├── eaeh-engineering v0.1.0
+         │           │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   ├── eaeh-provider-anthropic v0.1.0
+         │           │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   ├── eaeh-runtime v0.1.0 (*)
+         │           │   ├── eaeh-skills v0.1.0
+         │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   │   ├── eaeh-agents v0.1.0 (*)
+         │           │   │   ├── eaeh-api v0.1.0 (*)
+         │           │   │   ├── eaeh-cli v0.1.0 (*)
+         │           │   │   └── eaeh-runtime v0.1.0 (*)
+         │           │   └── eaeh-testkit v0.1.0
+         │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │       ├── (dev) eaeh-agents v0.1.0 (*)
+         │           │       └── (dev) eaeh-runtime v0.1.0 (*)
+         │           ├── eaeh-knowledge v0.1.0 (*)
+         │           ├── eaeh-runtime v0.1.0 (*)
+         │           ├── eaeh-tools v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   ├── eaeh-agents v0.1.0 (*)
+         │           │   ├── eaeh-engineering v0.1.0 (*)
+         │           │   ├── eaeh-knowledge v0.1.0 (*)
+         │           │   ├── eaeh-runtime v0.1.0 (*)
+         │           │   └── eaeh-skills v0.1.0 (*)
+         │           ├── eaeh-workflow v0.1.0
+         │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │           │   ├── eaeh-api v0.1.0 (*)
+         │           │   ├── eaeh-cli v0.1.0 (*)
+         │           │   └── eaeh-runtime v0.1.0 (*)
+         │           └── eaeh-workspace v0.1.0
+         │               ├── eaeh-agents v0.1.0 (*)
+         │               ├── eaeh-runtime v0.1.0 (*)
+         │               ├── eaeh-tools v0.1.0 (*)
+         │               └── eaeh-workflow v0.1.0 (*)
+         └── sha2 v0.11.1
+             ├── eaeh-core v0.1.0
+             │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   ├── eaeh-agents v0.1.0 (*)
+             │   ├── eaeh-api v0.1.0 (*)
+             │   ├── eaeh-architecture v0.1.0
+             │   │   └── eaeh-engineering v0.1.0 (*)
+             │   ├── eaeh-cli v0.1.0 (*)
+             │   ├── eaeh-engineering v0.1.0 (*)
+             │   ├── eaeh-events v0.1.0
+             │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │   ├── eaeh-governance v0.1.0
+             │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   │   ├── eaeh-api v0.1.0 (*)
+             │   │   │   ├── eaeh-cli v0.1.0 (*)
+             │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   │   └── eaeh-workflow v0.1.0 (*)
+             │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   ├── eaeh-workflow v0.1.0 (*)
+             │   │   └── eaeh-workspace v0.1.0 (*)
+             │   ├── eaeh-extensibility v0.1.0 (*)
+             │   ├── eaeh-governance v0.1.0 (*)
+             │   ├── eaeh-intelligence v0.1.0 (*)
+             │   ├── eaeh-isolation v0.1.0
+             │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   └── eaeh-tools v0.1.0 (*)
+             │   ├── eaeh-knowledge v0.1.0 (*)
+             │   ├── eaeh-provider-anthropic v0.1.0 (*)
+             │   ├── eaeh-requirements v0.1.0
+             │   │   ├── eaeh-architecture v0.1.0 (*)
+             │   │   ├── eaeh-engineering v0.1.0 (*)
+             │   │   └── eaeh-runtime v0.1.0 (*)
+             │   ├── eaeh-runtime v0.1.0 (*)
+             │   ├── eaeh-skills v0.1.0 (*)
+             │   ├── eaeh-store v0.1.0
+             │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-api v0.1.0 (*)
+             │   │   ├── eaeh-events v0.1.0 (*)
+             │   │   ├── eaeh-extensibility v0.1.0 (*)
+             │   │   ├── eaeh-governance v0.1.0 (*)
+             │   │   ├── eaeh-intelligence v0.1.0 (*)
+             │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   ├── eaeh-workflow v0.1.0 (*)
+             │   │   └── eaeh-workspace v0.1.0 (*)
+             │   ├── eaeh-testkit v0.1.0 (*)
+             │   ├── eaeh-tools v0.1.0 (*)
+             │   ├── eaeh-validation v0.1.0
+             │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+             │   │   ├── eaeh-agents v0.1.0 (*)
+             │   │   ├── eaeh-architecture v0.1.0 (*)
+             │   │   ├── eaeh-engineering v0.1.0 (*)
+             │   │   ├── eaeh-knowledge v0.1.0 (*)
+             │   │   ├── eaeh-requirements v0.1.0 (*)
+             │   │   ├── eaeh-runtime v0.1.0 (*)
+             │   │   ├── eaeh-skills v0.1.0 (*)
+             │   │   ├── eaeh-tools v0.1.0 (*)
+             │   │   └── eaeh-workflow v0.1.0 (*)
+             │   ├── eaeh-workflow v0.1.0 (*)
+             │   └── eaeh-workspace v0.1.0 (*)
+             └── ed25519-dalek v3.0.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'digest'
+   ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:54:1
+   │  
+54 │ ╭ digest 0.10.7 registry+https://github.com/rust-lang/crates.io-index
+55 │ │ digest 0.11.3 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰───────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ digest v0.10.7
+     └── sha2 v0.10.9
+         ├── sqlx-core v0.9.0
+         │   ├── sqlx v0.9.0
+         │   │   └── eaeh-store v0.1.0
+         │   │       ├── (dev) eaeh-acceptance v0.1.0
+         │   │       ├── eaeh-agents v0.1.0
+         │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   └── eaeh-runtime v0.1.0
+         │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │       ├── eaeh-api v0.1.0
+         │   │       │       │   └── eaeh-cli v0.1.0
+         │   │       │       └── eaeh-cli v0.1.0 (*)
+         │   │       ├── eaeh-api v0.1.0 (*)
+         │   │       ├── eaeh-events v0.1.0
+         │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   ├── eaeh-extensibility v0.1.0
+         │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   ├── eaeh-intelligence v0.1.0
+         │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-knowledge v0.1.0
+         │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-engineering v0.1.0
+         │   │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+         │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-skills v0.1.0
+         │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   └── eaeh-testkit v0.1.0
+         │   │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+         │   │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+         │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   ├── eaeh-tools v0.1.0
+         │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   │   └── eaeh-skills v0.1.0 (*)
+         │   │       │   │   ├── eaeh-workflow v0.1.0
+         │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   └── eaeh-workspace v0.1.0
+         │   │       │   │       ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │       ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │       ├── eaeh-tools v0.1.0 (*)
+         │   │       │   │       └── eaeh-workflow v0.1.0 (*)
+         │   │       │   ├── eaeh-governance v0.1.0
+         │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │       │   │   ├── eaeh-api v0.1.0 (*)
+         │   │       │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │       │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │       │   │   └── eaeh-workflow v0.1.0 (*)
+         │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │       │   ├── eaeh-runtime v0.1.0 (*)
+         │   │       │   ├── eaeh-skills v0.1.0 (*)
+         │   │       │   ├── eaeh-tools v0.1.0 (*)
+         │   │       │   ├── eaeh-workflow v0.1.0 (*)
+         │   │       │   └── eaeh-workspace v0.1.0 (*)
+         │   │       ├── eaeh-extensibility v0.1.0 (*)
+         │   │       ├── eaeh-governance v0.1.0 (*)
+         │   │       ├── eaeh-intelligence v0.1.0 (*)
+         │   │       ├── eaeh-knowledge v0.1.0 (*)
+         │   │       ├── eaeh-runtime v0.1.0 (*)
+         │   │       ├── eaeh-skills v0.1.0 (*)
+         │   │       ├── eaeh-tools v0.1.0 (*)
+         │   │       ├── eaeh-workflow v0.1.0 (*)
+         │   │       └── eaeh-workspace v0.1.0 (*)
+         │   ├── sqlx-macros v0.9.0
+         │   │   └── sqlx v0.9.0 (*)
+         │   ├── sqlx-macros-core v0.9.0
+         │   │   └── sqlx-macros v0.9.0 (*)
+         │   └── sqlx-sqlite v0.9.0
+         │       ├── sqlx v0.9.0 (*)
+         │       └── sqlx-macros-core v0.9.0 (*)
+         └── sqlx-macros-core v0.9.0 (*)
+   ├ digest v0.11.3
+     ├── curve25519-dalek v5.0.0
+     │   └── ed25519-dalek v3.0.0
+     │       └── eaeh-extensibility v0.1.0
+     │           ├── (dev) eaeh-acceptance v0.1.0
+     │           ├── eaeh-agents v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   └── eaeh-runtime v0.1.0
+     │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │       ├── eaeh-api v0.1.0
+     │           │       │   └── eaeh-cli v0.1.0
+     │           │       └── eaeh-cli v0.1.0 (*)
+     │           ├── eaeh-api v0.1.0 (*)
+     │           ├── eaeh-intelligence v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   ├── eaeh-agents v0.1.0 (*)
+     │           │   ├── eaeh-knowledge v0.1.0
+     │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   │   ├── eaeh-agents v0.1.0 (*)
+     │           │   │   ├── eaeh-api v0.1.0 (*)
+     │           │   │   ├── eaeh-cli v0.1.0 (*)
+     │           │   │   ├── eaeh-engineering v0.1.0
+     │           │   │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   ├── eaeh-provider-anthropic v0.1.0
+     │           │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   ├── eaeh-runtime v0.1.0 (*)
+     │           │   ├── eaeh-skills v0.1.0
+     │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   │   ├── eaeh-agents v0.1.0 (*)
+     │           │   │   ├── eaeh-api v0.1.0 (*)
+     │           │   │   ├── eaeh-cli v0.1.0 (*)
+     │           │   │   └── eaeh-runtime v0.1.0 (*)
+     │           │   └── eaeh-testkit v0.1.0
+     │           │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │       ├── (dev) eaeh-agents v0.1.0 (*)
+     │           │       └── (dev) eaeh-runtime v0.1.0 (*)
+     │           ├── eaeh-knowledge v0.1.0 (*)
+     │           ├── eaeh-runtime v0.1.0 (*)
+     │           ├── eaeh-tools v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   ├── eaeh-agents v0.1.0 (*)
+     │           │   ├── eaeh-engineering v0.1.0 (*)
+     │           │   ├── eaeh-knowledge v0.1.0 (*)
+     │           │   ├── eaeh-runtime v0.1.0 (*)
+     │           │   └── eaeh-skills v0.1.0 (*)
+     │           ├── eaeh-workflow v0.1.0
+     │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+     │           │   ├── eaeh-api v0.1.0 (*)
+     │           │   ├── eaeh-cli v0.1.0 (*)
+     │           │   └── eaeh-runtime v0.1.0 (*)
+     │           └── eaeh-workspace v0.1.0
+     │               ├── eaeh-agents v0.1.0 (*)
+     │               ├── eaeh-runtime v0.1.0 (*)
+     │               ├── eaeh-tools v0.1.0 (*)
+     │               └── eaeh-workflow v0.1.0 (*)
+     └── sha2 v0.11.1
+         ├── eaeh-core v0.1.0
+         │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   ├── eaeh-agents v0.1.0 (*)
+         │   ├── eaeh-api v0.1.0 (*)
+         │   ├── eaeh-architecture v0.1.0
+         │   │   └── eaeh-engineering v0.1.0 (*)
+         │   ├── eaeh-cli v0.1.0 (*)
+         │   ├── eaeh-engineering v0.1.0 (*)
+         │   ├── eaeh-events v0.1.0
+         │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │   ├── eaeh-governance v0.1.0
+         │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   │   ├── eaeh-api v0.1.0 (*)
+         │   │   │   ├── eaeh-cli v0.1.0 (*)
+         │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   │   └── eaeh-workflow v0.1.0 (*)
+         │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   ├── eaeh-workflow v0.1.0 (*)
+         │   │   └── eaeh-workspace v0.1.0 (*)
+         │   ├── eaeh-extensibility v0.1.0 (*)
+         │   ├── eaeh-governance v0.1.0 (*)
+         │   ├── eaeh-intelligence v0.1.0 (*)
+         │   ├── eaeh-isolation v0.1.0
+         │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   └── eaeh-tools v0.1.0 (*)
+         │   ├── eaeh-knowledge v0.1.0 (*)
+         │   ├── eaeh-provider-anthropic v0.1.0 (*)
+         │   ├── eaeh-requirements v0.1.0
+         │   │   ├── eaeh-architecture v0.1.0 (*)
+         │   │   ├── eaeh-engineering v0.1.0 (*)
+         │   │   └── eaeh-runtime v0.1.0 (*)
+         │   ├── eaeh-runtime v0.1.0 (*)
+         │   ├── eaeh-skills v0.1.0 (*)
+         │   ├── eaeh-store v0.1.0
+         │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-api v0.1.0 (*)
+         │   │   ├── eaeh-events v0.1.0 (*)
+         │   │   ├── eaeh-extensibility v0.1.0 (*)
+         │   │   ├── eaeh-governance v0.1.0 (*)
+         │   │   ├── eaeh-intelligence v0.1.0 (*)
+         │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   ├── eaeh-workflow v0.1.0 (*)
+         │   │   └── eaeh-workspace v0.1.0 (*)
+         │   ├── eaeh-testkit v0.1.0 (*)
+         │   ├── eaeh-tools v0.1.0 (*)
+         │   ├── eaeh-validation v0.1.0
+         │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+         │   │   ├── eaeh-agents v0.1.0 (*)
+         │   │   ├── eaeh-architecture v0.1.0 (*)
+         │   │   ├── eaeh-engineering v0.1.0 (*)
+         │   │   ├── eaeh-knowledge v0.1.0 (*)
+         │   │   ├── eaeh-requirements v0.1.0 (*)
+         │   │   ├── eaeh-runtime v0.1.0 (*)
+         │   │   ├── eaeh-skills v0.1.0 (*)
+         │   │   ├── eaeh-tools v0.1.0 (*)
+         │   │   └── eaeh-workflow v0.1.0 (*)
+         │   ├── eaeh-workflow v0.1.0 (*)
+         │   └── eaeh-workspace v0.1.0 (*)
+         └── ed25519-dalek v3.0.0 (*)
+
+warning[duplicate]: found 3 duplicate entries for crate 'getrandom'
+    ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:107:1
+    │  
+107 │ ╭ getrandom 0.2.17 registry+https://github.com/rust-lang/crates.io-index
+108 │ │ getrandom 0.3.4 registry+https://github.com/rust-lang/crates.io-index
+109 │ │ getrandom 0.4.3 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ getrandom v0.2.17
+      └── ring v0.17.14
+          ├── rustls v0.23.46
+          │   ├── eaeh-provider-anthropic v0.1.0
+          │   │   └── eaeh-runtime v0.1.0
+          │   │       ├── (dev) eaeh-acceptance v0.1.0
+          │   │       ├── eaeh-api v0.1.0
+          │   │       │   └── eaeh-cli v0.1.0
+          │   │       └── eaeh-cli v0.1.0 (*)
+          │   ├── hyper-rustls v0.27.10
+          │   │   └── reqwest v0.13.5
+          │   │       └── eaeh-provider-anthropic v0.1.0 (*)
+          │   ├── reqwest v0.13.5 (*)
+          │   ├── rustls-platform-verifier v0.7.1
+          │   │   └── reqwest v0.13.5 (*)
+          │   └── tokio-rustls v0.26.6
+          │       ├── hyper-rustls v0.27.10 (*)
+          │       └── reqwest v0.13.5 (*)
+          └── rustls-webpki v0.103.16
+              ├── rustls v0.23.46 (*)
+              └── rustls-platform-verifier v0.7.1 (*)
+    ├ getrandom v0.3.4
+      ├── ahash v0.8.12
+      │   ├── jsonschema v0.61.2
+      │   │   └── eaeh-validation v0.1.0
+      │   │       ├── (dev) eaeh-acceptance v0.1.0
+      │   │       ├── eaeh-agents v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   └── eaeh-runtime v0.1.0
+      │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │       ├── eaeh-api v0.1.0
+      │   │       │       │   └── eaeh-cli v0.1.0
+      │   │       │       └── eaeh-cli v0.1.0 (*)
+      │   │       ├── eaeh-architecture v0.1.0
+      │   │       │   └── eaeh-engineering v0.1.0
+      │   │       │       └── eaeh-runtime v0.1.0 (*)
+      │   │       ├── eaeh-engineering v0.1.0 (*)
+      │   │       ├── eaeh-knowledge v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   ├── eaeh-engineering v0.1.0 (*)
+      │   │       │   └── eaeh-runtime v0.1.0 (*)
+      │   │       ├── eaeh-requirements v0.1.0
+      │   │       │   ├── eaeh-architecture v0.1.0 (*)
+      │   │       │   ├── eaeh-engineering v0.1.0 (*)
+      │   │       │   └── eaeh-runtime v0.1.0 (*)
+      │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │       ├── eaeh-skills v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   └── eaeh-runtime v0.1.0 (*)
+      │   │       ├── eaeh-tools v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-engineering v0.1.0 (*)
+      │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   └── eaeh-skills v0.1.0 (*)
+      │   │       └── eaeh-workflow v0.1.0
+      │   │           ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │           ├── eaeh-api v0.1.0 (*)
+      │   │           ├── eaeh-cli v0.1.0 (*)
+      │   │           └── eaeh-runtime v0.1.0 (*)
+      │   ├── jsonschema-value v0.61.2
+      │   │   └── jsonschema v0.61.2 (*)
+      │   └── referencing v0.61.2
+      │       └── jsonschema v0.61.2 (*)
+      ├── jsonschema v0.61.2 (*)
+      ├── jsonschema-value v0.61.2 (*)
+      └── referencing v0.61.2 (*)
+    ├ getrandom v0.4.3
+      ├── eaeh-core v0.1.0
+      │   ├── (dev) eaeh-acceptance v0.1.0
+      │   ├── eaeh-agents v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   └── eaeh-runtime v0.1.0
+      │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       ├── eaeh-api v0.1.0
+      │   │       │   └── eaeh-cli v0.1.0
+      │   │       └── eaeh-cli v0.1.0 (*)
+      │   ├── eaeh-api v0.1.0 (*)
+      │   ├── eaeh-architecture v0.1.0
+      │   │   └── eaeh-engineering v0.1.0
+      │   │       └── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-cli v0.1.0 (*)
+      │   ├── eaeh-engineering v0.1.0 (*)
+      │   ├── eaeh-events v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-extensibility v0.1.0
+      │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   ├── eaeh-intelligence v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   ├── eaeh-knowledge v0.1.0
+      │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-skills v0.1.0
+      │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   └── eaeh-testkit v0.1.0
+      │   │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-tools v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   └── eaeh-skills v0.1.0 (*)
+      │   │   │   ├── eaeh-workflow v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   └── eaeh-workspace v0.1.0
+      │   │   │       ├── eaeh-agents v0.1.0 (*)
+      │   │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │   │       └── eaeh-workflow v0.1.0 (*)
+      │   │   ├── eaeh-governance v0.1.0
+      │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   │   └── eaeh-workflow v0.1.0 (*)
+      │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   ├── eaeh-workflow v0.1.0 (*)
+      │   │   └── eaeh-workspace v0.1.0 (*)
+      │   ├── eaeh-extensibility v0.1.0 (*)
+      │   ├── eaeh-governance v0.1.0 (*)
+      │   ├── eaeh-intelligence v0.1.0 (*)
+      │   ├── eaeh-isolation v0.1.0
+      │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   └── eaeh-tools v0.1.0 (*)
+      │   ├── eaeh-knowledge v0.1.0 (*)
+      │   ├── eaeh-provider-anthropic v0.1.0 (*)
+      │   ├── eaeh-requirements v0.1.0
+      │   │   ├── eaeh-architecture v0.1.0 (*)
+      │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   └── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-skills v0.1.0 (*)
+      │   ├── eaeh-store v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   ├── eaeh-events v0.1.0 (*)
+      │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │   ├── eaeh-governance v0.1.0 (*)
+      │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   ├── eaeh-workflow v0.1.0 (*)
+      │   │   └── eaeh-workspace v0.1.0 (*)
+      │   ├── eaeh-testkit v0.1.0 (*)
+      │   ├── eaeh-tools v0.1.0 (*)
+      │   ├── eaeh-validation v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-architecture v0.1.0 (*)
+      │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-requirements v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   └── eaeh-workflow v0.1.0 (*)
+      │   ├── eaeh-workflow v0.1.0 (*)
+      │   └── eaeh-workspace v0.1.0 (*)
+      ├── tempfile v3.27.0
+      │   ├── (dev) eaeh-agents v0.1.0 (*)
+      │   ├── (dev) eaeh-api v0.1.0 (*)
+      │   ├── (dev) eaeh-cli v0.1.0 (*)
+      │   ├── (dev) eaeh-events v0.1.0 (*)
+      │   ├── (dev) eaeh-extensibility v0.1.0 (*)
+      │   ├── (dev) eaeh-governance v0.1.0 (*)
+      │   ├── (dev) eaeh-intelligence v0.1.0 (*)
+      │   ├── (dev) eaeh-isolation v0.1.0 (*)
+      │   ├── (dev) eaeh-knowledge v0.1.0 (*)
+      │   ├── (dev) eaeh-runtime v0.1.0 (*)
+      │   ├── (dev) eaeh-skills v0.1.0 (*)
+      │   ├── (dev) eaeh-store v0.1.0 (*)
+      │   ├── (dev) eaeh-tools v0.1.0 (*)
+      │   ├── (dev) eaeh-workflow v0.1.0 (*)
+      │   └── (dev) eaeh-workspace v0.1.0 (*)
+      └── uuid v1.29.2
+          ├── (dev) eaeh-acceptance v0.1.0 (*)
+          ├── eaeh-api v0.1.0 (*)
+          ├── eaeh-core v0.1.0 (*)
+          ├── eaeh-events v0.1.0 (*)
+          ├── eaeh-isolation v0.1.0 (*)
+          └── eaeh-workspace v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'hashbrown'
+    ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:110:1
+    │  
+110 │ ╭ hashbrown 0.16.1 registry+https://github.com/rust-lang/crates.io-index
+111 │ │ hashbrown 0.17.1 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ hashbrown v0.16.1
+      ├── hashlink v0.11.1
+      │   └── sqlx-core v0.9.0
+      │       ├── sqlx v0.9.0
+      │       │   └── eaeh-store v0.1.0
+      │       │       ├── (dev) eaeh-acceptance v0.1.0
+      │       │       ├── eaeh-agents v0.1.0
+      │       │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   └── eaeh-runtime v0.1.0
+      │       │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │       ├── eaeh-api v0.1.0
+      │       │       │       │   └── eaeh-cli v0.1.0
+      │       │       │       └── eaeh-cli v0.1.0 (*)
+      │       │       ├── eaeh-api v0.1.0 (*)
+      │       │       ├── eaeh-events v0.1.0
+      │       │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   ├── eaeh-extensibility v0.1.0
+      │       │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   ├── eaeh-intelligence v0.1.0
+      │       │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-knowledge v0.1.0
+      │       │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-engineering v0.1.0
+      │       │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │       │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-skills v0.1.0
+      │       │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   └── eaeh-testkit v0.1.0
+      │       │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │       │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │       │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   ├── eaeh-tools v0.1.0
+      │       │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   └── eaeh-skills v0.1.0 (*)
+      │       │       │   │   ├── eaeh-workflow v0.1.0
+      │       │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   └── eaeh-workspace v0.1.0
+      │       │       │   │       ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │       ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │       ├── eaeh-tools v0.1.0 (*)
+      │       │       │   │       └── eaeh-workflow v0.1.0 (*)
+      │       │       │   ├── eaeh-governance v0.1.0
+      │       │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │       │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │       │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   ├── eaeh-skills v0.1.0 (*)
+      │       │       │   │   ├── eaeh-tools v0.1.0 (*)
+      │       │       │   │   └── eaeh-workflow v0.1.0 (*)
+      │       │       │   ├── eaeh-intelligence v0.1.0 (*)
+      │       │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   ├── eaeh-skills v0.1.0 (*)
+      │       │       │   ├── eaeh-tools v0.1.0 (*)
+      │       │       │   ├── eaeh-workflow v0.1.0 (*)
+      │       │       │   └── eaeh-workspace v0.1.0 (*)
+      │       │       ├── eaeh-extensibility v0.1.0 (*)
+      │       │       ├── eaeh-governance v0.1.0 (*)
+      │       │       ├── eaeh-intelligence v0.1.0 (*)
+      │       │       ├── eaeh-knowledge v0.1.0 (*)
+      │       │       ├── eaeh-runtime v0.1.0 (*)
+      │       │       ├── eaeh-skills v0.1.0 (*)
+      │       │       ├── eaeh-tools v0.1.0 (*)
+      │       │       ├── eaeh-workflow v0.1.0 (*)
+      │       │       └── eaeh-workspace v0.1.0 (*)
+      │       ├── sqlx-macros v0.9.0
+      │       │   └── sqlx v0.9.0 (*)
+      │       ├── sqlx-macros-core v0.9.0
+      │       │   └── sqlx-macros v0.9.0 (*)
+      │       └── sqlx-sqlite v0.9.0
+      │           ├── sqlx v0.9.0 (*)
+      │           └── sqlx-macros-core v0.9.0 (*)
+      └── sqlx-core v0.9.0 (*)
+    ├ hashbrown v0.17.1
+      ├── indexmap v2.14.2
+      │   └── sqlx-core v0.9.0
+      │       ├── sqlx v0.9.0
+      │       │   └── eaeh-store v0.1.0
+      │       │       ├── (dev) eaeh-acceptance v0.1.0
+      │       │       ├── eaeh-agents v0.1.0
+      │       │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   └── eaeh-runtime v0.1.0
+      │       │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │       ├── eaeh-api v0.1.0
+      │       │       │       │   └── eaeh-cli v0.1.0
+      │       │       │       └── eaeh-cli v0.1.0 (*)
+      │       │       ├── eaeh-api v0.1.0 (*)
+      │       │       ├── eaeh-events v0.1.0
+      │       │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   ├── eaeh-extensibility v0.1.0
+      │       │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   ├── eaeh-intelligence v0.1.0
+      │       │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-knowledge v0.1.0
+      │       │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-engineering v0.1.0
+      │       │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │       │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-skills v0.1.0
+      │       │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   └── eaeh-testkit v0.1.0
+      │       │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │       │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │       │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   ├── eaeh-tools v0.1.0
+      │       │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   │   └── eaeh-skills v0.1.0 (*)
+      │       │       │   │   ├── eaeh-workflow v0.1.0
+      │       │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   └── eaeh-workspace v0.1.0
+      │       │       │   │       ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │       ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │       ├── eaeh-tools v0.1.0 (*)
+      │       │       │   │       └── eaeh-workflow v0.1.0 (*)
+      │       │       │   ├── eaeh-governance v0.1.0
+      │       │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │       │       │   │   ├── eaeh-api v0.1.0 (*)
+      │       │       │   │   ├── eaeh-cli v0.1.0 (*)
+      │       │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │       │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │       │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   │   ├── eaeh-skills v0.1.0 (*)
+      │       │       │   │   ├── eaeh-tools v0.1.0 (*)
+      │       │       │   │   └── eaeh-workflow v0.1.0 (*)
+      │       │       │   ├── eaeh-intelligence v0.1.0 (*)
+      │       │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │       │   ├── eaeh-runtime v0.1.0 (*)
+      │       │       │   ├── eaeh-skills v0.1.0 (*)
+      │       │       │   ├── eaeh-tools v0.1.0 (*)
+      │       │       │   ├── eaeh-workflow v0.1.0 (*)
+      │       │       │   └── eaeh-workspace v0.1.0 (*)
+      │       │       ├── eaeh-extensibility v0.1.0 (*)
+      │       │       ├── eaeh-governance v0.1.0 (*)
+      │       │       ├── eaeh-intelligence v0.1.0 (*)
+      │       │       ├── eaeh-knowledge v0.1.0 (*)
+      │       │       ├── eaeh-runtime v0.1.0 (*)
+      │       │       ├── eaeh-skills v0.1.0 (*)
+      │       │       ├── eaeh-tools v0.1.0 (*)
+      │       │       ├── eaeh-workflow v0.1.0 (*)
+      │       │       └── eaeh-workspace v0.1.0 (*)
+      │       ├── sqlx-macros v0.9.0
+      │       │   └── sqlx v0.9.0 (*)
+      │       ├── sqlx-macros-core v0.9.0
+      │       │   └── sqlx-macros v0.9.0 (*)
+      │       └── sqlx-sqlite v0.9.0
+      │           ├── sqlx v0.9.0 (*)
+      │           └── sqlx-macros-core v0.9.0 (*)
+      └── referencing v0.61.2
+          └── jsonschema v0.61.2
+              └── eaeh-validation v0.1.0
+                  ├── (dev) eaeh-acceptance v0.1.0 (*)
+                  ├── eaeh-agents v0.1.0 (*)
+                  ├── eaeh-architecture v0.1.0
+                  │   └── eaeh-engineering v0.1.0 (*)
+                  ├── eaeh-engineering v0.1.0 (*)
+                  ├── eaeh-knowledge v0.1.0 (*)
+                  ├── eaeh-requirements v0.1.0
+                  │   ├── eaeh-architecture v0.1.0 (*)
+                  │   ├── eaeh-engineering v0.1.0 (*)
+                  │   └── eaeh-runtime v0.1.0 (*)
+                  ├── eaeh-runtime v0.1.0 (*)
+                  ├── eaeh-skills v0.1.0 (*)
+                  ├── eaeh-tools v0.1.0 (*)
+                  └── eaeh-workflow v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'r-efi'
+    ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:185:1
+    │  
+185 │ ╭ r-efi 5.3.0 registry+https://github.com/rust-lang/crates.io-index
+186 │ │ r-efi 6.0.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ r-efi v5.3.0
+      └── getrandom v0.3.4
+          ├── ahash v0.8.12
+          │   ├── jsonschema v0.61.2
+          │   │   └── eaeh-validation v0.1.0
+          │   │       ├── (dev) eaeh-acceptance v0.1.0
+          │   │       ├── eaeh-agents v0.1.0
+          │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │       │   └── eaeh-runtime v0.1.0
+          │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │       │       ├── eaeh-api v0.1.0
+          │   │       │       │   └── eaeh-cli v0.1.0
+          │   │       │       └── eaeh-cli v0.1.0 (*)
+          │   │       ├── eaeh-architecture v0.1.0
+          │   │       │   └── eaeh-engineering v0.1.0
+          │   │       │       └── eaeh-runtime v0.1.0 (*)
+          │   │       ├── eaeh-engineering v0.1.0 (*)
+          │   │       ├── eaeh-knowledge v0.1.0
+          │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │       │   ├── eaeh-agents v0.1.0 (*)
+          │   │       │   ├── eaeh-api v0.1.0 (*)
+          │   │       │   ├── eaeh-cli v0.1.0 (*)
+          │   │       │   ├── eaeh-engineering v0.1.0 (*)
+          │   │       │   └── eaeh-runtime v0.1.0 (*)
+          │   │       ├── eaeh-requirements v0.1.0
+          │   │       │   ├── eaeh-architecture v0.1.0 (*)
+          │   │       │   ├── eaeh-engineering v0.1.0 (*)
+          │   │       │   └── eaeh-runtime v0.1.0 (*)
+          │   │       ├── eaeh-runtime v0.1.0 (*)
+          │   │       ├── eaeh-skills v0.1.0
+          │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │       │   ├── eaeh-agents v0.1.0 (*)
+          │   │       │   ├── eaeh-api v0.1.0 (*)
+          │   │       │   ├── eaeh-cli v0.1.0 (*)
+          │   │       │   └── eaeh-runtime v0.1.0 (*)
+          │   │       ├── eaeh-tools v0.1.0
+          │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │       │   ├── eaeh-agents v0.1.0 (*)
+          │   │       │   ├── eaeh-engineering v0.1.0 (*)
+          │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │       │   ├── eaeh-runtime v0.1.0 (*)
+          │   │       │   └── eaeh-skills v0.1.0 (*)
+          │   │       └── eaeh-workflow v0.1.0
+          │   │           ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │           ├── eaeh-api v0.1.0 (*)
+          │   │           ├── eaeh-cli v0.1.0 (*)
+          │   │           └── eaeh-runtime v0.1.0 (*)
+          │   ├── jsonschema-value v0.61.2
+          │   │   └── jsonschema v0.61.2 (*)
+          │   └── referencing v0.61.2
+          │       └── jsonschema v0.61.2 (*)
+          ├── jsonschema v0.61.2 (*)
+          ├── jsonschema-value v0.61.2 (*)
+          └── referencing v0.61.2 (*)
+    ├ r-efi v6.0.0
+      └── getrandom v0.4.3
+          ├── eaeh-core v0.1.0
+          │   ├── (dev) eaeh-acceptance v0.1.0
+          │   ├── eaeh-agents v0.1.0
+          │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   └── eaeh-runtime v0.1.0
+          │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │       ├── eaeh-api v0.1.0
+          │   │       │   └── eaeh-cli v0.1.0
+          │   │       └── eaeh-cli v0.1.0 (*)
+          │   ├── eaeh-api v0.1.0 (*)
+          │   ├── eaeh-architecture v0.1.0
+          │   │   └── eaeh-engineering v0.1.0
+          │   │       └── eaeh-runtime v0.1.0 (*)
+          │   ├── eaeh-cli v0.1.0 (*)
+          │   ├── eaeh-engineering v0.1.0 (*)
+          │   ├── eaeh-events v0.1.0
+          │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   ├── eaeh-extensibility v0.1.0
+          │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   │   ├── eaeh-api v0.1.0 (*)
+          │   │   │   ├── eaeh-intelligence v0.1.0
+          │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   │   │   ├── eaeh-knowledge v0.1.0
+          │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+          │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+          │   │   │   │   ├── eaeh-provider-anthropic v0.1.0
+          │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+          │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   │   │   ├── eaeh-skills v0.1.0
+          │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+          │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+          │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+          │   │   │   │   └── eaeh-testkit v0.1.0
+          │   │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+          │   │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+          │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   │   ├── eaeh-tools v0.1.0
+          │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+          │   │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   │   │   └── eaeh-skills v0.1.0 (*)
+          │   │   │   ├── eaeh-workflow v0.1.0
+          │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   │   ├── eaeh-api v0.1.0 (*)
+          │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+          │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+          │   │   │   └── eaeh-workspace v0.1.0
+          │   │   │       ├── eaeh-agents v0.1.0 (*)
+          │   │   │       ├── eaeh-runtime v0.1.0 (*)
+          │   │   │       ├── eaeh-tools v0.1.0 (*)
+          │   │   │       └── eaeh-workflow v0.1.0 (*)
+          │   │   ├── eaeh-governance v0.1.0
+          │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   │   ├── eaeh-api v0.1.0 (*)
+          │   │   │   ├── eaeh-cli v0.1.0 (*)
+          │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+          │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+          │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   │   ├── eaeh-skills v0.1.0 (*)
+          │   │   │   ├── eaeh-tools v0.1.0 (*)
+          │   │   │   └── eaeh-workflow v0.1.0 (*)
+          │   │   ├── eaeh-intelligence v0.1.0 (*)
+          │   │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   ├── eaeh-skills v0.1.0 (*)
+          │   │   ├── eaeh-tools v0.1.0 (*)
+          │   │   ├── eaeh-workflow v0.1.0 (*)
+          │   │   └── eaeh-workspace v0.1.0 (*)
+          │   ├── eaeh-extensibility v0.1.0 (*)
+          │   ├── eaeh-governance v0.1.0 (*)
+          │   ├── eaeh-intelligence v0.1.0 (*)
+          │   ├── eaeh-isolation v0.1.0
+          │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+          │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   └── eaeh-tools v0.1.0 (*)
+          │   ├── eaeh-knowledge v0.1.0 (*)
+          │   ├── eaeh-provider-anthropic v0.1.0 (*)
+          │   ├── eaeh-requirements v0.1.0
+          │   │   ├── eaeh-architecture v0.1.0 (*)
+          │   │   ├── eaeh-engineering v0.1.0 (*)
+          │   │   └── eaeh-runtime v0.1.0 (*)
+          │   ├── eaeh-runtime v0.1.0 (*)
+          │   ├── eaeh-skills v0.1.0 (*)
+          │   ├── eaeh-store v0.1.0
+          │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   ├── eaeh-api v0.1.0 (*)
+          │   │   ├── eaeh-events v0.1.0 (*)
+          │   │   ├── eaeh-extensibility v0.1.0 (*)
+          │   │   ├── eaeh-governance v0.1.0 (*)
+          │   │   ├── eaeh-intelligence v0.1.0 (*)
+          │   │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   ├── eaeh-skills v0.1.0 (*)
+          │   │   ├── eaeh-tools v0.1.0 (*)
+          │   │   ├── eaeh-workflow v0.1.0 (*)
+          │   │   └── eaeh-workspace v0.1.0 (*)
+          │   ├── eaeh-testkit v0.1.0 (*)
+          │   ├── eaeh-tools v0.1.0 (*)
+          │   ├── eaeh-validation v0.1.0
+          │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+          │   │   ├── eaeh-agents v0.1.0 (*)
+          │   │   ├── eaeh-architecture v0.1.0 (*)
+          │   │   ├── eaeh-engineering v0.1.0 (*)
+          │   │   ├── eaeh-knowledge v0.1.0 (*)
+          │   │   ├── eaeh-requirements v0.1.0 (*)
+          │   │   ├── eaeh-runtime v0.1.0 (*)
+          │   │   ├── eaeh-skills v0.1.0 (*)
+          │   │   ├── eaeh-tools v0.1.0 (*)
+          │   │   └── eaeh-workflow v0.1.0 (*)
+          │   ├── eaeh-workflow v0.1.0 (*)
+          │   └── eaeh-workspace v0.1.0 (*)
+          ├── tempfile v3.27.0
+          │   ├── (dev) eaeh-agents v0.1.0 (*)
+          │   ├── (dev) eaeh-api v0.1.0 (*)
+          │   ├── (dev) eaeh-cli v0.1.0 (*)
+          │   ├── (dev) eaeh-events v0.1.0 (*)
+          │   ├── (dev) eaeh-extensibility v0.1.0 (*)
+          │   ├── (dev) eaeh-governance v0.1.0 (*)
+          │   ├── (dev) eaeh-intelligence v0.1.0 (*)
+          │   ├── (dev) eaeh-isolation v0.1.0 (*)
+          │   ├── (dev) eaeh-knowledge v0.1.0 (*)
+          │   ├── (dev) eaeh-runtime v0.1.0 (*)
+          │   ├── (dev) eaeh-skills v0.1.0 (*)
+          │   ├── (dev) eaeh-store v0.1.0 (*)
+          │   ├── (dev) eaeh-tools v0.1.0 (*)
+          │   ├── (dev) eaeh-workflow v0.1.0 (*)
+          │   └── (dev) eaeh-workspace v0.1.0 (*)
+          └── uuid v1.29.2
+              ├── (dev) eaeh-acceptance v0.1.0 (*)
+              ├── eaeh-api v0.1.0 (*)
+              ├── eaeh-core v0.1.0 (*)
+              ├── eaeh-events v0.1.0 (*)
+              ├── eaeh-isolation v0.1.0 (*)
+              └── eaeh-workspace v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'sha2'
+    ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:219:1
+    │  
+219 │ ╭ sha2 0.10.9 registry+https://github.com/rust-lang/crates.io-index
+220 │ │ sha2 0.11.1 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ sha2 v0.10.9
+      ├── sqlx-core v0.9.0
+      │   ├── sqlx v0.9.0
+      │   │   └── eaeh-store v0.1.0
+      │   │       ├── (dev) eaeh-acceptance v0.1.0
+      │   │       ├── eaeh-agents v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   └── eaeh-runtime v0.1.0
+      │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │       ├── eaeh-api v0.1.0
+      │   │       │       │   └── eaeh-cli v0.1.0
+      │   │       │       └── eaeh-cli v0.1.0 (*)
+      │   │       ├── eaeh-api v0.1.0 (*)
+      │   │       ├── eaeh-events v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-extensibility v0.1.0
+      │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   ├── eaeh-intelligence v0.1.0
+      │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-knowledge v0.1.0
+      │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-engineering v0.1.0
+      │   │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-skills v0.1.0
+      │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   └── eaeh-testkit v0.1.0
+      │   │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   ├── eaeh-tools v0.1.0
+      │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   └── eaeh-skills v0.1.0 (*)
+      │   │       │   │   ├── eaeh-workflow v0.1.0
+      │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   └── eaeh-workspace v0.1.0
+      │   │       │   │       ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │       │   │       └── eaeh-workflow v0.1.0 (*)
+      │   │       │   ├── eaeh-governance v0.1.0
+      │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │       │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │       │   │   └── eaeh-workflow v0.1.0 (*)
+      │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   ├── eaeh-skills v0.1.0 (*)
+      │   │       │   ├── eaeh-tools v0.1.0 (*)
+      │   │       │   ├── eaeh-workflow v0.1.0 (*)
+      │   │       │   └── eaeh-workspace v0.1.0 (*)
+      │   │       ├── eaeh-extensibility v0.1.0 (*)
+      │   │       ├── eaeh-governance v0.1.0 (*)
+      │   │       ├── eaeh-intelligence v0.1.0 (*)
+      │   │       ├── eaeh-knowledge v0.1.0 (*)
+      │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │       ├── eaeh-skills v0.1.0 (*)
+      │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │       ├── eaeh-workflow v0.1.0 (*)
+      │   │       └── eaeh-workspace v0.1.0 (*)
+      │   ├── sqlx-macros v0.9.0
+      │   │   └── sqlx v0.9.0 (*)
+      │   ├── sqlx-macros-core v0.9.0
+      │   │   └── sqlx-macros v0.9.0 (*)
+      │   └── sqlx-sqlite v0.9.0
+      │       ├── sqlx v0.9.0 (*)
+      │       └── sqlx-macros-core v0.9.0 (*)
+      └── sqlx-macros-core v0.9.0 (*)
+    ├ sha2 v0.11.1
+      ├── eaeh-core v0.1.0
+      │   ├── (dev) eaeh-acceptance v0.1.0
+      │   ├── eaeh-agents v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   └── eaeh-runtime v0.1.0
+      │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       ├── eaeh-api v0.1.0
+      │   │       │   └── eaeh-cli v0.1.0
+      │   │       └── eaeh-cli v0.1.0 (*)
+      │   ├── eaeh-api v0.1.0 (*)
+      │   ├── eaeh-architecture v0.1.0
+      │   │   └── eaeh-engineering v0.1.0
+      │   │       └── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-cli v0.1.0 (*)
+      │   ├── eaeh-engineering v0.1.0 (*)
+      │   ├── eaeh-events v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-extensibility v0.1.0
+      │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   ├── eaeh-intelligence v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   ├── eaeh-knowledge v0.1.0
+      │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-skills v0.1.0
+      │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   └── eaeh-testkit v0.1.0
+      │   │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-tools v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   └── eaeh-skills v0.1.0 (*)
+      │   │   │   ├── eaeh-workflow v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   └── eaeh-workspace v0.1.0
+      │   │   │       ├── eaeh-agents v0.1.0 (*)
+      │   │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │   │       └── eaeh-workflow v0.1.0 (*)
+      │   │   ├── eaeh-governance v0.1.0
+      │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   │   └── eaeh-workflow v0.1.0 (*)
+      │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   ├── eaeh-workflow v0.1.0 (*)
+      │   │   └── eaeh-workspace v0.1.0 (*)
+      │   ├── eaeh-extensibility v0.1.0 (*)
+      │   ├── eaeh-governance v0.1.0 (*)
+      │   ├── eaeh-intelligence v0.1.0 (*)
+      │   ├── eaeh-isolation v0.1.0
+      │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   └── eaeh-tools v0.1.0 (*)
+      │   ├── eaeh-knowledge v0.1.0 (*)
+      │   ├── eaeh-provider-anthropic v0.1.0 (*)
+      │   ├── eaeh-requirements v0.1.0
+      │   │   ├── eaeh-architecture v0.1.0 (*)
+      │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   └── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-skills v0.1.0 (*)
+      │   ├── eaeh-store v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   ├── eaeh-events v0.1.0 (*)
+      │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │   ├── eaeh-governance v0.1.0 (*)
+      │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   ├── eaeh-workflow v0.1.0 (*)
+      │   │   └── eaeh-workspace v0.1.0 (*)
+      │   ├── eaeh-testkit v0.1.0 (*)
+      │   ├── eaeh-tools v0.1.0 (*)
+      │   ├── eaeh-validation v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-architecture v0.1.0 (*)
+      │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-requirements v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   └── eaeh-workflow v0.1.0 (*)
+      │   ├── eaeh-workflow v0.1.0 (*)
+      │   └── eaeh-workspace v0.1.0 (*)
+      └── ed25519-dalek v3.0.0
+          └── eaeh-extensibility v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'syn'
+    ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:241:1
+    │  
+241 │ ╭ syn 2.0.119 registry+https://github.com/rust-lang/crates.io-index
+242 │ │ syn 3.0.10 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ syn v2.0.119
+      ├── axum-macros v0.5.1
+      │   └── axum v0.8.9
+      │       ├── eaeh-api v0.1.0
+      │       │   └── eaeh-cli v0.1.0
+      │       ├── eaeh-cli v0.1.0 (*)
+      │       └── (dev) eaeh-provider-anthropic v0.1.0
+      │           └── eaeh-runtime v0.1.0
+      │               ├── (dev) eaeh-acceptance v0.1.0
+      │               ├── eaeh-api v0.1.0 (*)
+      │               └── eaeh-cli v0.1.0 (*)
+      ├── curve25519-dalek-derive v0.1.1
+      │   └── curve25519-dalek v5.0.0
+      │       └── ed25519-dalek v3.0.0
+      │           └── eaeh-extensibility v0.1.0
+      │               ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               ├── eaeh-agents v0.1.0
+      │               │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   └── eaeh-runtime v0.1.0 (*)
+      │               ├── eaeh-api v0.1.0 (*)
+      │               ├── eaeh-intelligence v0.1.0
+      │               │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   ├── eaeh-agents v0.1.0 (*)
+      │               │   ├── eaeh-knowledge v0.1.0
+      │               │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   │   ├── eaeh-agents v0.1.0 (*)
+      │               │   │   ├── eaeh-api v0.1.0 (*)
+      │               │   │   ├── eaeh-cli v0.1.0 (*)
+      │               │   │   ├── eaeh-engineering v0.1.0
+      │               │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │               │   │   └── eaeh-runtime v0.1.0 (*)
+      │               │   ├── eaeh-provider-anthropic v0.1.0 (*)
+      │               │   ├── eaeh-runtime v0.1.0 (*)
+      │               │   ├── eaeh-skills v0.1.0
+      │               │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   │   ├── eaeh-agents v0.1.0 (*)
+      │               │   │   ├── eaeh-api v0.1.0 (*)
+      │               │   │   ├── eaeh-cli v0.1.0 (*)
+      │               │   │   └── eaeh-runtime v0.1.0 (*)
+      │               │   └── eaeh-testkit v0.1.0
+      │               │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │               │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │               ├── eaeh-knowledge v0.1.0 (*)
+      │               ├── eaeh-runtime v0.1.0 (*)
+      │               ├── eaeh-tools v0.1.0
+      │               │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   ├── eaeh-agents v0.1.0 (*)
+      │               │   ├── eaeh-engineering v0.1.0 (*)
+      │               │   ├── eaeh-knowledge v0.1.0 (*)
+      │               │   ├── eaeh-runtime v0.1.0 (*)
+      │               │   └── eaeh-skills v0.1.0 (*)
+      │               ├── eaeh-workflow v0.1.0
+      │               │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   ├── eaeh-api v0.1.0 (*)
+      │               │   ├── eaeh-cli v0.1.0 (*)
+      │               │   └── eaeh-runtime v0.1.0 (*)
+      │               └── eaeh-workspace v0.1.0
+      │                   ├── eaeh-agents v0.1.0 (*)
+      │                   ├── eaeh-runtime v0.1.0 (*)
+      │                   ├── eaeh-tools v0.1.0 (*)
+      │                   └── eaeh-workflow v0.1.0 (*)
+      ├── jni-macros v0.22.4
+      │   └── jni v0.22.4
+      │       └── rustls-platform-verifier v0.7.1
+      │           └── reqwest v0.13.5
+      │               └── eaeh-provider-anthropic v0.1.0 (*)
+      ├── jni-sys-macros v0.4.1
+      │   └── jni-sys v0.4.1
+      │       └── jni v0.22.4 (*)
+      ├── sqlx-macros v0.9.0
+      │   └── sqlx v0.9.0
+      │       └── eaeh-store v0.1.0
+      │           ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │           ├── eaeh-agents v0.1.0 (*)
+      │           ├── eaeh-api v0.1.0 (*)
+      │           ├── eaeh-events v0.1.0
+      │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │           │   ├── eaeh-agents v0.1.0 (*)
+      │           │   ├── eaeh-extensibility v0.1.0 (*)
+      │           │   ├── eaeh-governance v0.1.0
+      │           │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │           │   │   ├── eaeh-agents v0.1.0 (*)
+      │           │   │   ├── eaeh-api v0.1.0 (*)
+      │           │   │   ├── eaeh-cli v0.1.0 (*)
+      │           │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │           │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │           │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │           │   │   ├── eaeh-runtime v0.1.0 (*)
+      │           │   │   ├── eaeh-skills v0.1.0 (*)
+      │           │   │   ├── eaeh-tools v0.1.0 (*)
+      │           │   │   └── eaeh-workflow v0.1.0 (*)
+      │           │   ├── eaeh-intelligence v0.1.0 (*)
+      │           │   ├── eaeh-knowledge v0.1.0 (*)
+      │           │   ├── eaeh-runtime v0.1.0 (*)
+      │           │   ├── eaeh-skills v0.1.0 (*)
+      │           │   ├── eaeh-tools v0.1.0 (*)
+      │           │   ├── eaeh-workflow v0.1.0 (*)
+      │           │   └── eaeh-workspace v0.1.0 (*)
+      │           ├── eaeh-extensibility v0.1.0 (*)
+      │           ├── eaeh-governance v0.1.0 (*)
+      │           ├── eaeh-intelligence v0.1.0 (*)
+      │           ├── eaeh-knowledge v0.1.0 (*)
+      │           ├── eaeh-runtime v0.1.0 (*)
+      │           ├── eaeh-skills v0.1.0 (*)
+      │           ├── eaeh-tools v0.1.0 (*)
+      │           ├── eaeh-workflow v0.1.0 (*)
+      │           └── eaeh-workspace v0.1.0 (*)
+      ├── sqlx-macros-core v0.9.0
+      │   └── sqlx-macros v0.9.0 (*)
+      ├── strum_macros v0.28.0
+      │   └── strum v0.28.0
+      │       └── jsonschema v0.61.2
+      │           └── eaeh-validation v0.1.0
+      │               ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               ├── eaeh-agents v0.1.0 (*)
+      │               ├── eaeh-architecture v0.1.0
+      │               │   └── eaeh-engineering v0.1.0 (*)
+      │               ├── eaeh-engineering v0.1.0 (*)
+      │               ├── eaeh-knowledge v0.1.0 (*)
+      │               ├── eaeh-requirements v0.1.0
+      │               │   ├── eaeh-architecture v0.1.0 (*)
+      │               │   ├── eaeh-engineering v0.1.0 (*)
+      │               │   └── eaeh-runtime v0.1.0 (*)
+      │               ├── eaeh-runtime v0.1.0 (*)
+      │               ├── eaeh-skills v0.1.0 (*)
+      │               ├── eaeh-tools v0.1.0 (*)
+      │               └── eaeh-workflow v0.1.0 (*)
+      ├── tracing-attributes v0.1.31
+      │   └── tracing v0.1.44
+      │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       ├── eaeh-agents v0.1.0 (*)
+      │       ├── eaeh-api v0.1.0 (*)
+      │       ├── eaeh-cli v0.1.0 (*)
+      │       ├── eaeh-events v0.1.0 (*)
+      │       ├── eaeh-extensibility v0.1.0 (*)
+      │       ├── eaeh-governance v0.1.0 (*)
+      │       ├── eaeh-intelligence v0.1.0 (*)
+      │       ├── eaeh-isolation v0.1.0
+      │       │   ├── (dev) eaeh-agents v0.1.0 (*)
+      │       │   ├── eaeh-runtime v0.1.0 (*)
+      │       │   └── eaeh-tools v0.1.0 (*)
+      │       ├── eaeh-knowledge v0.1.0 (*)
+      │       ├── eaeh-provider-anthropic v0.1.0 (*)
+      │       ├── eaeh-runtime v0.1.0 (*)
+      │       ├── eaeh-skills v0.1.0 (*)
+      │       ├── eaeh-store v0.1.0 (*)
+      │       ├── eaeh-tools v0.1.0 (*)
+      │       ├── eaeh-workflow v0.1.0 (*)
+      │       ├── eaeh-workspace v0.1.0 (*)
+      │       ├── hyper-util v0.1.21
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── hyper-rustls v0.27.10
+      │       │   │   └── reqwest v0.13.5 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── sqlx-core v0.9.0
+      │       │   ├── sqlx v0.9.0 (*)
+      │       │   ├── sqlx-macros v0.9.0 (*)
+      │       │   ├── sqlx-macros-core v0.9.0 (*)
+      │       │   └── sqlx-sqlite v0.9.0
+      │       │       ├── sqlx v0.9.0 (*)
+      │       │       └── sqlx-macros-core v0.9.0 (*)
+      │       ├── sqlx-sqlite v0.9.0 (*)
+      │       └── tracing-subscriber v0.3.23
+      │           ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │           └── eaeh-runtime v0.1.0 (*)
+      ├── windows-implement v0.60.2
+      │   └── windows-core v0.62.2
+      │       └── iana-time-zone v0.1.65
+      │           └── chrono v0.4.45
+      │               ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               ├── (dev) eaeh-agents v0.1.0 (*)
+      │               ├── eaeh-cli v0.1.0 (*)
+      │               ├── eaeh-core v0.1.0
+      │               │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │               │   ├── eaeh-agents v0.1.0 (*)
+      │               │   ├── eaeh-api v0.1.0 (*)
+      │               │   ├── eaeh-architecture v0.1.0 (*)
+      │               │   ├── eaeh-cli v0.1.0 (*)
+      │               │   ├── eaeh-engineering v0.1.0 (*)
+      │               │   ├── eaeh-events v0.1.0 (*)
+      │               │   ├── eaeh-extensibility v0.1.0 (*)
+      │               │   ├── eaeh-governance v0.1.0 (*)
+      │               │   ├── eaeh-intelligence v0.1.0 (*)
+      │               │   ├── eaeh-isolation v0.1.0 (*)
+      │               │   ├── eaeh-knowledge v0.1.0 (*)
+      │               │   ├── eaeh-provider-anthropic v0.1.0 (*)
+      │               │   ├── eaeh-requirements v0.1.0 (*)
+      │               │   ├── eaeh-runtime v0.1.0 (*)
+      │               │   ├── eaeh-skills v0.1.0 (*)
+      │               │   ├── eaeh-store v0.1.0 (*)
+      │               │   ├── eaeh-testkit v0.1.0 (*)
+      │               │   ├── eaeh-tools v0.1.0 (*)
+      │               │   ├── eaeh-validation v0.1.0 (*)
+      │               │   ├── eaeh-workflow v0.1.0 (*)
+      │               │   └── eaeh-workspace v0.1.0 (*)
+      │               ├── eaeh-events v0.1.0 (*)
+      │               ├── eaeh-governance v0.1.0 (*)
+      │               ├── eaeh-intelligence v0.1.0 (*)
+      │               ├── eaeh-knowledge v0.1.0 (*)
+      │               ├── eaeh-runtime v0.1.0 (*)
+      │               ├── eaeh-store v0.1.0 (*)
+      │               ├── eaeh-tools v0.1.0 (*)
+      │               ├── eaeh-workflow v0.1.0 (*)
+      │               ├── eaeh-workspace v0.1.0 (*)
+      │               ├── sqlx-core v0.9.0 (*)
+      │               └── sqlx-sqlite v0.9.0 (*)
+      └── windows-interface v0.59.3
+          └── windows-core v0.62.2 (*)
+    ├ syn v3.0.10
+      ├── async-trait v0.1.92
+      │   ├── (dev) eaeh-acceptance v0.1.0
+      │   ├── (dev) eaeh-agents v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   └── eaeh-runtime v0.1.0
+      │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       ├── eaeh-api v0.1.0
+      │   │       │   └── eaeh-cli v0.1.0
+      │   │       └── eaeh-cli v0.1.0 (*)
+      │   ├── eaeh-architecture v0.1.0
+      │   │   └── eaeh-engineering v0.1.0
+      │   │       └── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-engineering v0.1.0 (*)
+      │   ├── eaeh-events v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-extensibility v0.1.0
+      │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   ├── eaeh-intelligence v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   ├── eaeh-knowledge v0.1.0
+      │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   ├── eaeh-skills v0.1.0
+      │   │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   └── eaeh-testkit v0.1.0
+      │   │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-tools v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   │   └── eaeh-skills v0.1.0 (*)
+      │   │   │   ├── eaeh-workflow v0.1.0
+      │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │   │   └── eaeh-workspace v0.1.0
+      │   │   │       ├── eaeh-agents v0.1.0 (*)
+      │   │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │   │       └── eaeh-workflow v0.1.0 (*)
+      │   │   ├── eaeh-governance v0.1.0
+      │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   │   └── eaeh-workflow v0.1.0 (*)
+      │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   ├── eaeh-workflow v0.1.0 (*)
+      │   │   └── eaeh-workspace v0.1.0 (*)
+      │   ├── eaeh-extensibility v0.1.0 (*)
+      │   ├── eaeh-intelligence v0.1.0 (*)
+      │   ├── eaeh-isolation v0.1.0
+      │   │   ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   └── eaeh-tools v0.1.0 (*)
+      │   ├── eaeh-knowledge v0.1.0 (*)
+      │   ├── eaeh-provider-anthropic v0.1.0 (*)
+      │   ├── eaeh-requirements v0.1.0
+      │   │   ├── eaeh-architecture v0.1.0 (*)
+      │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   └── eaeh-runtime v0.1.0 (*)
+      │   ├── eaeh-runtime v0.1.0 (*)
+      │   ├── (dev) eaeh-skills v0.1.0 (*)
+      │   ├── eaeh-testkit v0.1.0 (*)
+      │   ├── eaeh-tools v0.1.0 (*)
+      │   ├── eaeh-validation v0.1.0
+      │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │   ├── eaeh-architecture v0.1.0 (*)
+      │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │   ├── eaeh-requirements v0.1.0 (*)
+      │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │   └── eaeh-workflow v0.1.0 (*)
+      │   ├── eaeh-workflow v0.1.0 (*)
+      │   └── eaeh-workspace v0.1.0 (*)
+      ├── clap_derive v4.6.7
+      │   └── clap v4.6.7
+      │       └── eaeh-cli v0.1.0 (*)
+      ├── displaydoc v0.2.7
+      │   ├── icu_collections v2.4.0
+      │   │   ├── icu_normalizer v2.4.0
+      │   │   │   └── idna_adapter v1.2.2
+      │   │   │       └── idna v1.1.0
+      │   │   │           └── url v2.5.8
+      │   │   │               ├── reqwest v0.13.5
+      │   │   │               │   └── eaeh-provider-anthropic v0.1.0 (*)
+      │   │   │               ├── sqlx-core v0.9.0
+      │   │   │               │   ├── sqlx v0.9.0
+      │   │   │               │   │   └── eaeh-store v0.1.0
+      │   │   │               │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-agents v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-api v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-events v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-extensibility v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-governance v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-intelligence v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-knowledge v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-skills v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │   │               │   │       ├── eaeh-workflow v0.1.0 (*)
+      │   │   │               │   │       └── eaeh-workspace v0.1.0 (*)
+      │   │   │               │   ├── sqlx-macros v0.9.0
+      │   │   │               │   │   └── sqlx v0.9.0 (*)
+      │   │   │               │   ├── sqlx-macros-core v0.9.0
+      │   │   │               │   │   └── sqlx-macros v0.9.0 (*)
+      │   │   │               │   └── sqlx-sqlite v0.9.0
+      │   │   │               │       ├── sqlx v0.9.0 (*)
+      │   │   │               │       └── sqlx-macros-core v0.9.0 (*)
+      │   │   │               ├── sqlx-macros-core v0.9.0 (*)
+      │   │   │               ├── sqlx-sqlite v0.9.0 (*)
+      │   │   │               └── tower-http v0.6.11
+      │   │   │                   └── reqwest v0.13.5 (*)
+      │   │   └── icu_properties v2.4.0
+      │   │       └── idna_adapter v1.2.2 (*)
+      │   ├── icu_locale_core v2.4.0
+      │   │   ├── icu_properties v2.4.0 (*)
+      │   │   └── icu_provider v2.4.0
+      │   │       ├── icu_normalizer v2.4.0 (*)
+      │   │       └── icu_properties v2.4.0 (*)
+      │   ├── icu_properties v2.4.0 (*)
+      │   ├── icu_provider v2.4.0 (*)
+      │   ├── tinystr v0.8.5
+      │   │   └── icu_locale_core v2.4.0 (*)
+      │   └── zerotrie v0.2.5
+      │       ├── icu_properties v2.4.0 (*)
+      │       └── icu_provider v2.4.0 (*)
+      ├── futures-macro v0.3.34
+      │   └── futures-util v0.3.34
+      │       ├── axum v0.8.9
+      │       │   ├── eaeh-api v0.1.0 (*)
+      │       │   ├── eaeh-cli v0.1.0 (*)
+      │       │   └── (dev) eaeh-provider-anthropic v0.1.0 (*)
+      │       ├── futures-executor v0.3.34
+      │       │   └── sqlx-sqlite v0.9.0 (*)
+      │       ├── hyper-util v0.1.21
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── hyper-rustls v0.27.10
+      │       │   │   └── reqwest v0.13.5 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── js-sys v0.3.107
+      │       │   ├── getrandom v0.3.4
+      │       │   │   ├── ahash v0.8.12
+      │       │   │   │   ├── jsonschema v0.61.2
+      │       │   │   │   │   └── eaeh-validation v0.1.0 (*)
+      │       │   │   │   ├── jsonschema-value v0.61.2
+      │       │   │   │   │   └── jsonschema v0.61.2 (*)
+      │       │   │   │   └── referencing v0.61.2
+      │       │   │   │       └── jsonschema v0.61.2 (*)
+      │       │   │   ├── jsonschema v0.61.2 (*)
+      │       │   │   ├── jsonschema-value v0.61.2 (*)
+      │       │   │   └── referencing v0.61.2 (*)
+      │       │   ├── iana-time-zone v0.1.65
+      │       │   │   └── chrono v0.4.45
+      │       │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │       │   │       ├── eaeh-cli v0.1.0 (*)
+      │       │   │       ├── eaeh-core v0.1.0
+      │       │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │       │   │       │   ├── eaeh-api v0.1.0 (*)
+      │       │   │       │   ├── eaeh-architecture v0.1.0 (*)
+      │       │   │       │   ├── eaeh-cli v0.1.0 (*)
+      │       │   │       │   ├── eaeh-engineering v0.1.0 (*)
+      │       │   │       │   ├── eaeh-events v0.1.0 (*)
+      │       │   │       │   ├── eaeh-extensibility v0.1.0 (*)
+      │       │   │       │   ├── eaeh-governance v0.1.0 (*)
+      │       │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+      │       │   │       │   ├── eaeh-isolation v0.1.0 (*)
+      │       │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │       │   │       │   ├── eaeh-provider-anthropic v0.1.0 (*)
+      │       │   │       │   ├── eaeh-requirements v0.1.0 (*)
+      │       │   │       │   ├── eaeh-runtime v0.1.0 (*)
+      │       │   │       │   ├── eaeh-skills v0.1.0 (*)
+      │       │   │       │   ├── eaeh-store v0.1.0 (*)
+      │       │   │       │   ├── eaeh-testkit v0.1.0 (*)
+      │       │   │       │   ├── eaeh-tools v0.1.0 (*)
+      │       │   │       │   ├── eaeh-validation v0.1.0 (*)
+      │       │   │       │   ├── eaeh-workflow v0.1.0 (*)
+      │       │   │       │   └── eaeh-workspace v0.1.0 (*)
+      │       │   │       ├── eaeh-events v0.1.0 (*)
+      │       │   │       ├── eaeh-governance v0.1.0 (*)
+      │       │   │       ├── eaeh-intelligence v0.1.0 (*)
+      │       │   │       ├── eaeh-knowledge v0.1.0 (*)
+      │       │   │       ├── eaeh-runtime v0.1.0 (*)
+      │       │   │       ├── eaeh-store v0.1.0 (*)
+      │       │   │       ├── eaeh-tools v0.1.0 (*)
+      │       │   │       ├── eaeh-workflow v0.1.0 (*)
+      │       │   │       ├── eaeh-workspace v0.1.0 (*)
+      │       │   │       ├── sqlx-core v0.9.0 (*)
+      │       │   │       └── sqlx-sqlite v0.9.0 (*)
+      │       │   ├── reqwest v0.13.5 (*)
+      │       │   ├── wasm-bindgen-futures v0.4.80
+      │       │   │   └── reqwest v0.13.5 (*)
+      │       │   └── web-sys v0.3.107
+      │       │       └── reqwest v0.13.5 (*)
+      │       ├── sqlx-core v0.9.0 (*)
+      │       ├── sqlx-sqlite v0.9.0 (*)
+      │       ├── tokio-util v0.7.20
+      │       │   ├── eaeh-runtime v0.1.0 (*)
+      │       │   └── eaeh-workflow v0.1.0 (*)
+      │       ├── tower v0.5.3
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── (dev) eaeh-api v0.1.0 (*)
+      │       │   ├── reqwest v0.13.5 (*)
+      │       │   └── tower-http v0.6.11 (*)
+      │       └── tower-http v0.6.11 (*)
+      ├── ref-cast-impl v1.0.27
+      │   └── ref-cast v1.0.27
+      │       └── fluent-uri v0.4.1
+      │           └── referencing v0.61.2 (*)
+      ├── serde_derive v1.0.229
+      │   └── serde v1.0.229
+      │       ├── ahash v0.8.12 (*)
+      │       ├── chrono v0.4.45 (*)
+      │       ├── eaeh-agents v0.1.0 (*)
+      │       ├── eaeh-api v0.1.0 (*)
+      │       ├── eaeh-architecture v0.1.0 (*)
+      │       ├── eaeh-cli v0.1.0 (*)
+      │       ├── eaeh-core v0.1.0 (*)
+      │       ├── eaeh-engineering v0.1.0 (*)
+      │       ├── eaeh-events v0.1.0 (*)
+      │       ├── eaeh-extensibility v0.1.0 (*)
+      │       ├── eaeh-governance v0.1.0 (*)
+      │       ├── eaeh-intelligence v0.1.0 (*)
+      │       ├── eaeh-isolation v0.1.0 (*)
+      │       ├── eaeh-knowledge v0.1.0 (*)
+      │       ├── eaeh-provider-anthropic v0.1.0 (*)
+      │       ├── eaeh-requirements v0.1.0 (*)
+      │       ├── eaeh-runtime v0.1.0 (*)
+      │       ├── eaeh-skills v0.1.0 (*)
+      │       ├── eaeh-store v0.1.0 (*)
+      │       ├── eaeh-tools v0.1.0 (*)
+      │       ├── eaeh-validation v0.1.0 (*)
+      │       ├── eaeh-workflow v0.1.0 (*)
+      │       ├── eaeh-workspace v0.1.0 (*)
+      │       ├── either v1.19.0
+      │       │   ├── sqlx-core v0.9.0 (*)
+      │       │   └── sqlx-macros-core v0.9.0 (*)
+      │       ├── email_address v0.2.9
+      │       │   └── jsonschema v0.61.2 (*)
+      │       ├── fluent-uri v0.4.1 (*)
+      │       ├── jsonschema v0.61.2 (*)
+      │       ├── reqwest v0.13.5 (*)
+      │       ├── serde_urlencoded v0.7.1
+      │       │   └── axum v0.8.9 (*)
+      │       ├── sqlx-core v0.9.0 (*)
+      │       ├── sqlx-macros-core v0.9.0 (*)
+      │       ├── sqlx-sqlite v0.9.0 (*)
+      │       ├── tracing-serde v0.2.0
+      │       │   └── tracing-subscriber v0.3.23
+      │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       │       └── eaeh-runtime v0.1.0 (*)
+      │       └── tracing-subscriber v0.3.23 (*)
+      ├── synstructure v0.14.0
+      │   ├── yoke-derive v0.8.4
+      │   │   └── yoke v0.8.4
+      │   │       ├── icu_collections v2.4.0 (*)
+      │   │       ├── icu_provider v2.4.0 (*)
+      │   │       ├── zerotrie v0.2.5 (*)
+      │   │       └── zerovec v0.11.9
+      │   │           ├── icu_collections v2.4.0 (*)
+      │   │           ├── icu_locale_core v2.4.0 (*)
+      │   │           ├── icu_normalizer v2.4.0 (*)
+      │   │           ├── icu_properties v2.4.0 (*)
+      │   │           ├── icu_provider v2.4.0 (*)
+      │   │           ├── potential_utf v0.1.6
+      │   │           │   └── icu_collections v2.4.0 (*)
+      │   │           └── tinystr v0.8.5 (*)
+      │   └── zerofrom-derive v0.1.8
+      │       └── zerofrom v0.1.8
+      │           ├── icu_collections v2.4.0 (*)
+      │           ├── icu_provider v2.4.0 (*)
+      │           ├── yoke v0.8.4 (*)
+      │           ├── zerotrie v0.2.5 (*)
+      │           └── zerovec v0.11.9 (*)
+      ├── thiserror-impl v2.0.21
+      │   └── thiserror v2.0.21
+      │       ├── eaeh-core v0.1.0 (*)
+      │       ├── jni v0.22.4
+      │       │   └── rustls-platform-verifier v0.7.1
+      │       │       └── reqwest v0.13.5 (*)
+      │       ├── sqlx-core v0.9.0 (*)
+      │       ├── sqlx-macros-core v0.9.0 (*)
+      │       └── sqlx-sqlite v0.9.0 (*)
+      ├── tokio-macros v2.7.2
+      │   └── tokio v1.54.1
+      │       ├── axum v0.8.9 (*)
+      │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       ├── eaeh-agents v0.1.0 (*)
+      │       ├── eaeh-api v0.1.0 (*)
+      │       ├── (dev) eaeh-architecture v0.1.0 (*)
+      │       ├── eaeh-cli v0.1.0 (*)
+      │       ├── (dev) eaeh-engineering v0.1.0 (*)
+      │       ├── eaeh-events v0.1.0 (*)
+      │       ├── eaeh-extensibility v0.1.0 (*)
+      │       ├── (dev) eaeh-governance v0.1.0 (*)
+      │       ├── eaeh-intelligence v0.1.0 (*)
+      │       ├── eaeh-isolation v0.1.0 (*)
+      │       ├── eaeh-knowledge v0.1.0 (*)
+      │       ├── (dev) eaeh-provider-anthropic v0.1.0 (*)
+      │       ├── (dev) eaeh-requirements v0.1.0 (*)
+      │       ├── eaeh-runtime v0.1.0 (*)
+      │       ├── (dev) eaeh-skills v0.1.0 (*)
+      │       ├── eaeh-store v0.1.0 (*)
+      │       ├── eaeh-tools v0.1.0 (*)
+      │       ├── (dev) eaeh-validation v0.1.0 (*)
+      │       ├── eaeh-workflow v0.1.0 (*)
+      │       ├── eaeh-workspace v0.1.0 (*)
+      │       ├── hyper v1.12.0
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── hyper-rustls v0.27.10 (*)
+      │       │   ├── hyper-util v0.1.21 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── hyper-rustls v0.27.10 (*)
+      │       ├── hyper-util v0.1.21 (*)
+      │       ├── reqwest v0.13.5 (*)
+      │       ├── sqlx-core v0.9.0 (*)
+      │       ├── sqlx-macros-core v0.9.0 (*)
+      │       ├── tokio-rustls v0.26.6
+      │       │   ├── hyper-rustls v0.27.10 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── tokio-stream v0.1.19
+      │       │   └── sqlx-core v0.9.0 (*)
+      │       ├── tokio-util v0.7.20 (*)
+      │       ├── tower v0.5.3 (*)
+      │       └── wasm-bindgen-futures v0.4.80 (*)
+      ├── wasm-bindgen-macro-support v0.2.130
+      │   └── wasm-bindgen-macro v0.2.130
+      │       └── wasm-bindgen v0.2.130
+      │           ├── getrandom v0.3.4 (*)
+      │           ├── iana-time-zone v0.1.65 (*)
+      │           ├── js-sys v0.3.107 (*)
+      │           ├── reqwest v0.13.5 (*)
+      │           ├── wasm-bindgen-futures v0.4.80 (*)
+      │           └── web-sys v0.3.107 (*)
+      ├── yoke-derive v0.8.4 (*)
+      ├── zerofrom-derive v0.1.8 (*)
+      └── zerovec-derive v0.11.7
+          └── zerovec v0.11.9 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'windows-sys'
+    ┌─ /Users/udithad/repo/test-harness/enterprise-architecture-engineering-harness/Cargo.lock:303:1
+    │  
+303 │ ╭ windows-sys 0.52.0 registry+https://github.com/rust-lang/crates.io-index
+304 │ │ windows-sys 0.61.2 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰────────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ windows-sys v0.52.0
+      └── ring v0.17.14
+          ├── rustls v0.23.46
+          │   ├── eaeh-provider-anthropic v0.1.0
+          │   │   └── eaeh-runtime v0.1.0
+          │   │       ├── (dev) eaeh-acceptance v0.1.0
+          │   │       ├── eaeh-api v0.1.0
+          │   │       │   └── eaeh-cli v0.1.0
+          │   │       └── eaeh-cli v0.1.0 (*)
+          │   ├── hyper-rustls v0.27.10
+          │   │   └── reqwest v0.13.5
+          │   │       └── eaeh-provider-anthropic v0.1.0 (*)
+          │   ├── reqwest v0.13.5 (*)
+          │   ├── rustls-platform-verifier v0.7.1
+          │   │   └── reqwest v0.13.5 (*)
+          │   └── tokio-rustls v0.26.6
+          │       ├── hyper-rustls v0.27.10 (*)
+          │       └── reqwest v0.13.5 (*)
+          └── rustls-webpki v0.103.16
+              ├── rustls v0.23.46 (*)
+              └── rustls-platform-verifier v0.7.1 (*)
+    ├ windows-sys v0.61.2
+      ├── anstyle-query v1.1.5
+      │   └── anstream v1.0.0
+      │       └── clap_builder v4.6.7
+      │           └── clap v4.6.7
+      │               └── eaeh-cli v0.1.0
+      ├── anstyle-wincon v3.0.11
+      │   └── anstream v1.0.0 (*)
+      ├── errno v0.3.15
+      │   ├── rustix v1.1.6
+      │   │   └── tempfile v3.27.0
+      │   │       ├── (dev) eaeh-agents v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0
+      │   │       │   └── eaeh-runtime v0.1.0
+      │   │       │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │       ├── eaeh-api v0.1.0
+      │   │       │       │   └── eaeh-cli v0.1.0 (*)
+      │   │       │       └── eaeh-cli v0.1.0 (*)
+      │   │       ├── (dev) eaeh-api v0.1.0 (*)
+      │   │       ├── (dev) eaeh-cli v0.1.0 (*)
+      │   │       ├── (dev) eaeh-events v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-extensibility v0.1.0
+      │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   ├── eaeh-intelligence v0.1.0
+      │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-knowledge v0.1.0
+      │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-engineering v0.1.0
+      │   │       │   │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-provider-anthropic v0.1.0
+      │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-skills v0.1.0
+      │   │       │   │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   └── eaeh-testkit v0.1.0
+      │   │       │   │   │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │       ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │       │   │   │       └── (dev) eaeh-runtime v0.1.0 (*)
+      │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   ├── eaeh-tools v0.1.0
+      │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-engineering v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   │   └── eaeh-skills v0.1.0 (*)
+      │   │       │   │   ├── eaeh-workflow v0.1.0
+      │   │       │   │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   │   └── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   └── eaeh-workspace v0.1.0
+      │   │       │   │       ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │       ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │       ├── eaeh-tools v0.1.0 (*)
+      │   │       │   │       └── eaeh-workflow v0.1.0 (*)
+      │   │       │   ├── eaeh-governance v0.1.0
+      │   │       │   │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   │   ├── eaeh-cli v0.1.0 (*)
+      │   │       │   │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │       │   │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │       │   │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   │   ├── eaeh-skills v0.1.0 (*)
+      │   │       │   │   ├── eaeh-tools v0.1.0 (*)
+      │   │       │   │   └── eaeh-workflow v0.1.0 (*)
+      │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   ├── eaeh-skills v0.1.0 (*)
+      │   │       │   ├── eaeh-tools v0.1.0 (*)
+      │   │       │   ├── eaeh-workflow v0.1.0 (*)
+      │   │       │   └── eaeh-workspace v0.1.0 (*)
+      │   │       ├── (dev) eaeh-extensibility v0.1.0 (*)
+      │   │       ├── (dev) eaeh-governance v0.1.0 (*)
+      │   │       ├── (dev) eaeh-intelligence v0.1.0 (*)
+      │   │       ├── (dev) eaeh-isolation v0.1.0
+      │   │       │   ├── (dev) eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   └── eaeh-tools v0.1.0 (*)
+      │   │       ├── (dev) eaeh-knowledge v0.1.0 (*)
+      │   │       ├── (dev) eaeh-runtime v0.1.0 (*)
+      │   │       ├── (dev) eaeh-skills v0.1.0 (*)
+      │   │       ├── (dev) eaeh-store v0.1.0
+      │   │       │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │   │       │   ├── eaeh-agents v0.1.0 (*)
+      │   │       │   ├── eaeh-api v0.1.0 (*)
+      │   │       │   ├── eaeh-events v0.1.0 (*)
+      │   │       │   ├── eaeh-extensibility v0.1.0 (*)
+      │   │       │   ├── eaeh-governance v0.1.0 (*)
+      │   │       │   ├── eaeh-intelligence v0.1.0 (*)
+      │   │       │   ├── eaeh-knowledge v0.1.0 (*)
+      │   │       │   ├── eaeh-runtime v0.1.0 (*)
+      │   │       │   ├── eaeh-skills v0.1.0 (*)
+      │   │       │   ├── eaeh-tools v0.1.0 (*)
+      │   │       │   ├── eaeh-workflow v0.1.0 (*)
+      │   │       │   └── eaeh-workspace v0.1.0 (*)
+      │   │       ├── (dev) eaeh-tools v0.1.0 (*)
+      │   │       ├── (dev) eaeh-workflow v0.1.0 (*)
+      │   │       └── (dev) eaeh-workspace v0.1.0 (*)
+      │   └── signal-hook-registry v1.4.8
+      │       └── tokio v1.54.1
+      │           ├── axum v0.8.9
+      │           │   ├── eaeh-api v0.1.0 (*)
+      │           │   ├── eaeh-cli v0.1.0 (*)
+      │           │   └── (dev) eaeh-provider-anthropic v0.1.0 (*)
+      │           ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │           ├── eaeh-agents v0.1.0 (*)
+      │           ├── eaeh-api v0.1.0 (*)
+      │           ├── (dev) eaeh-architecture v0.1.0
+      │           │   └── eaeh-engineering v0.1.0 (*)
+      │           ├── eaeh-cli v0.1.0 (*)
+      │           ├── (dev) eaeh-engineering v0.1.0 (*)
+      │           ├── eaeh-events v0.1.0 (*)
+      │           ├── eaeh-extensibility v0.1.0 (*)
+      │           ├── (dev) eaeh-governance v0.1.0 (*)
+      │           ├── eaeh-intelligence v0.1.0 (*)
+      │           ├── eaeh-isolation v0.1.0 (*)
+      │           ├── eaeh-knowledge v0.1.0 (*)
+      │           ├── (dev) eaeh-provider-anthropic v0.1.0 (*)
+      │           ├── (dev) eaeh-requirements v0.1.0
+      │           │   ├── eaeh-architecture v0.1.0 (*)
+      │           │   ├── eaeh-engineering v0.1.0 (*)
+      │           │   └── eaeh-runtime v0.1.0 (*)
+      │           ├── eaeh-runtime v0.1.0 (*)
+      │           ├── (dev) eaeh-skills v0.1.0 (*)
+      │           ├── eaeh-store v0.1.0 (*)
+      │           ├── eaeh-tools v0.1.0 (*)
+      │           ├── (dev) eaeh-validation v0.1.0
+      │           │   ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │           │   ├── eaeh-agents v0.1.0 (*)
+      │           │   ├── eaeh-architecture v0.1.0 (*)
+      │           │   ├── eaeh-engineering v0.1.0 (*)
+      │           │   ├── eaeh-knowledge v0.1.0 (*)
+      │           │   ├── eaeh-requirements v0.1.0 (*)
+      │           │   ├── eaeh-runtime v0.1.0 (*)
+      │           │   ├── eaeh-skills v0.1.0 (*)
+      │           │   ├── eaeh-tools v0.1.0 (*)
+      │           │   └── eaeh-workflow v0.1.0 (*)
+      │           ├── eaeh-workflow v0.1.0 (*)
+      │           ├── eaeh-workspace v0.1.0 (*)
+      │           ├── hyper v1.12.0
+      │           │   ├── axum v0.8.9 (*)
+      │           │   ├── hyper-rustls v0.27.10
+      │           │   │   └── reqwest v0.13.5
+      │           │   │       └── eaeh-provider-anthropic v0.1.0 (*)
+      │           │   ├── hyper-util v0.1.21
+      │           │   │   ├── axum v0.8.9 (*)
+      │           │   │   ├── hyper-rustls v0.27.10 (*)
+      │           │   │   └── reqwest v0.13.5 (*)
+      │           │   └── reqwest v0.13.5 (*)
+      │           ├── hyper-rustls v0.27.10 (*)
+      │           ├── hyper-util v0.1.21 (*)
+      │           ├── reqwest v0.13.5 (*)
+      │           ├── sqlx-core v0.9.0
+      │           │   ├── sqlx v0.9.0
+      │           │   │   └── eaeh-store v0.1.0 (*)
+      │           │   ├── sqlx-macros v0.9.0
+      │           │   │   └── sqlx v0.9.0 (*)
+      │           │   ├── sqlx-macros-core v0.9.0
+      │           │   │   └── sqlx-macros v0.9.0 (*)
+      │           │   └── sqlx-sqlite v0.9.0
+      │           │       ├── sqlx v0.9.0 (*)
+      │           │       └── sqlx-macros-core v0.9.0 (*)
+      │           ├── sqlx-macros-core v0.9.0 (*)
+      │           ├── tokio-rustls v0.26.6
+      │           │   ├── hyper-rustls v0.27.10 (*)
+      │           │   └── reqwest v0.13.5 (*)
+      │           ├── tokio-stream v0.1.19
+      │           │   └── sqlx-core v0.9.0 (*)
+      │           ├── tokio-util v0.7.20
+      │           │   ├── eaeh-runtime v0.1.0 (*)
+      │           │   └── eaeh-workflow v0.1.0 (*)
+      │           ├── tower v0.5.3
+      │           │   ├── axum v0.8.9 (*)
+      │           │   ├── (dev) eaeh-api v0.1.0 (*)
+      │           │   ├── reqwest v0.13.5 (*)
+      │           │   └── tower-http v0.6.11
+      │           │       └── reqwest v0.13.5 (*)
+      │           └── wasm-bindgen-futures v0.4.80
+      │               └── reqwest v0.13.5 (*)
+      ├── mio v1.2.4
+      │   └── tokio v1.54.1 (*)
+      ├── nu-ansi-term v0.50.3
+      │   └── tracing-subscriber v0.3.23
+      │       ├── (dev) eaeh-acceptance v0.1.0 (*)
+      │       └── eaeh-runtime v0.1.0 (*)
+      ├── rustix v1.1.6 (*)
+      ├── rustls-platform-verifier v0.7.1
+      │   └── reqwest v0.13.5 (*)
+      ├── schannel v0.1.30
+      │   └── rustls-native-certs v0.8.5
+      │       └── rustls-platform-verifier v0.7.1 (*)
+      ├── socket2 v0.6.5
+      │   ├── hyper-util v0.1.21 (*)
+      │   └── tokio v1.54.1 (*)
+      ├── tempfile v3.27.0 (*)
+      ├── tokio v1.54.1 (*)
+      └── winapi-util v0.1.11
+          ├── same-file v1.0.6
+          │   └── walkdir v2.5.0
+          │       └── (build) jni v0.22.4
+          │           └── rustls-platform-verifier v0.7.1 (*)
+          └── walkdir v2.5.0 (*)
+
+advisories ok, bans ok, licenses ok, sources ok
+==> CI PASSED

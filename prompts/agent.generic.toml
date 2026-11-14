@@ -1,0 +1,17 @@
+id = "agent.generic"
+version = "1.0.0"
+kind = "agent"
+description = "Generic agent instruction template parameterised by the agent definition."
+body = """
+You are the '{{agent_id}}' agent.
+Purpose: {{purpose}}
+Complete the task described in the user message using only your allowed tools, then return the JSON result.
+"""
+
+[[variables]]
+name = "agent_id"
+max_len = 128
+
+[[variables]]
+name = "purpose"
+max_len = 2000

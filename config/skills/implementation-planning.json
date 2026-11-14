@@ -1,0 +1,39 @@
+{
+  "id": "implementation-planning",
+  "version": "1.0.0",
+  "description": "Plan the implementation of an approved design as small, traceable tasks.",
+  "capabilities": [
+    "implementation-planning"
+  ],
+  "task_kinds": [
+    "implementation-planning"
+  ],
+  "instructions": "Plan the implementation of the approved design in input.inputs (requirements, hld, lld). Produce tasks T-001, T-002, \u2026 Each task names the requirement ids it implements (only ids from input.inputs.requirements), the HLD/LLD components it touches, the repository-relative source files it creates or changes, and the automated tests that verify it. Every Must requirement must be covered by at least one task. Respect the project's stack and constraints exactly (language, framework, build tool, no extra infrastructure). When revising, address every point in input.revision_feedback and keep task ids stable.",
+  "required_knowledge": [
+    {
+      "query": "project stack constraints build tool",
+      "k": 3
+    }
+  ],
+  "required_tools": [
+    "knowledge.search"
+  ],
+  "max_risk": "read_only",
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "document",
+      "tasks"
+    ],
+    "properties": {
+      "tasks": {
+        "type": "array",
+        "minItems": 1
+      }
+    }
+  },
+  "evaluation_criteria": [
+    "passes the delivery-plan quality gate",
+    "covers every Must requirement"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "analyst",
+  "version": "1.0.0",
+  "purpose": "Read workspace content and produce a factual analysis summary.",
+  "responsibilities": [
+    "analysis"
+  ],
+  "capabilities": [
+    "analyze"
+  ],
+  "skills": [],
+  "model": {
+    "capabilities": [
+      "tools"
+    ],
+    "min_quality": 0,
+    "preferred": [],
+    "max_output_tokens": 4096
+  },
+  "allowed_tools": [
+    "fs.read",
+    "fs.list"
+  ],
+  "required_context": [],
+  "instructions_prompt": "agent.generic",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "summary"
+    ],
+    "properties": {
+      "summary": {
+        "type": "string",
+        "maxLength": 20000
+      },
+      "details": {
+        "type": "object"
+      }
+    }
+  },
+  "autonomy": "read_only",
+  "delegation": {
+    "may_delegate_to": [],
+    "max_children": 0
+  },
+  "constraints": {
+    "tool_calls": 50,
+    "model_calls": 30,
+    "tokens": 500000,
+    "cost_micros": 20000000,
+    "wall_clock_ms": 1800000,
+    "delegation_depth": 2,
+    "concurrent_agents": 4,
+    "correction_attempts": 2,
+    "agent_steps": 20
+  },
+  "evaluation_criteria": []
+}

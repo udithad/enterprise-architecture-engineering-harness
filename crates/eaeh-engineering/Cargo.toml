@@ -1,0 +1,26 @@
+[package]
+name = "eaeh-engineering"
+description = "EAEH engineering-design integration: governed tools (BRD sections, requirements and architecture rendering, design checks), validator registration and default quality gates for Phase 3 workflows."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-tools.workspace = true
+eaeh-validation.workspace = true
+eaeh-knowledge.workspace = true
+eaeh-requirements.workspace = true
+eaeh-architecture.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+semver.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

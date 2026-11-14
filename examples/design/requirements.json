@@ -1,0 +1,274 @@
+{
+  "document": "requirements",
+  "title": "Order management – requirements (demonstration)",
+  "summary": "Requirements derived from the demonstration order-management BRD.",
+  "requirements": [
+    {
+      "id": "REQ-F-001",
+      "kind": "functional",
+      "title": "Place order",
+      "statement": "A registered customer must be able to place an order for one or more products from their cart.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "Given a cart with at least one line, when the customer checks out, then an order with status PLACED is created"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#2"
+      ],
+      "business_rules": [
+        "BR-001",
+        "BR-002"
+      ],
+      "concepts": [
+        "Order",
+        "Order line",
+        "Customer"
+      ]
+    },
+    {
+      "id": "REQ-F-002",
+      "kind": "functional",
+      "title": "Order confirmation",
+      "statement": "The customer must receive a confirmation containing the order number when an order is placed.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "The response to a successful order placement contains the order number"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#2"
+      ],
+      "concepts": [
+        "Order"
+      ]
+    },
+    {
+      "id": "REQ-F-003",
+      "kind": "functional",
+      "title": "Cancel order",
+      "statement": "A customer must be able to cancel an order that has not been shipped.",
+      "priority": "should",
+      "acceptance_criteria": [
+        "Cancelling an order in status PLACED or PAID sets it to CANCELLED",
+        "Cancelling an order in status SHIPPED is rejected"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#3"
+      ],
+      "business_rules": [
+        "BR-003"
+      ],
+      "concepts": [
+        "Order"
+      ]
+    },
+    {
+      "id": "REQ-F-004",
+      "kind": "functional",
+      "title": "View order status",
+      "statement": "A customer must be able to see the current status of each of their orders.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "The order list shows each order with one of PLACED, PAID, SHIPPED, DELIVERED, CANCELLED"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#4"
+      ],
+      "concepts": [
+        "Order",
+        "Order status"
+      ]
+    },
+    {
+      "id": "REQ-F-005",
+      "kind": "functional",
+      "title": "Record shipment",
+      "statement": "Warehouse staff must be able to set an order to shipped.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "After warehouse staff record the shipment the customer sees status SHIPPED"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#4"
+      ],
+      "concepts": [
+        "Order status"
+      ]
+    },
+    {
+      "id": "REQ-F-006",
+      "kind": "functional",
+      "title": "Take payment",
+      "statement": "Payment must be taken through the existing external payment provider when the order is placed.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "An order is PAID only after the payment provider confirms the payment"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#5"
+      ]
+    },
+    {
+      "id": "REQ-NF-001",
+      "kind": "non_functional",
+      "category": "security",
+      "title": "No card data",
+      "statement": "The platform must not store card numbers.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "A scan of all EAEH-managed data stores finds 0 card numbers"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#5"
+      ]
+    },
+    {
+      "id": "REQ-NF-002",
+      "kind": "non_functional",
+      "category": "performance_efficiency",
+      "title": "Order placement latency",
+      "statement": "Order placement must complete within 2 seconds at the 95th percentile.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "p95 placement latency <= 2000 ms at 20 orders per second"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#6"
+      ]
+    },
+    {
+      "id": "REQ-NF-003",
+      "kind": "non_functional",
+      "category": "reliability",
+      "title": "Availability",
+      "statement": "The ordering service must be available 99.9% of each calendar month.",
+      "priority": "must",
+      "acceptance_criteria": [
+        "Monthly availability measured by synthetic checks is at least 99.9%"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#6"
+      ]
+    }
+  ],
+  "business_rules": [
+    {
+      "id": "BR-001",
+      "statement": "An order must contain at least one line.",
+      "sources": [
+        "demo-brd/order-management@v1#2"
+      ]
+    },
+    {
+      "id": "BR-002",
+      "statement": "Each order line has a product and a positive quantity.",
+      "sources": [
+        "demo-brd/order-management@v1#2"
+      ]
+    },
+    {
+      "id": "BR-003",
+      "statement": "An order can be cancelled only until it has been shipped.",
+      "sources": [
+        "demo-brd/order-management@v1#3"
+      ]
+    }
+  ],
+  "domain_concepts": [
+    {
+      "name": "Customer",
+      "definition": "A registered person who buys products online.",
+      "attributes": [
+        "id",
+        "name"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#1"
+      ]
+    },
+    {
+      "name": "Order",
+      "definition": "A customer's request to buy one or more products.",
+      "attributes": [
+        "order number",
+        "status",
+        "lines"
+      ],
+      "relationships": [
+        "Order contains Order line",
+        "Customer places Order"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#2"
+      ]
+    },
+    {
+      "name": "Order line",
+      "definition": "A product and quantity within an order.",
+      "attributes": [
+        "product",
+        "quantity"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#2"
+      ]
+    },
+    {
+      "name": "Order status",
+      "definition": "Lifecycle state of an order.",
+      "attributes": [
+        "placed",
+        "paid",
+        "shipped",
+        "delivered",
+        "cancelled"
+      ],
+      "sources": [
+        "demo-brd/order-management@v1#4"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISS-001",
+      "kind": "ambiguity",
+      "severity": "high",
+      "description": "The BRD leaves cancellation of partially shipped orders undefined (TBD).",
+      "refs": [
+        "REQ-F-003",
+        "demo-brd/order-management@v1#3"
+      ],
+      "question": "Can the unshipped lines of a partially shipped order be cancelled?"
+    },
+    {
+      "id": "ISS-002",
+      "kind": "ambiguity",
+      "severity": "medium",
+      "description": "The BRD only says order placement must be 'fast'; 2 s at p95 is a proposed target.",
+      "refs": [
+        "REQ-NF-002",
+        "demo-brd/order-management@v1#6"
+      ],
+      "question": "Is 2 seconds at the 95th percentile acceptable?"
+    }
+  ],
+  "out_of_scope": [
+    {
+      "source": "demo-brd/order-management@v1#0",
+      "reason": "Document title and purpose statement"
+    },
+    {
+      "source": "demo-brd/order-management@v1#7",
+      "reason": "Returns and refunds remain with the existing customer-service process"
+    }
+  ],
+  "citations": [
+    "demo-brd/order-management@v1#0",
+    "demo-brd/order-management@v1#1",
+    "demo-brd/order-management@v1#2",
+    "demo-brd/order-management@v1#3",
+    "demo-brd/order-management@v1#4",
+    "demo-brd/order-management@v1#5",
+    "demo-brd/order-management@v1#6",
+    "demo-brd/order-management@v1#7"
+  ]
+}

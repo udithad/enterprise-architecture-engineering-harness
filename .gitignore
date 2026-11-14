@@ -1,0 +1,6 @@
+/target
+/.eaeh-data
+*.db
+*.db-shm
+*.db-wal
+*.token

@@ -1,0 +1,17 @@
+[package]
+name = "eaeh-testkit"
+description = "TEST-ONLY support for EAEH: scripted model provider (a labelled test double) and fixtures. Never a production dependency (enforced by the architecture fitness test)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+eaeh-core.workspace = true
+eaeh-intelligence.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true

@@ -1,0 +1,299 @@
+{
+  "document": "hld",
+  "title": "Order management – high-level design (demonstration)",
+  "summary": "Self-service ordering for the retailer's online shop.",
+  "context": {
+    "system_name": "Order Management",
+    "description": "Lets customers place, track and cancel orders and warehouse staff record shipments.",
+    "actors": [
+      {
+        "id": "customer",
+        "name": "Customer",
+        "kind": "person",
+        "description": "Registered online customer"
+      },
+      {
+        "id": "warehouse-staff",
+        "name": "Warehouse staff",
+        "kind": "person",
+        "description": "Ships orders"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "web-shop",
+      "name": "Web shop",
+      "kind": "web_app",
+      "responsibilities": [
+        "Checkout and order history UI",
+        "Warehouse shipment screen"
+      ],
+      "technology": "Server-rendered web application",
+      "requirements": [
+        "REQ-F-001",
+        "REQ-F-004",
+        "REQ-F-005"
+      ]
+    },
+    {
+      "id": "order-service",
+      "name": "Order service",
+      "kind": "service",
+      "responsibilities": [
+        "Order lifecycle and business rules",
+        "Payment orchestration",
+        "Order API"
+      ],
+      "technology": "Rust service",
+      "requirements": [
+        "REQ-F-001",
+        "REQ-F-002",
+        "REQ-F-003",
+        "REQ-F-004",
+        "REQ-F-005",
+        "REQ-F-006",
+        "REQ-NF-002"
+      ]
+    },
+    {
+      "id": "order-db",
+      "name": "Order database",
+      "kind": "database",
+      "responsibilities": [
+        "Durable storage of orders"
+      ],
+      "technology": "Managed relational database",
+      "requirements": []
+    },
+    {
+      "id": "payment-provider",
+      "name": "Payment provider",
+      "kind": "external",
+      "responsibilities": [
+        "Card payment processing"
+      ],
+      "technology": "Existing external provider"
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "I-001",
+      "provider": "order-service",
+      "consumers": [
+        "web-shop"
+      ],
+      "protocol": "HTTPS JSON (REST)",
+      "description": "Order API",
+      "requirements": [
+        "REQ-F-001",
+        "REQ-F-003",
+        "REQ-F-004",
+        "REQ-F-005"
+      ]
+    },
+    {
+      "id": "I-002",
+      "provider": "payment-provider",
+      "consumers": [
+        "order-service"
+      ],
+      "protocol": "HTTPS (provider API)",
+      "description": "Payment authorisation with provider-issued tokens",
+      "requirements": [
+        "REQ-F-006"
+      ]
+    },
+    {
+      "id": "I-003",
+      "provider": "web-shop",
+      "consumers": [
+        "customer",
+        "warehouse-staff"
+      ],
+      "protocol": "HTTPS (browser)",
+      "description": "User interface"
+    }
+  ],
+  "data_flows": [
+    {
+      "id": "F-001",
+      "from": "customer",
+      "to": "web-shop",
+      "data": "Cart and order details"
+    },
+    {
+      "id": "F-002",
+      "from": "order-service",
+      "to": "order-db",
+      "data": "Orders and status history"
+    },
+    {
+      "id": "F-003",
+      "from": "order-service",
+      "to": "payment-provider",
+      "data": "Payment token and amount (no card numbers)"
+    }
+  ],
+  "deployment": [
+    {
+      "id": "app-cluster",
+      "name": "Application cluster",
+      "environment": "production",
+      "technology": "Container platform, 2 zones",
+      "hosts": [
+        "web-shop",
+        "order-service"
+      ]
+    },
+    {
+      "id": "db-cluster",
+      "name": "Database service",
+      "environment": "production",
+      "technology": "Managed relational database, multi-zone",
+      "hosts": [
+        "order-db"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D-001",
+      "title": "Single order service with a relational store",
+      "status": "accepted",
+      "context": "Order rules are transactional and the team is small.",
+      "decision": "Implement order management as one service owning a relational database; expose a REST API whose errors follow the error-format standard.",
+      "alternatives": [
+        {
+          "option": "Separate microservices for ordering, payment and shipment",
+          "pros": [
+            "Independent scaling"
+          ],
+          "cons": [
+            "Distributed transactions",
+            "Higher operational cost"
+          ]
+        },
+        {
+          "option": "Single service with relational store",
+          "pros": [
+            "Simple consistency"
+          ],
+          "cons": [
+            "Scales as one unit"
+          ]
+        }
+      ],
+      "consequences": [
+        "Status transitions are local transactions"
+      ],
+      "requirements": [
+        "REQ-F-003",
+        "REQ-F-005"
+      ],
+      "standards": [
+        "demo-api-standards/error-format@v1"
+      ]
+    },
+    {
+      "id": "D-002",
+      "title": "Delegate card handling to the payment provider",
+      "status": "accepted",
+      "context": "The platform must never store card numbers.",
+      "decision": "Use provider-issued payment tokens; card numbers never reach EAEH-managed components.",
+      "alternatives": [
+        {
+          "option": "Collect card numbers and forward them",
+          "pros": [
+            "Full UI control"
+          ],
+          "cons": [
+            "Card-data compliance scope"
+          ]
+        }
+      ],
+      "consequences": [
+        "Payment UI is partly provider-hosted"
+      ],
+      "requirements": [
+        "REQ-NF-001",
+        "REQ-F-006"
+      ]
+    },
+    {
+      "id": "D-003",
+      "title": "Run two instances across two zones",
+      "status": "accepted",
+      "context": "99.9% monthly availability is required.",
+      "decision": "Run at least two instances of each stateless component in two zones behind a load balancer and use a multi-zone managed database.",
+      "alternatives": [
+        {
+          "option": "Single instance with fast restart",
+          "pros": [
+            "Cheaper"
+          ],
+          "cons": [
+            "Zone outage breaks availability target"
+          ]
+        }
+      ],
+      "consequences": [
+        "Higher infrastructure cost"
+      ],
+      "requirements": [
+        "REQ-NF-003"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-001",
+      "description": "Payment provider outage blocks order placement",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Time-boxed retries; order stays PLACED and payment can be retried",
+      "components": [
+        "order-service"
+      ]
+    },
+    {
+      "id": "R-002",
+      "description": "Cancellation rules for partially shipped orders are undefined (ISS-001)",
+      "likelihood": "high",
+      "impact": "medium",
+      "mitigation": "Reject cancellation of partially shipped orders until the business decides",
+      "components": [
+        "order-service"
+      ]
+    }
+  ],
+  "tradeoffs": [
+    {
+      "id": "T-001",
+      "concern": "When payment is taken",
+      "options": [
+        "Synchronous at placement",
+        "Asynchronous after placement"
+      ],
+      "choice": "Synchronous at placement",
+      "rationale": "The BRD requires payment when the order is placed; the 2 s latency budget allows one provider call.",
+      "quality_attributes": [
+        "performance_efficiency",
+        "reliability"
+      ]
+    }
+  ],
+  "compliance": [
+    {
+      "standard": "demo-api-standards/error-format@v1",
+      "status": "compliant",
+      "justification": "All order API errors use application/problem+json with type, title, status and trace_id (D-001; LLD API design).",
+      "components": [
+        "order-service"
+      ]
+    }
+  ],
+  "citations": [
+    "demo-api-standards/error-format@v1"
+  ]
+}
