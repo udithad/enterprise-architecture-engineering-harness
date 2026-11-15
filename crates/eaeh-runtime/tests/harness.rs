@@ -193,7 +193,7 @@ async fn shipped_definitions_and_demo_workflow_end_to_end() {
     assert!(m.keys().any(|k| k.contains("workflow.completed")), "{m:?}");
     let health = h.health().await;
     assert_eq!(health.status, "ok");
-    assert_eq!(health.migrations, vec![1, 2, 3, 4, 5]);
+    assert_eq!(health.migrations, vec![1, 2, 3, 4, 5, 6]);
     assert!(
         health
             .isolation

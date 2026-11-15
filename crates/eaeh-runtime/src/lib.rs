@@ -12,6 +12,8 @@ pub mod supervision;
 
 pub use config::HarnessConfig;
 pub use eaeh_agents::{ExecutionMode, ExternalSubmission, ExternalTaskView};
-pub use eaeh_workspace::ArtifactMeta;
+pub use eaeh_workspace::{
+    ArtifactMeta, INDEX_FILE, MaterializationStatus, MaterializeReport, WorkspaceRegistration,
+};
 pub use extensions::{ExtensionContext, InProcessExtension};
 pub use harness::{Harness, HarnessBuilder, HealthReport};

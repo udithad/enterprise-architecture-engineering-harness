@@ -1,7 +1,7 @@
 {
   "id": "engineering.design",
-  "version": "1.0.0",
-  "description": "Phase 3: BRD \u2192 requirements \u2192 HLD \u2192 LLD with deterministic quality gates and a human approval gate after each stage.",
+  "version": "1.1.0",
+  "description": "Phase 3: BRD → requirements → HLD → LLD with deterministic quality gates and a human approval gate after each stage.",
   "initial": "brd",
   "states": [
     {
@@ -105,6 +105,7 @@
       "type": "approval_gate",
       "required_role": "approver",
       "artifact_from": "render_requirements",
+      "materialize": "docs/architecture/requirements",
       "max_revisions": 3,
       "transitions": {
         "approved": "hld",
@@ -165,6 +166,7 @@
       "type": "approval_gate",
       "required_role": "approver",
       "artifact_from": "render_hld",
+      "materialize": "docs/architecture/hld",
       "max_revisions": 3,
       "transitions": {
         "approved": "lld",
@@ -235,6 +237,7 @@
       "type": "approval_gate",
       "required_role": "approver",
       "artifact_from": "render_lld",
+      "materialize": "docs/architecture/lld",
       "max_revisions": 3,
       "transitions": {
         "approved": "done",

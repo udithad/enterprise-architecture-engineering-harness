@@ -576,8 +576,10 @@ name = "eaeh-acceptance"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum",
  "chrono",
  "eaeh-agents",
+ "eaeh-api",
  "eaeh-core",
  "eaeh-events",
  "eaeh-extensibility",
@@ -591,8 +593,12 @@ dependencies = [
  "eaeh-tools",
  "eaeh-validation",
  "eaeh-workflow",
+ "http-body-util",
+ "semver",
  "serde_json",
+ "tempfile",
  "tokio",
+ "tower",
  "tracing",
  "tracing-subscriber",
  "uuid",

@@ -12,7 +12,9 @@
 //! * Per-principal rate limiting and request body size limits.
 
 mod error;
+pub mod portal;
 mod routes;
+mod views;
 
 pub use error::ApiError;
 pub use routes::{AppState, router};

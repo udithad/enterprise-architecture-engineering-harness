@@ -17,9 +17,7 @@ Two other modes exist:
 - `direct_provider`: EAEH calls its own Anthropic adapter. Opt-in, separately billed, and verified only against a mock server.
 - `deterministic`: replayed fixtures; not AI.
 
-**Just want an HLD/LLD for a small API?** Follow the [Quick Start](docs/user-guides/QUICKSTART-HLD-LLD.md). Full instructions: [EAEH User Manual](docs/user-guides/EAEH-USER-MANUAL.md).
-**New to EAEH?** Start with the beginner-friendly [Getting Started guide](docs/user-guides/EAEH-GETTING-STARTED.md). It explains what EAEH is, how your AI assistant and EAEH share the work, and the lifecycle from BRD to approved code.
-**Using EAEH in a repository (Claude Code / GitHub Copilot in VS Code)?** See the [Developer Experience Guide](docs/user-guides/DEVELOPER-EXPERIENCE-GUIDE.md). It covers the one-command project bootstrap, MCP setup, hand-offs, identity profiles, readiness, approvals and delivery.
+**Getting started:** the [EAEH User Guide](docs/user-guides/EAEH-USER-GUIDE.md) is the single guide: clone, build, setup, Governance Portal, a no-AI demo, and a new project from BRD to approved Requirements, HLD and LLD, with the CLI command and the portal action for each step.
 
 ## Quick start
 
@@ -54,7 +52,7 @@ scripts/demo-external-ai.sh setup             # simple-springboot-api in externa
 | `docs/architecture/` | Architecture, ADRs, threat model |
 | `docs/implementation/` | Roadmap, action register, test strategy, phase reports, evidence |
 | `docs/OPERATIONS.md` | Install, configure, run, CLI and API reference |
-| `docs/user-guides/` | Beginner-friendly guides ([Getting Started](docs/user-guides/EAEH-GETTING-STARTED.md)) |
+| `docs/user-guides/` | The [EAEH User Guide](docs/user-guides/EAEH-USER-GUIDE.md) |
 | `claude-instructions.md` | Master architecture and implementation instructions |
 
 ## Licence

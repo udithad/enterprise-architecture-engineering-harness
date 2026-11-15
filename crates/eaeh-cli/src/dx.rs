@@ -365,6 +365,31 @@ pub fn project_context(explicit: Option<&str>) -> Result<(ProjectId, Option<(Pat
     }
 }
 
+/// Register the repository as the project's application workspace, where approved
+/// documents are materialized (ARTIFACT-MATERIALIZATION-PLAN). The repository must be the
+/// one the manifest was bootstrapped in.
+pub(crate) async fn register_workspace(
+    h: &Harness,
+    m: &ProjectManifest,
+    root: &std::path::Path,
+    by: &str,
+) -> Result<eaeh_runtime::WorkspaceRegistration> {
+    let here = std::fs::canonicalize(root)?;
+    let declared =
+        std::fs::canonicalize(&m.workspace.root).unwrap_or_else(|_| PathBuf::from(&m.workspace.root));
+    if here != declared {
+        return Err(HarnessError::invalid_input(format!(
+            "manifest workspace is {}, current repository is {}: re-run `eaeh project init` here",
+            m.workspace.root,
+            here.display()
+        )));
+    }
+    h.engine
+        .materializer()
+        .register_workspace(m.scope(), &here, by)
+        .await
+}
+
 pub(crate) fn manifest_required(explicit: Option<&str>) -> Result<(PathBuf, ProjectManifest)> {
     project_context(explicit)?.1.ok_or_else(|| {
         HarnessError::invalid_input(
@@ -1044,6 +1069,11 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     };
     let mp = m.save(&root)?;
     log.push(format!("manifest written: {}", mp.display()));
+    let reg = register_workspace(&h, &m, &root, admin.id.as_str()).await?;
+    log.push(format!(
+        "application workspace registered: {} (approved documents are written to docs/architecture/)",
+        reg.root
+    ));
     for f in write_client_files(&root, &m, &a.config_path)? {
         log.push(format!("AI client integration: {f}"));
     }
@@ -1504,6 +1534,8 @@ pub async fn workflow_run(
     let (root, m) = manifest_required(project)?;
     let h = harness(cfg).await?;
     let p = caller_need(&h, Need::Action(Action::WorkflowStart, Some(m.project.id))).await?;
+    // The run writes approved documents into this repository (idempotent registration).
+    register_workspace(&h, &m, &root, p.id.as_str()).await?;
     let plan = proj::plan_activity(&h, &p, &m, &root, activity).await?;
     let mut text = render_plan(&plan);
     if !plan.readiness.ready {
@@ -1562,6 +1594,11 @@ pub async fn status_report(
         inst.status.as_str(),
         inst.state
     );
+    // The portal shows this run only when it uses the same installation.
+    text.push_str(&format!(
+        "  installation: {} (open the portal with the same configuration)\n",
+        data_dir(h)
+    ));
     for t in &history {
         text.push_str(&format!(
             "  {} → {} [{}] by {}\n",
@@ -1573,6 +1610,19 @@ pub async fn status_report(
     for (state, a) in &inst.data.artifacts {
         artifacts
             .push(json!({"state": state, "name": a.name, "version": a.version, "id": a.id, "hash": a.hash}));
+    }
+    let documents = h.engine.documents(p, id).await?;
+    let doc_lines = render_documents(&documents);
+    if !doc_lines.is_empty() {
+        text.push_str("Documents in the project workspace:\n");
+        text.push_str(&doc_lines);
+    }
+    if let Some(b) = &inst.data.blocked {
+        text.push_str(&format!(
+            "BLOCKED at '{}': approved, but the approved documents could not be written to the project workspace: {}\n",
+            b.gate, b.reason
+        ));
+        next.push("fix the cause, then write them and continue: eaeh artifact sync   (eaeh artifact status explains each document)".into());
     }
     match inst.status.as_str() {
         "waiting_approval" => {
@@ -1663,11 +1713,12 @@ pub async fn status_report(
                 }
             }
         }
-        "running" => next.push(format!(
+        "running" if inst.data.blocked.is_none() => next.push(format!(
             "interrupted runs continue with: eaeh workflow resume {id}"
         )),
         "succeeded" => {
-            next.push("inspect traceability: eaeh trace --id <item>; artifacts: eaeh artifact export <id> --out <dir>".to_string());
+            next.push("approved documents are in the project workspace (see above); verify with: eaeh artifact status".to_string());
+            next.push("inspect traceability: eaeh trace --id <item>".to_string());
         }
         _ => {}
     }
@@ -1678,7 +1729,8 @@ pub async fn status_report(
         json!({"instance": inst.id, "workflow": inst.definition_id, "status": inst.status.as_str(), "stage": inst.state,
                "execution_mode": h.execution_mode.as_str(),
                "failure": inst.data.failure, "artifacts": artifacts, "history": history, "next": next,
-               "revisions": inst.data.revisions, "quality": inst.data.quality}),
+               "revisions": inst.data.revisions, "quality": inst.data.quality,
+               "blocked": inst.data.blocked, "documents": documents, "installation": {"data_dir": data_dir(h)}}),
         text.trim_end().to_string(),
     ))
 }
@@ -1895,4 +1947,187 @@ pub async fn task_submit(cfg: &HarnessConfig, id: &str, output: &Path, client: &
         &format!("{head}\n{st_text}"),
     );
     Ok(())
+}
+
+// ------------------------------------------------------------------ approved documents
+
+/// One line per gate document: target folder and verified workspace state.
+pub(crate) fn render_documents(docs: &[eaeh_workflow::GateDocument]) -> String {
+    let mut s = String::new();
+    for d in docs {
+        let (Some(dir), Some(m)) = (&d.target_dir, &d.materialization) else {
+            continue;
+        };
+        let version = d
+            .artifact
+            .as_ref()
+            .map(|a| format!("v{}", a.version))
+            .unwrap_or_default();
+        s.push_str(&format!(
+            "  {:<22} {dir}/  {} {version} – {}\n",
+            d.gate,
+            m.state.to_uppercase(),
+            m.explanation
+        ));
+    }
+    s
+}
+
+async fn resolve_instance(
+    h: &Harness,
+    p: &eaeh_core::Principal,
+    id: Option<&str>,
+    project: Option<&str>,
+) -> Result<WorkflowInstanceId> {
+    match id {
+        Some(i) => parse(i),
+        None => {
+            let (pid, _) = project_context(project)?;
+            h.engine
+                .list(p, Scope::new(p.tenant, pid), None, 1)
+                .await?
+                .into_iter()
+                .next()
+                .map(|i| i.id)
+                .ok_or_else(|| HarnessError::not_found("no workflow runs in this project yet"))
+        }
+    }
+}
+
+/// `eaeh artifact status`: each approval gate's document – version, hash, approval,
+/// workspace folder and the verified materialization state (files re-hashed now).
+pub async fn artifact_status(cfg: &HarnessConfig, id: Option<&str>, project: Option<&str>) -> Result<()> {
+    let h = harness(cfg).await?;
+    let p = caller_need(&h, Need::Any).await?;
+    let id = resolve_instance(&h, &p, id, project).await?;
+    let inst = h.engine.get_for(&p, id).await?;
+    let docs = h.engine.documents(&p, id).await?;
+    let ws = h.engine.materializer().workspace(inst.scope).await?;
+    let mut text = format!(
+        "Workflow {id} ({}) – {}\nAuthoritative store: {}  (artifact store; history and audit)\nProject workspace:   {}\n\n",
+        inst.definition_id,
+        inst.status.as_str(),
+        cfg.data_dir().join("artifacts").display(),
+        ws.as_ref()
+            .map(|w| w.root.as_str())
+            .unwrap_or("NOT REGISTERED – run `eaeh artifact sync` inside the project repository"),
+    );
+    for d in &docs {
+        let a = d.artifact.as_ref();
+        text.push_str(&format!(
+            "{}  ({})\n  artifact : {} v{} {}\n  hash     : {}\n  approval : {}\n",
+            d.gate,
+            d.artifact_from,
+            a.map(|a| a.name.as_str()).unwrap_or("–"),
+            a.map(|a| a.version).unwrap_or_default(),
+            a.map(|a| a.id.to_string()).unwrap_or_default(),
+            a.map(|a| a.hash.as_str()).unwrap_or("–"),
+            if d.approved {
+                format!(
+                    "approved by {} at {}",
+                    d.approval.approver_id.clone().unwrap_or_default(),
+                    d.approval.decided_at.clone().unwrap_or_default()
+                )
+            } else if d.approval.approval_id.is_some() {
+                format!("NOT VALID: {}", d.approval.issues.join("; "))
+            } else {
+                "not approved".into()
+            },
+        ));
+        match (&d.target_dir, &d.materialization) {
+            (Some(dir), Some(m)) => {
+                text.push_str(&format!(
+                    "  folder   : {dir}/\n  state    : {} – {}\n",
+                    m.state.to_uppercase(),
+                    m.explanation
+                ));
+                if let Some(t) = &m.last_success_at {
+                    text.push_str(&format!("  written  : {t}\n"));
+                }
+                if let Some(a) = m.last_attempt.as_ref().filter(|a| a.status != "succeeded") {
+                    text.push_str(&format!(
+                        "  last try : {} at {}: {}\n",
+                        a.status, a.created_at, a.detail
+                    ));
+                }
+                for f in m.files.iter().filter(|f| f.state != "verified") {
+                    text.push_str(&format!("    {} {}\n", f.state.to_uppercase(), f.path));
+                }
+            }
+            (None, _) => text.push_str("  folder   : – (this gate does not write to the workspace)\n"),
+            (Some(dir), None) => text.push_str(&format!("  folder   : {dir}/ (no artifact yet)\n")),
+        }
+        if let Some(b) = &d.blocked {
+            text.push_str(&format!("  BLOCKED  : {b}\n"));
+        }
+        text.push('\n');
+    }
+    if docs.iter().any(|d| {
+        d.approved
+            && d.materialization
+                .as_ref()
+                .map(|m| m.state != "verified")
+                .unwrap_or(false)
+    }) {
+        text.push_str("  → write the approved versions: eaeh artifact sync\n");
+    }
+    out(
+        &json!({"instance": id, "status": inst.status.as_str(), "workspace": ws,
+                "store": cfg.data_dir().join("artifacts"), "documents": docs}),
+        text.trim_end(),
+    );
+    Ok(())
+}
+
+/// `eaeh artifact sync`: reconcile – write the approved version of every document into
+/// the project workspace (registering this repository first), hash-verified and audited.
+pub async fn artifact_sync(
+    cfg: &HarnessConfig,
+    id: Option<&str>,
+    project: Option<&str>,
+    replace_modified: bool,
+) -> Result<bool> {
+    let (root, m) = manifest_required(project)?;
+    let h = harness(cfg).await?;
+    let p = caller_need(&h, Need::Action(Action::WorkflowStart, Some(m.project.id))).await?;
+    let reg = register_workspace(&h, &m, &root, p.id.as_str()).await?;
+    let id = resolve_instance(&h, &p, id, project).await?;
+    let results = h.engine.sync_documents(&p, id, replace_modified).await?;
+    let mut text = format!("Project workspace: {}\n", reg.root);
+    let mut ok = true;
+    for r in &results {
+        text.push_str(&format!(
+            "  {:<22} {}/  {}",
+            r.gate,
+            r.target_dir,
+            r.status.to_uppercase()
+        ));
+        match &r.report {
+            Some(rep) => {
+                let changed = rep.files.iter().filter(|f| f.action != "unchanged").count();
+                text.push_str(&format!(
+                    " – v{} ({} files, {changed} changed, every file re-hashed)\n",
+                    rep.bundle_version,
+                    rep.files.len()
+                ));
+            }
+            None => text.push_str(&format!(" – {}\n", r.detail)),
+        }
+        ok &= matches!(r.status.as_str(), "succeeded" | "skipped");
+    }
+    if results.is_empty() {
+        text.push_str("  (this workflow has no documents to write)\n");
+    }
+    text.push_str(&format!("Provenance index: {}\n", eaeh_runtime::INDEX_FILE));
+    let inst = h.engine.get_for(&p, id).await?;
+    text.push_str(&format!(
+        "Workflow {id}: {} at '{}'\n",
+        inst.status.as_str(),
+        inst.state
+    ));
+    out(
+        &json!({"workspace": reg, "instance": id, "results": results, "status": inst.status.as_str(), "stage": inst.state}),
+        text.trim_end(),
+    );
+    Ok(ok)
 }

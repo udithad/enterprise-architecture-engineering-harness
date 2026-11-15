@@ -21,7 +21,10 @@ use eaeh_governance::{
 use eaeh_store::audit::{AuditEntry, AuditOutcome};
 use eaeh_store::{Db, DbResultExt, WriteTx, from_json, sqlx, to_json, ts};
 use eaeh_validation::{QualityGate, ValidationEngine, ValidationSubject};
-use eaeh_workspace::{ArtifactStore, Provenance, Workspace, WorkspaceManager};
+use eaeh_workspace::{
+    ArtifactStore, MaterializationStatus, MaterializeReport, MaterializeRequest, Materializer, Provenance,
+    Workspace, WorkspaceManager,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -184,6 +187,47 @@ pub struct WorkflowData {
     /// starting a new one.
     #[serde(default)]
     pub awaiting_external: Option<String>,
+    /// Set while an approved gate cannot take its `approved` transition because the
+    /// approved bundle could not be materialized into the project workspace
+    /// (ARTIFACT-MATERIALIZATION-PLAN, M1). The instance stays `running` at the gate;
+    /// every drive (and `eaeh artifact sync`) retries.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub blocked: Option<BlockedGate>,
+}
+
+/// Why an instance is held at an approved gate.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BlockedGate {
+    pub gate: String,
+    pub reason: String,
+    pub since: String,
+}
+
+/// An approval gate's document: the reviewed artifact, its approval verification and
+/// where (and whether) the approved version is materialized ([`WorkflowEngine::documents`]).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GateDocument {
+    pub gate: String,
+    pub artifact_from: String,
+    pub artifact: Option<ArtifactRef>,
+    pub approval: GateCheck,
+    /// The gate holds a valid approval of the current artifact version.
+    pub approved: bool,
+    /// Repository-relative target directory, if the gate materializes its bundle.
+    pub target_dir: Option<String>,
+    pub materialization: Option<MaterializationStatus>,
+    pub blocked: Option<String>,
+}
+
+/// Result of [`WorkflowEngine::sync_documents`] for one gate.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SyncOutcome {
+    pub gate: String,
+    pub target_dir: String,
+    /// `succeeded`, `conflict`, `failed` or `skipped` (not approved).
+    pub status: String,
+    pub detail: String,
+    pub report: Option<MaterializeReport>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -247,6 +291,103 @@ pub struct TraceLinkRecord {
     pub approval_id: String,
 }
 
+/// `(instance, definition, version, from, to, trigger, actor, at)` of a transition joined to its instance.
+type MoveRow = (String, String, String, String, String, String, String, String);
+
+/// Verification of one approval gate ([`WorkflowEngine::gate_checks`]). `approval_id` is
+/// `None` while the gate has no granted approval; `issues` is empty when the approval
+/// satisfies the completion guard.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GateCheck {
+    pub gate: String,
+    pub artifact_from: String,
+    pub approval_id: Option<String>,
+    pub approver_id: Option<String>,
+    pub approver_role: Option<String>,
+    pub decided_at: Option<String>,
+    pub approved_hash: Option<String>,
+    pub current_hash: Option<String>,
+    pub issues: Vec<String>,
+}
+
+/// One workflow event in [`WorkflowEngine::recent_activity`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ActivityItem {
+    /// `workflow_started`, `task_completed`, `artifact_generated`, `approval_requested`,
+    /// `approval_granted`, `approval_rejected`, `changes_requested`, `stage_failed`,
+    /// `workflow_completed`, `workflow_failed`, `workflow_cancelled` or `transition`.
+    pub kind: String,
+    pub occurred_at: String,
+    pub workflow_instance_id: String,
+    pub definition_id: String,
+    pub state: Option<String>,
+    pub to_state: Option<String>,
+    pub actor_id: String,
+}
+
+/// Read model of one task execution (portal, status views). `name` is the agent task kind
+/// or the tool id; `agent` the agent definition (`id@version`) instantiated for it, if any.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TaskSummary {
+    pub id: String,
+    pub workflow_instance_id: String,
+    pub state: String,
+    pub kind: String,
+    pub name: String,
+    pub status: String,
+    pub attempt: i64,
+    pub agent: Option<String>,
+    pub error: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+/// Static SQL prefix shared by the task read models (a macro so `concat!` keeps it `&'static`).
+macro_rules! task_select {
+    () => {
+        "SELECT t.id, t.workflow_instance_id, t.state_name, t.kind, t.status, t.attempt, t.error, \
+     t.created_at, t.updated_at, \
+     (SELECT a.definition_id || '@' || a.definition_version FROM agent_instances a WHERE a.task_id = t.id \
+      ORDER BY a.created_at DESC LIMIT 1) AS agent \
+     FROM tasks t"
+    };
+}
+
+type TaskRow = (
+    String,
+    Option<String>,
+    String,
+    String,
+    String,
+    i64,
+    Option<String>,
+    String,
+    String,
+    Option<String>,
+);
+
+fn task_summary(r: TaskRow) -> TaskSummary {
+    let (id, instance, state, kind_json, status, attempt, error, created_at, updated_at, agent) = r;
+    let (kind, name) = match serde_json::from_str::<TaskSpec>(&kind_json) {
+        Ok(TaskSpec::Agent { task_kind, .. }) => ("agent".to_string(), task_kind),
+        Ok(TaskSpec::Tool { tool, .. }) => ("tool".to_string(), tool.to_string()),
+        Err(_) => ("unknown".to_string(), state.clone()),
+    };
+    TaskSummary {
+        id,
+        workflow_instance_id: instance.unwrap_or_default(),
+        state,
+        kind,
+        name,
+        status,
+        attempt,
+        agent,
+        error,
+        created_at,
+        updated_at,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TransitionRecord {
     pub seq: i64,
@@ -268,6 +409,7 @@ pub struct WorkflowEngine {
     planner: Arc<dyn Planner>,
     artifacts: ArtifactStore,
     workspaces: WorkspaceManager,
+    materializer: Materializer,
     validation: Option<Arc<ValidationEngine>>,
     gates: BTreeMap<String, QualityGate>,
     locks: Mutex<HashMap<WorkflowInstanceId, Arc<tokio::sync::Mutex<()>>>>,
@@ -298,6 +440,7 @@ impl WorkflowEngine {
         artifacts: ArtifactStore,
         workspaces: WorkspaceManager,
     ) -> Self {
+        let materializer = Materializer::new(db.clone(), artifacts.clone(), hooks.clone());
         Self {
             db,
             authz,
@@ -307,6 +450,7 @@ impl WorkflowEngine {
             hooks,
             executor,
             planner,
+            materializer,
             artifacts,
             workspaces,
             validation: None,
@@ -330,6 +474,11 @@ impl WorkflowEngine {
 
     pub fn approvals(&self) -> &ApprovalManager {
         &self.approvals
+    }
+
+    /// Materialization of approved bundles into the registered project workspace.
+    pub fn materializer(&self) -> &Materializer {
+        &self.materializer
     }
 
     pub fn artifacts(&self) -> &ArtifactStore {
@@ -604,6 +753,193 @@ impl WorkflowEngine {
             .collect())
     }
 
+    // ------------------------------------------------------------ read models (portal)
+
+    /// Task executions of one instance, oldest first (authorized like [`Self::get_for`]).
+    pub async fn tasks_for(&self, actor: &Principal, id: WorkflowInstanceId) -> Result<Vec<TaskSummary>> {
+        self.get_for(actor, id).await?;
+        let rows: Vec<TaskRow> = sqlx::query_as(concat!(
+            task_select!(),
+            " WHERE t.workflow_instance_id = ? ORDER BY t.created_at, t.id"
+        ))
+        .bind(id.to_string())
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        Ok(rows.into_iter().map(task_summary).collect())
+    }
+
+    /// Tasks that are pending, running or handed off to an external AI client.
+    pub async fn active_tasks(
+        &self,
+        actor: &Principal,
+        scope: Scope,
+        limit: u32,
+    ) -> Result<Vec<TaskSummary>> {
+        self.authz
+            .authorize(actor, Action::WorkflowRead, Target::Scope(scope))?;
+        let rows: Vec<TaskRow> = sqlx::query_as(concat!(
+            task_select!(),
+            " WHERE t.tenant_id = ? AND t.project_id = ? \
+             AND t.status IN ('pending', 'running', 'awaiting_external') ORDER BY t.updated_at DESC LIMIT ?"
+        ))
+        .bind(scope.tenant.to_string())
+        .bind(scope.project.to_string())
+        .bind(i64::from(limit.clamp(1, 100)))
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        Ok(rows.into_iter().map(task_summary).collect())
+    }
+
+    /// Non-terminal instances (running, waiting for an approval or an external AI client),
+    /// most recently updated first.
+    pub async fn list_active(
+        &self,
+        actor: &Principal,
+        scope: Scope,
+        limit: u32,
+    ) -> Result<Vec<WorkflowInstance>> {
+        self.authz
+            .authorize(actor, Action::WorkflowRead, Target::Scope(scope))?;
+        let rows = sqlx::query(
+            "SELECT * FROM workflow_instances WHERE tenant_id = ? AND project_id = ? \
+             AND status IN ('running', 'waiting_approval', 'waiting_external') ORDER BY updated_at DESC LIMIT ?",
+        )
+        .bind(scope.tenant.to_string())
+        .bind(scope.project.to_string())
+        .bind(i64::from(limit.clamp(1, 100)))
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        rows.iter().map(row_to_instance).collect()
+    }
+
+    /// Recent workflow events for one project, newest first: instance starts plus recorded
+    /// transitions, classified against the instance's definition (`workflow.read`; it does
+    /// not need `audit.read` because it exposes only workflow history).
+    pub async fn recent_activity(
+        &self,
+        actor: &Principal,
+        scope: Scope,
+        limit: u32,
+    ) -> Result<Vec<ActivityItem>> {
+        self.authz
+            .authorize(actor, Action::WorkflowRead, Target::Scope(scope))?;
+        let limit = i64::from(limit.clamp(1, 100));
+        let starts: Vec<(String, String, String, String, String)> = sqlx::query_as(
+            "SELECT id, definition_id, definition_version, started_by, created_at FROM workflow_instances \
+             WHERE tenant_id = ? AND project_id = ? ORDER BY created_at DESC LIMIT ?",
+        )
+        .bind(scope.tenant.to_string())
+        .bind(scope.project.to_string())
+        .bind(limit)
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        let moves: Vec<MoveRow> = sqlx::query_as(
+            "SELECT t.instance_id, w.definition_id, w.definition_version, t.from_state, t.to_state, t.trigger, t.actor_id, t.occurred_at \
+             FROM workflow_transitions t JOIN workflow_instances w ON w.id = t.instance_id \
+             WHERE w.tenant_id = ? AND w.project_id = ? ORDER BY t.occurred_at DESC, t.seq DESC LIMIT ?",
+        )
+        .bind(scope.tenant.to_string())
+        .bind(scope.project.to_string())
+        .bind(limit)
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        let mut defs: HashMap<(String, String), Option<WorkflowDefinition>> = HashMap::new();
+        let mut items = Vec::with_capacity(starts.len() + moves.len());
+        for (id, def, _, by, at) in starts {
+            items.push(ActivityItem {
+                kind: "workflow_started".into(),
+                occurred_at: at,
+                workflow_instance_id: id,
+                definition_id: def,
+                state: None,
+                to_state: None,
+                actor_id: by,
+            });
+        }
+        for (id, def_id, ver, from, to, trigger, by, at) in moves {
+            let key = (def_id.clone(), ver.clone());
+            if !defs.contains_key(&key) {
+                let d = self.definition(&def_id, &ver).await.ok();
+                defs.insert(key.clone(), d);
+            }
+            let from_def = defs
+                .get(&key)
+                .and_then(|d| d.as_ref())
+                .and_then(|d| d.states.iter().find(|s| s.name == from));
+            let to_def = defs
+                .get(&key)
+                .and_then(|d| d.as_ref())
+                .and_then(|d| d.states.iter().find(|s| s.name == to));
+            let kind = match trigger.as_str() {
+                "approved" => "approval_granted",
+                "rejected" => "approval_rejected",
+                "changes_requested" => "changes_requested",
+                "failed" | "timed_out" => "stage_failed",
+                "succeeded" if from_def.is_some_and(|s| s.artifact_name().is_some()) => "artifact_generated",
+                "succeeded" => "task_completed",
+                _ => "transition",
+            };
+            items.push(ActivityItem {
+                kind: kind.into(),
+                occurred_at: at.clone(),
+                workflow_instance_id: id.clone(),
+                definition_id: def_id.clone(),
+                state: Some(from),
+                to_state: Some(to.clone()),
+                actor_id: by.clone(),
+            });
+            if let Some(s) = to_def {
+                let follow = match &s.kind {
+                    StateKind::ApprovalGate { .. } => Some("approval_requested"),
+                    StateKind::Terminal {
+                        outcome: Outcome::Succeeded,
+                    } => Some("workflow_completed"),
+                    StateKind::Terminal {
+                        outcome: Outcome::Failed,
+                    } => Some("workflow_failed"),
+                    StateKind::Terminal {
+                        outcome: Outcome::Cancelled,
+                    } => Some("workflow_cancelled"),
+                    _ => None,
+                };
+                if let Some(k) = follow {
+                    items.push(ActivityItem {
+                        kind: k.into(),
+                        occurred_at: at,
+                        workflow_instance_id: id,
+                        definition_id: def_id,
+                        state: Some(to),
+                        to_state: None,
+                        actor_id: by,
+                    });
+                }
+            }
+        }
+        items.sort_by(|a, b| b.occurred_at.cmp(&a.occurred_at));
+        items.truncate(limit as usize);
+        Ok(items)
+    }
+
+    /// Instance counts by status for one project.
+    pub async fn status_counts(&self, actor: &Principal, scope: Scope) -> Result<BTreeMap<String, i64>> {
+        self.authz
+            .authorize(actor, Action::WorkflowRead, Target::Scope(scope))?;
+        let rows: Vec<(String, i64)> = sqlx::query_as(
+            "SELECT status, COUNT(*) FROM workflow_instances WHERE tenant_id = ? AND project_id = ? GROUP BY status",
+        )
+        .bind(scope.tenant.to_string())
+        .bind(scope.project.to_string())
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        Ok(rows.into_iter().collect())
+    }
+
     fn instance_lock(&self, id: WorkflowInstanceId) -> Arc<tokio::sync::Mutex<()>> {
         self.locks
             .lock()
@@ -651,6 +987,40 @@ impl WorkflowEngine {
                         Outcome::Failed => InstanceStatus::Failed,
                         Outcome::Cancelled => InstanceStatus::Cancelled,
                     };
+                    // Completion guard: success is recorded only when every approval gate
+                    // leading to this terminal holds a valid human approval of the
+                    // artifact version it reviewed – independent of the transition graph.
+                    if status == InstanceStatus::Succeeded {
+                        let violations = self.completion_violations(&inst, &def, &state.name).await?;
+                        self.db
+                            .audit(
+                                AuditEntry::system(
+                                    ENGINE_COMPONENT,
+                                    "workflow.completion_check",
+                                    "workflow_instance",
+                                    inst.id.to_string(),
+                                    if violations.is_empty() {
+                                        AuditOutcome::Succeeded
+                                    } else {
+                                        AuditOutcome::Denied
+                                    },
+                                )
+                                .scope(inst.scope)
+                                .correlation(inst.trace().correlation)
+                                .details(json!({
+                                    "terminal": state.name,
+                                    "approved_gates": inst.data.approved_gates,
+                                    "violations": violations,
+                                })),
+                            )
+                            .await?;
+                        if !violations.is_empty() {
+                            let reason = format!("completion guard: {}", violations.join("; "));
+                            self.finish(&inst, InstanceStatus::Failed, &inst.state, Some(reason))
+                                .await?;
+                            return Ok(InstanceStatus::Failed);
+                        }
+                    }
                     self.finish(&inst, status, &inst.state, None).await?;
                     return Ok(status);
                 }
@@ -658,6 +1028,7 @@ impl WorkflowEngine {
                     required_role,
                     artifact_from,
                     max_revisions,
+                    materialize,
                 } => {
                     if let Some(aid) = inst.data.current_approval.get(&state.name).copied() {
                         let rec = self.approvals.get(aid).await?;
@@ -667,8 +1038,28 @@ impl WorkflowEngine {
                                 return Ok(InstanceStatus::WaitingApproval);
                             }
                             ApprovalStatus::Approved => {
+                                // Write the approved version into the project workspace
+                                // before moving on; a failure holds the run at this gate.
+                                if let Some(dir) = materialize
+                                    && let Err(e) = self
+                                        .materialize_gate(
+                                            &inst,
+                                            &def,
+                                            &state.name,
+                                            artifact_from,
+                                            dir,
+                                            &rec,
+                                            false,
+                                            &engine_actor(),
+                                        )
+                                        .await
+                                {
+                                    self.block(&inst, &state.name, &e.message).await?;
+                                    return Ok(InstanceStatus::Running);
+                                }
                                 self.record_trace_links(&inst, artifact_from, aid).await?;
                                 let mut data = inst.data.clone();
+                                data.blocked = None;
                                 data.current_approval.remove(&state.name);
                                 data.approved_gates.insert(state.name.clone(), aid);
                                 data.feedback.remove(&state.name);
@@ -853,23 +1244,434 @@ impl WorkflowEngine {
         ))
     }
 
+    /// Approval gates from which `terminal` is reachable, each of which must hold a valid
+    /// approval before the instance may succeed. Returns human-readable violations.
+    async fn completion_violations(
+        &self,
+        inst: &WorkflowInstance,
+        def: &WorkflowDefinition,
+        terminal: &str,
+    ) -> Result<Vec<String>> {
+        let mut preds: HashMap<&str, Vec<&str>> = HashMap::new();
+        for s in &def.states {
+            for to in s.transitions.values() {
+                preds.entry(to.as_str()).or_default().push(s.name.as_str());
+            }
+        }
+        let mut seen: BTreeSet<&str> = BTreeSet::new();
+        let mut stack = vec![terminal];
+        while let Some(x) = stack.pop() {
+            for p in preds.get(x).into_iter().flatten() {
+                if seen.insert(p) {
+                    stack.push(p);
+                }
+            }
+        }
+        let mut out = vec![];
+        for gate in def.states.iter().filter(|s| seen.contains(s.name.as_str())) {
+            if matches!(gate.kind, StateKind::ApprovalGate { .. }) {
+                let c = self.check_gate(inst, gate).await;
+                if c.approval_id.is_none() {
+                    out.push(format!("gate '{}' has no granted approval", gate.name));
+                }
+                out.extend(c.issues.into_iter().map(|i| format!("gate '{}': {i}", gate.name)));
+            }
+        }
+        Ok(out)
+    }
+
+    /// Verification of one approval gate of an instance: the granted approval (if any) and
+    /// every reason it would not satisfy the completion guard. Used by the guard itself and
+    /// by read models (portal), so both apply exactly the same rules.
+    async fn check_gate(&self, inst: &WorkflowInstance, gate: &StateDef) -> GateCheck {
+        let g = &gate.name;
+        let artifact_from = match &gate.kind {
+            StateKind::ApprovalGate { artifact_from, .. } => artifact_from.clone(),
+            _ => String::new(),
+        };
+        let mut c = GateCheck {
+            gate: g.clone(),
+            artifact_from: artifact_from.clone(),
+            approval_id: None,
+            approver_id: None,
+            approver_role: None,
+            decided_at: None,
+            approved_hash: None,
+            current_hash: inst.data.artifacts.get(&artifact_from).map(|a| a.hash.clone()),
+            issues: vec![],
+        };
+        let Some(aid) = inst.data.approved_gates.get(g) else {
+            return c;
+        };
+        c.approval_id = Some(aid.to_string());
+        let rec = match self.approvals.get(*aid).await {
+            Ok(r) => r,
+            Err(_) => {
+                c.issues.push(format!("approval {aid} not found"));
+                return c;
+            }
+        };
+        c.approved_hash = rec.artifact_hash.clone();
+        if rec.status != ApprovalStatus::Approved {
+            c.issues
+                .push(format!("approval {aid} is {:?}, not approved", rec.status));
+        }
+        if rec.subject_ref != format!("{}:{g}", inst.id) || rec.scope != inst.scope {
+            c.issues
+                .push(format!("approval {aid} belongs to another workflow or project"));
+        }
+        match &rec.decision {
+            None => c.issues.push(format!("approval {aid} has no recorded decision")),
+            Some(d) => {
+                c.approver_id = Some(d.approver_id.clone());
+                c.approver_role = Some(d.approver_role.clone());
+                c.decided_at = Some(d.decided_at.clone());
+                if d.decision != "approve" {
+                    c.issues.push(format!("recorded decision is '{}'", d.decision));
+                }
+                if d.approver_id.is_empty() || rec.authors.iter().any(|a| a.as_str() == d.approver_id) {
+                    c.issues
+                        .push(format!("approver '{}' is missing or an author", d.approver_id));
+                }
+                if d.artifact_hash.is_none() || d.artifact_hash != rec.artifact_hash {
+                    c.issues
+                        .push("decision is not bound to the reviewed artifact hash".into());
+                }
+            }
+        }
+        match (&c.current_hash, rec.artifact_hash.as_deref()) {
+            (Some(a), Some(h)) if a == h => {}
+            (Some(_), _) => c.issues.push(format!(
+                "approved hash differs from the current '{artifact_from}' artifact"
+            )),
+            (None, _) => c
+                .issues
+                .push(format!("reviewed artifact '{artifact_from}' is missing")),
+        }
+        c
+    }
+
+    /// Verification of every approval gate of an instance (`workflow.read`).
+    pub async fn gate_checks(&self, actor: &Principal, id: WorkflowInstanceId) -> Result<Vec<GateCheck>> {
+        let inst = self.get_for(actor, id).await?;
+        let def = self
+            .definition(&inst.definition_id, &inst.definition_version)
+            .await?;
+        let mut out = vec![];
+        for s in def
+            .states
+            .iter()
+            .filter(|s| matches!(s.kind, StateKind::ApprovalGate { .. }))
+        {
+            out.push(self.check_gate(&inst, s).await);
+        }
+        Ok(out)
+    }
+
+    /// The instance with approvals of gates that are approved but not yet passed (held by
+    /// a blocked materialization) counted as granted.
+    async fn effective(&self, inst: &WorkflowInstance) -> Result<WorkflowInstance> {
+        let mut e = inst.clone();
+        for (gate, aid) in &inst.data.current_approval {
+            if self.approvals.get(*aid).await?.status == ApprovalStatus::Approved {
+                e.data.approved_gates.insert(gate.clone(), *aid);
+            }
+        }
+        Ok(e)
+    }
+
+    /// Target directory of a gate: its own `materialize`, or – for runs started before
+    /// the gate declared one – the same gate of the latest definition version.
+    fn target_dir(gate: &StateDef, latest: Option<&WorkflowDefinition>) -> Option<String> {
+        let own = |s: &StateDef| match &s.kind {
+            StateKind::ApprovalGate { materialize, .. } => materialize.clone(),
+            _ => None,
+        };
+        own(gate).or_else(|| latest.and_then(|d| d.state(&gate.name).ok()).and_then(own))
+    }
+
+    /// Write the approved bundle of `gate` into the project workspace.
+    #[allow(clippy::too_many_arguments)]
+    async fn materialize_gate(
+        &self,
+        inst: &WorkflowInstance,
+        def: &WorkflowDefinition,
+        gate: &str,
+        artifact_from: &str,
+        dir: &str,
+        rec: &eaeh_governance::ApprovalRecord,
+        replace_modified: bool,
+        actor: &str,
+    ) -> Result<MaterializeReport> {
+        let art = inst.data.artifacts.get(artifact_from).ok_or_else(|| {
+            HarnessError::integrity(format!("gate '{gate}' has no artifact from '{artifact_from}'"))
+        })?;
+        if rec.status != ApprovalStatus::Approved || rec.artifact_hash.as_deref() != Some(art.hash.as_str()) {
+            return Err(HarnessError::approval_required(format!(
+                "gate '{gate}': only the approved version of '{}' is materialized",
+                art.name
+            )));
+        }
+        let d = rec.decision.as_ref();
+        let approval = json!({
+            "id": rec.id.to_string(),
+            "approver": d.map(|d| d.approver_id.clone()),
+            "role": d.map(|d| d.approver_role.clone()),
+            "decided_at": d.map(|d| d.decided_at.clone()),
+            "artifact_hash": rec.artifact_hash,
+        });
+        // Approved artifacts this one derives from: the gates that precede it in the
+        // definition (requirements ← HLD ← LLD), also when reconciling a finished run.
+        let earlier: Vec<&str> = def
+            .states
+            .iter()
+            .take_while(|s| s.name != gate)
+            .filter(|s| matches!(s.kind, StateKind::ApprovalGate { .. }))
+            .map(|s| s.name.as_str())
+            .collect();
+        let mut sources = vec![];
+        for (g, aid) in &inst.data.approved_gates {
+            if !earlier.contains(&g.as_str()) {
+                continue;
+            }
+            if let Ok(StateKind::ApprovalGate {
+                artifact_from: af, ..
+            }) = def.state(g).map(|s| &s.kind)
+                && let Some(a) = inst.data.artifacts.get(af)
+            {
+                sources.push(json!({
+                    "gate": g, "approval_id": aid.to_string(),
+                    "artifact_id": a.id.to_string(), "name": a.name, "version": a.version, "hash": a.hash,
+                }));
+            }
+        }
+        if let Some(brd) = inst
+            .input
+            .get("brd_citation")
+            .or_else(|| inst.input.get("citation"))
+        {
+            sources.push(json!({"brd": brd}));
+        }
+        self.materializer
+            .materialize(&MaterializeRequest {
+                scope: inst.scope,
+                bundle: art.id,
+                target_dir: dir.to_string(),
+                workflow_instance: Some(inst.id.to_string()),
+                gate: Some(gate.to_string()),
+                approval,
+                sources,
+                replace_modified,
+                actor: actor.to_string(),
+                trace: inst.trace(),
+            })
+            .await
+    }
+
+    /// Hold the instance at an approved gate whose bundle could not be materialized.
+    async fn block(&self, inst: &WorkflowInstance, gate: &str, reason: &str) -> Result<()> {
+        let mut data = inst.data.clone();
+        let since = match &data.blocked {
+            Some(b) if b.gate == gate => b.since.clone(),
+            _ => ts(self.db.now()),
+        };
+        let newly = data.blocked.as_ref().map(|b| b.reason != reason).unwrap_or(true);
+        data.blocked = Some(BlockedGate {
+            gate: gate.into(),
+            reason: reason.into(),
+            since,
+        });
+        let mut tx = self.db.write().await?;
+        self.update_in(&mut tx, inst, None, Some(InstanceStatus::Running), &data)
+            .await?;
+        if newly {
+            self.db
+                .audit_in(
+                    &mut tx,
+                    AuditEntry::system(
+                        ENGINE_COMPONENT,
+                        "workflow.blocked",
+                        "workflow_instance",
+                        inst.id.to_string(),
+                        AuditOutcome::Denied,
+                    )
+                    .scope(inst.scope)
+                    .correlation(inst.trace().correlation)
+                    .details(json!({"gate": gate, "reason": reason})),
+                )
+                .await?;
+        }
+        tx.commit().await
+    }
+
+    /// Every approval gate's document with its approval verification and verified
+    /// materialization state (`workflow.read`; files on disk are re-hashed now).
+    pub async fn documents(&self, actor: &Principal, id: WorkflowInstanceId) -> Result<Vec<GateDocument>> {
+        let inst = self.get_for(actor, id).await?;
+        let eff = self.effective(&inst).await?;
+        let def = self
+            .definition(&inst.definition_id, &inst.definition_version)
+            .await?;
+        let latest = self
+            .latest_definition(&WorkflowDefinitionId::new(&inst.definition_id)?)
+            .await
+            .ok();
+        let mut out = vec![];
+        for g in def
+            .states
+            .iter()
+            .filter(|s| matches!(s.kind, StateKind::ApprovalGate { .. }))
+        {
+            let check = self.check_gate(&eff, g).await;
+            let approved = check.approval_id.is_some() && check.issues.is_empty();
+            let artifact = inst.data.artifacts.get(&check.artifact_from).cloned();
+            let target_dir = Self::target_dir(g, latest.as_ref());
+            let materialization = match (&target_dir, &artifact) {
+                (Some(dir), Some(a)) => {
+                    let mut st = self.materializer.status(inst.scope, a.id, dir).await?;
+                    if !approved && matches!(st.state.as_str(), "not_materialized" | "outdated") {
+                        st.state = "awaiting_approval".into();
+                        st.explanation = format!(
+                            "Version {} is not approved yet. Only approved versions are written to {dir}; review it in the portal or with `eaeh approval review`.",
+                            a.version
+                        );
+                    }
+                    Some(st)
+                }
+                _ => None,
+            };
+            out.push(GateDocument {
+                gate: g.name.clone(),
+                artifact_from: check.artifact_from.clone(),
+                artifact,
+                approval: check,
+                approved,
+                target_dir,
+                materialization,
+                blocked: inst
+                    .data
+                    .blocked
+                    .as_ref()
+                    .filter(|b| b.gate == g.name)
+                    .map(|b| b.reason.clone()),
+            });
+        }
+        Ok(out)
+    }
+
+    /// Reconcile: materialize the approved version of every gate's bundle into the
+    /// registered workspace (`workflow.start` on the project, like starting the run).
+    /// Unapproved versions are skipped. An instance held at a gate resumes afterwards.
+    pub async fn sync_documents(
+        &self,
+        actor: &Principal,
+        id: WorkflowInstanceId,
+        replace_modified: bool,
+    ) -> Result<Vec<SyncOutcome>> {
+        let inst = self.get_for(actor, id).await?;
+        self.authz
+            .authorize(actor, Action::WorkflowStart, Target::Scope(inst.scope))?;
+        let eff = self.effective(&inst).await?;
+        let def = self
+            .definition(&inst.definition_id, &inst.definition_version)
+            .await?;
+        let latest = self
+            .latest_definition(&WorkflowDefinitionId::new(&inst.definition_id)?)
+            .await
+            .ok();
+        let mut out = vec![];
+        for g in def
+            .states
+            .iter()
+            .filter(|s| matches!(s.kind, StateKind::ApprovalGate { .. }))
+        {
+            let Some(dir) = Self::target_dir(g, latest.as_ref()) else {
+                continue;
+            };
+            let check = self.check_gate(&eff, g).await;
+            let (Some(aid), true) = (check.approval_id.as_ref(), check.issues.is_empty()) else {
+                out.push(SyncOutcome {
+                    gate: g.name.clone(),
+                    target_dir: dir,
+                    status: "skipped".into(),
+                    detail: if check.approval_id.is_none() {
+                        "not approved – only approved versions are materialized".into()
+                    } else {
+                        format!(
+                            "approval not valid for the current version: {}",
+                            check.issues.join("; ")
+                        )
+                    },
+                    report: None,
+                });
+                continue;
+            };
+            let rec = self.approvals.get(aid.parse()?).await?;
+            let res = self
+                .materialize_gate(
+                    &eff,
+                    &def,
+                    &g.name,
+                    &check.artifact_from,
+                    &dir,
+                    &rec,
+                    replace_modified,
+                    actor.id.as_str(),
+                )
+                .await;
+            out.push(match res {
+                Ok(r) => SyncOutcome {
+                    gate: g.name.clone(),
+                    target_dir: dir,
+                    status: "succeeded".into(),
+                    detail: "materialized and verified".into(),
+                    report: Some(r),
+                },
+                Err(e) => SyncOutcome {
+                    gate: g.name.clone(),
+                    target_dir: dir,
+                    status: if e.kind == eaeh_core::ErrorKind::Conflict {
+                        "conflict".into()
+                    } else {
+                        "failed".into()
+                    },
+                    detail: e.message,
+                    report: None,
+                },
+            });
+        }
+        if inst.data.blocked.is_some() {
+            self.drive(id).await?;
+        }
+        Ok(out)
+    }
+
     /// Execute a work state (with gate checks, retries, timeout, cancellation).
     async fn run_work(&self, inst: &WorkflowInstance, state: &StateDef) -> Result<Option<Trigger>> {
         // Mandatory gate check, independent of the transition graph.
+        // The approval must be valid *and* bound to the current version of the artifact
+        // the gate reviewed, so that e.g. an LLD is never generated from an outdated HLD.
+        let def = if state.requires_approval_of.is_empty() {
+            None
+        } else {
+            Some(
+                self.definition(&inst.definition_id, &inst.definition_version)
+                    .await?,
+            )
+        };
         for gate in &state.requires_approval_of {
-            let ok = match inst.data.approved_gates.get(gate) {
-                Some(aid) => {
-                    let rec = self.approvals.get(*aid).await?;
-                    rec.status == ApprovalStatus::Approved
-                        && rec.subject_ref == format!("{}:{gate}", inst.id)
-                        && rec.scope == inst.scope
+            let issues = match def.as_ref().and_then(|d| d.state(gate).ok()) {
+                Some(g) if inst.data.approved_gates.contains_key(gate) => {
+                    self.check_gate(inst, g).await.issues
                 }
-                None => false,
+                Some(_) => vec!["not granted".to_string()],
+                None => vec!["gate not defined".to_string()],
             };
-            if !ok {
+            if !issues.is_empty() {
                 let reason = format!(
-                    "state '{}' requires approval of gate '{gate}', which has not been granted",
-                    state.name
+                    "state '{}' requires approval of gate '{gate}', which has not been granted for the current artifact version ({})",
+                    state.name,
+                    issues.join("; ")
                 );
                 self.db
                     .audit(
@@ -882,7 +1684,7 @@ impl WorkflowEngine {
                         )
                         .scope(inst.scope)
                         .correlation(inst.trace().correlation)
-                        .details(json!({"state": state.name, "gate": gate})),
+                        .details(json!({"state": state.name, "gate": gate, "issues": issues})),
                     )
                     .await?;
                 self.finish(inst, InstanceStatus::Failed, &inst.state, Some(reason))

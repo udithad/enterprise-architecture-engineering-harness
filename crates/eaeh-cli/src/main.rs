@@ -24,6 +24,7 @@ use std::sync::Arc;
 mod credentials;
 mod dx;
 mod mcp;
+mod portal;
 mod worker;
 
 use credentials::Need;
@@ -106,6 +107,27 @@ enum Cmd {
     Health,
     /// Run the HTTP API server with background dispatch and supervision.
     Serve,
+    /// Local Governance Portal (web UI) for dashboards and approval review. Loopback only,
+    /// no login: reads as `--as` (or EAEH_TOKEN / default profile) and records approval
+    /// decisions only as the profile named with `--approver`. Prints a launch URL.
+    Portal {
+        /// Loopback address to listen on.
+        #[arg(long, default_value = "127.0.0.1:8090")]
+        bind: String,
+        /// Stored approver profile used for Approve / Request changes / Reject. Omit for a
+        /// read-only portal.
+        #[arg(long)]
+        approver: Option<String>,
+        /// Directory with the built web UI (`npm --prefix portal run build`).
+        #[arg(long, default_value = "portal/dist", env = "EAEH_PORTAL_DIR")]
+        static_dir: PathBuf,
+        /// Additional allowed browser origin for the Vite dev server (e.g. http://localhost:5173).
+        #[arg(long = "dev-origin")]
+        dev_origins: Vec<String>,
+        /// Open the launch link in the default browser once the portal is listening.
+        #[arg(long)]
+        open: bool,
+    },
     #[command(subcommand)]
     Admin(AdminCmd),
     #[command(subcommand)]
@@ -139,7 +161,7 @@ enum Cmd {
         #[arg(long, default_value_t = 3)]
         depth: u32,
     },
-    /// Artifacts (Phase 3: export rendered bundles).
+    /// Artifacts: approved documents in the project workspace (status, sync) and export.
     #[command(subcommand)]
     Artifact(ArtifactCmd),
     /// Stored identities: login, status, use, renew, logout.
@@ -328,6 +350,24 @@ enum BrdCmd {
 
 #[derive(Subcommand)]
 enum ArtifactCmd {
+    /// Approved documents of a run (latest if no id): version, hash, approval, project
+    /// workspace folder and the verified state of the files there.
+    Status {
+        id: Option<String>,
+        #[arg(long)]
+        project: Option<String>,
+    },
+    /// Write the approved documents of a run (latest if no id) into this repository
+    /// (docs/architecture/…), hash-verified and audited. Run inside the project repository.
+    /// Never overwrites files changed locally unless --replace-modified is given.
+    Sync {
+        id: Option<String>,
+        #[arg(long)]
+        project: Option<String>,
+        /// Replace files that were modified locally with the approved version (audited).
+        #[arg(long)]
+        replace_modified: bool,
+    },
     /// Write an artifact to a directory; a bundle manifest exports every file it binds.
     Export {
         #[arg(long)]
@@ -852,6 +892,25 @@ async fn run(cli: Cli) -> Result<()> {
                 .map_err(|e| HarnessError::internal(format!("server: {e}")))?;
             h.shutdown().await;
         }
+        Cmd::Portal {
+            bind,
+            approver,
+            static_dir,
+            dev_origins,
+            open,
+        } => {
+            portal::serve(
+                &cfg,
+                portal::PortalArgs {
+                    bind,
+                    approver,
+                    static_dir,
+                    dev_origins,
+                    open,
+                },
+            )
+            .await?;
+        }
         Cmd::Admin(AdminCmd::Bootstrap {
             tenant,
             project,
@@ -1352,7 +1411,11 @@ async fn run(cli: Cli) -> Result<()> {
                         .filter(|(id, _)| p.can_access(&Scope::new(p.tenant, *id)))
                         .map(|(id, n)| json!({"id": id, "name": n}))
                         .collect();
-                    print(&json!({"items": items}));
+                    // Which installation answered: the portal shows the same projects only
+                    // when it runs on the same data directory.
+                    print(
+                        &json!({"items": items, "installation": {"data_dir": dx::data_dir(&h), "config_dir": cfg.base_dir}}),
+                    );
                 }
             }
         }
@@ -1538,6 +1601,18 @@ async fn run(cli: Cli) -> Result<()> {
             let items = h.engine.trace(&p, scope, id.as_deref(), depth).await?;
             print(&json!({"items": items}));
         }
+        Cmd::Artifact(ArtifactCmd::Status { id, project }) => {
+            dx::artifact_status(&cfg, id.as_deref(), project.as_deref()).await?;
+        }
+        Cmd::Artifact(ArtifactCmd::Sync {
+            id,
+            project,
+            replace_modified,
+        }) => {
+            if !dx::artifact_sync(&cfg, id.as_deref(), project.as_deref(), replace_modified).await? {
+                std::process::exit(8);
+            }
+        }
         Cmd::Artifact(ArtifactCmd::Export { project, id, out }) => {
             let h = harness(&cfg).await?;
             let p = caller(&h).await?;
@@ -1590,7 +1665,7 @@ async fn main() {
         .map(|c| (c.log.format, c.log.filter))
         .unwrap_or_else(|_| ("pretty".into(), "warn".into()));
     // CLI commands log warnings and above unless serving.
-    let filter = if matches!(cli.cmd, Cmd::Serve) {
+    let filter = if matches!(cli.cmd, Cmd::Serve | Cmd::Portal { .. }) {
         filter
     } else {
         "warn".into()

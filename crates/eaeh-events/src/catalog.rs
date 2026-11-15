@@ -98,3 +98,11 @@ event!(KnowledgeRetrieved, "knowledge.retrieved" { pub hits: u32, pub mode: Stri
 event!(KnowledgeConflictDetected, "knowledge.conflict_detected" { pub subject: String, pub document_a: String, pub document_b: String });
 event!(SkillRegistered, "skill.registered" { pub skill: String, pub version: String, pub status: String });
 event!(SkillStateChanged, "skill.state_changed" { pub skill: String, pub version: String, pub status: String });
+
+// ---- Approved design artifacts in the project workspace (ARTIFACT-MATERIALIZATION-PLAN) ----
+event!(ArtifactMaterialized, "artifact.materialized" {
+    pub bundle_id: String,
+    pub target_dir: String,
+    pub files: u32,
+    pub status: String,
+});

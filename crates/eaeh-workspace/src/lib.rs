@@ -9,10 +9,15 @@
 
 mod artifacts;
 mod locks;
+mod materialize;
 mod workspace;
 
 pub use artifacts::{ArtifactMeta, ArtifactStore, Provenance};
 pub use locks::LockInfo;
+pub use materialize::{
+    AttemptRecord, FileAction, FileCheck, INDEX_FILE, MaterializationStatus, MaterializeReport,
+    MaterializeRequest, Materializer, WorkspaceRegistration,
+};
 pub use workspace::{DirEntry, Workspace, WorkspaceManager};
 
 /// Validate a workspace-relative path and return its normal components.

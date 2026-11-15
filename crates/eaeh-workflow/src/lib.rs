@@ -14,6 +14,7 @@ pub use definition::{
     Outcome, PlanProposal, PlanStep, RetryPolicy, StateDef, StateKind, Trigger, WorkflowDefinition,
 };
 pub use engine::{
-    InstanceStatus, Planner, PlanningContext, TaskExecution, TaskExecutor, TaskOutput, TaskSpec,
-    WorkflowData, WorkflowEngine, WorkflowInstance,
+    ActivityItem, BlockedGate, GateCheck, GateDocument, InstanceStatus, Planner, PlanningContext,
+    SyncOutcome, TaskExecution, TaskExecutor, TaskOutput, TaskSpec, TaskSummary, WorkflowData,
+    WorkflowEngine, WorkflowInstance,
 };

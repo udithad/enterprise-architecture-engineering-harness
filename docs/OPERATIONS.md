@@ -44,7 +44,7 @@ $B init                                                    # creates data dir (0
 $B admin bootstrap --tenant acme --project platform \
    --admin-id admin --token-file ./admin.token             # one time only; token file mode 0600
 $B auth login --profile admin --token-file ./admin.token && rm ./admin.token   # stored 0600, never printed
-# then, per project, one command (see docs/user-guides/DEVELOPER-EXPERIENCE-GUIDE.md):
+# then, per project, one command (see docs/user-guides/EAEH-USER-GUIDE.md):
 $B project init --name <project> --developer <id> --steward <id> --approver <id> --brd <BRD.md> …
 # or manually:
 $B principal create --id arthur --display-name Arthur --roles approver --projects <project-id>

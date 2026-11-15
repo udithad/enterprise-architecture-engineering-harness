@@ -1,7 +1,7 @@
 {
   "id": "requirements.analysis",
-  "version": "1.0.0",
-  "description": "Phase 3: BRD \u2192 analysed, traceable requirements \u2192 human approval (request changes / reject supported).",
+  "version": "1.1.0",
+  "description": "Phase 3: BRD → analysed, traceable requirements → human approval (request changes / reject supported).",
   "initial": "brd",
   "states": [
     {
@@ -105,6 +105,7 @@
       "type": "approval_gate",
       "required_role": "approver",
       "artifact_from": "render_requirements",
+      "materialize": "docs/architecture/requirements",
       "max_revisions": 3,
       "transitions": {
         "approved": "done",

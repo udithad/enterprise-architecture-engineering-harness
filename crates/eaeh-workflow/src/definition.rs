@@ -95,6 +95,11 @@ pub enum StateKind {
         /// further request follows the `rejected` transition (Phase 3, ADR-0020).
         #[serde(default = "default_max_revisions")]
         max_revisions: u32,
+        /// Repository-relative directory into which the engine writes the approved bundle
+        /// before taking the `approved` transition (ARTIFACT-MATERIALIZATION-PLAN, M1). A
+        /// failed write blocks the workflow at the gate until `eaeh artifact sync` succeeds.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        materialize: Option<String>,
     },
     Terminal {
         outcome: Outcome,
@@ -327,8 +332,23 @@ impl WorkflowDefinition {
                 StateKind::ApprovalGate {
                     artifact_from,
                     max_revisions,
+                    materialize,
                     ..
                 } => {
+                    if let Some(dir) = materialize {
+                        let ok = !dir.is_empty()
+                            && !dir.starts_with('/')
+                            && !dir.contains('\\')
+                            && dir.split('/').all(|c| {
+                                !c.is_empty() && c != "." && c != ".." && c != ".git" && c != ".eaeh"
+                            });
+                        if !ok {
+                            return err(format!(
+                                "gate '{}' materialize must be a relative directory without '.', '..', .git or .eaeh",
+                                s.name
+                            ));
+                        }
+                    }
                     if *max_revisions > 20 {
                         return err(format!("gate '{}' max_revisions must be 0..=20", s.name));
                     }

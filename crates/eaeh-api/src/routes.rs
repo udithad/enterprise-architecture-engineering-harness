@@ -42,11 +42,11 @@ struct ApiJson<T>(T);
 
 #[derive(FromRequestParts)]
 #[from_request(via(axum::extract::Query), rejection(ApiError))]
-struct ApiQuery<T>(T);
+pub(crate) struct ApiQuery<T>(pub(crate) T);
 
 #[derive(FromRequestParts)]
 #[from_request(via(axum::extract::Path), rejection(ApiError))]
-struct ApiPath<T>(T);
+pub(crate) struct ApiPath<T>(pub(crate) T);
 
 pub fn router(state: Arc<AppState>) -> Router {
     let max_body = state.harness.config.api.max_body_bytes;
@@ -92,6 +92,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/skills/{id}/{version}/{action}", post(skill_action))
         .route("/v1/projects/{id}/domain", post(set_project_domain))
         .route("/v1/principals/{id}/teams", post(set_principal_teams))
+        // Governance Portal read models (ADR-0026)
+        .merge(crate::views::routes())
         .layer(middleware::from_fn_with_state(state.clone(), authenticate));
     Router::new()
         .route("/v1/health", get(health))
@@ -171,7 +173,7 @@ fn rate_limit(st: &AppState, p: &Principal) -> ApiResult<()> {
 }
 
 /// Authorize a read/listing at the API boundary and audit denials.
-async fn authorize(st: &AppState, p: &Principal, action: Action, target: Target) -> ApiResult<()> {
+pub(crate) async fn authorize(st: &AppState, p: &Principal, action: Action, target: Target) -> ApiResult<()> {
     if let Err(e) = st.harness.authz.authorize(p, action, target) {
         let _ = st
             .harness
@@ -403,6 +405,9 @@ async fn list_tools(State(st): St, Extension(p): Extension<Principal>) -> ApiRes
 struct AuditQuery {
     after_seq: Option<i64>,
     limit: Option<u32>,
+    /// `asc` (default, from `after_seq`) or `desc` (newest first, before `before_seq`).
+    order: Option<String>,
+    before_seq: Option<i64>,
 }
 
 async fn list_audit(
@@ -412,11 +417,28 @@ async fn list_audit(
 ) -> ApiResult<Json<Value>> {
     authorize(&st, &p, Action::AuditRead, Target::Tenant(p.tenant)).await?;
     let limit = q.limit.unwrap_or(100).clamp(1, 500);
-    let items = st
-        .harness
-        .db
-        .audit_records(Some(p.tenant), q.after_seq.unwrap_or(0), limit)
-        .await?;
+    let desc = match q.order.as_deref() {
+        None | Some("asc") => false,
+        Some("desc") => true,
+        Some(_) => {
+            return Err(ApiError::new(
+                StatusCode::BAD_REQUEST,
+                "invalid_input",
+                "order must be asc or desc",
+            ));
+        }
+    };
+    let items = if desc {
+        st.harness
+            .db
+            .audit_recent(Some(p.tenant), q.before_seq, limit)
+            .await?
+    } else {
+        st.harness
+            .db
+            .audit_records(Some(p.tenant), q.after_seq.unwrap_or(0), limit)
+            .await?
+    };
     let next = if items.len() as u32 == limit {
         items.last().map(|r| r.seq.to_string())
     } else {

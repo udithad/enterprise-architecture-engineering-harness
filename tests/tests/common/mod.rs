@@ -28,6 +28,8 @@ pub fn example(name: &str) -> Value {
 
 pub struct World {
     pub h: Arc<Harness>,
+    /// Registered application repository (approved documents are materialized here).
+    pub workspace: PathBuf,
     pub provider: Arc<ScriptedModelProvider>,
     pub scope: Scope,
     pub operator: eaeh_core::Principal,
@@ -194,9 +196,23 @@ pub async fn world_cfg(
         .await
         .unwrap();
     }
+    // The application repository approved documents are written to (ARTIFACT-MATERIALIZATION-PLAN).
+    let workspace = h.config.data_dir().join("app-repo");
+    std::fs::create_dir_all(&workspace).unwrap();
+    let workspace = workspace.canonicalize().unwrap();
+    h.engine
+        .materializer()
+        .register_workspace(
+            Scope::new(admin.tenant, project),
+            &workspace,
+            operator.id.as_str(),
+        )
+        .await
+        .unwrap();
     World {
         h,
         provider,
+        workspace,
         scope: Scope::new(admin.tenant, project),
         operator,
         approver,

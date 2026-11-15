@@ -247,6 +247,38 @@ impl Db {
         rows.iter().map(row_to_record).collect()
     }
 
+    /// Newest first, strictly before `before_seq` when given (latest-activity views).
+    pub async fn audit_recent(
+        &self,
+        tenant: Option<TenantId>,
+        before_seq: Option<i64>,
+        limit: u32,
+    ) -> Result<Vec<AuditRecord>> {
+        let rows = sqlx::query(
+            "SELECT * FROM audit_log WHERE (? IS NULL OR seq < ?) AND (? IS NULL OR tenant_id = ?) ORDER BY seq DESC LIMIT ?",
+        )
+        .bind(before_seq)
+        .bind(before_seq)
+        .bind(tenant.map(|t| t.to_string()))
+        .bind(tenant.map(|t| t.to_string()))
+        .bind(i64::from(limit))
+        .fetch_all(self.pool())
+        .await
+        .db()?;
+        rows.iter().map(row_to_record).collect()
+    }
+
+    /// Records of one action on one resource, oldest first.
+    pub async fn audit_by_resource(&self, resource_id: &str, action: &str) -> Result<Vec<AuditRecord>> {
+        let rows = sqlx::query("SELECT * FROM audit_log WHERE resource_id = ? AND action = ? ORDER BY seq")
+            .bind(resource_id)
+            .bind(action)
+            .fetch_all(self.pool())
+            .await
+            .db()?;
+        rows.iter().map(row_to_record).collect()
+    }
+
     pub async fn audit_by_correlation(&self, correlation: CorrelationId) -> Result<Vec<AuditRecord>> {
         let rows = sqlx::query("SELECT * FROM audit_log WHERE correlation_id = ? ORDER BY seq")
             .bind(correlation.to_string())
