@@ -103,6 +103,90 @@ pub struct SkillDefinition {
     /// single-file skills, whose digests are therefore unchanged.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package: Option<SkillPackage>,
+    /// Community `SKILL.md` (YAML front matter): the complete front matter as written –
+    /// `name`, `description`, `license`, `metadata` and any other properties – preserved
+    /// verbatim, covered by the approval digest and shown to reviewers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frontmatter: Option<Value>,
+    /// How `task_kinds` (the layers) were determined for a community skill: `explicit`,
+    /// `inferred from metadata.scope=<value>` or `none` (approved but applied to no layer).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layers_from: Option<String>,
+}
+
+/// Layers inferred from a community skill's `metadata.scope` (COMMUNITY-SKILL-FORMAT-PLAN Y2).
+pub const SCOPE_LAYERS: &[(&str, &[&str])] = &[
+    ("design", &["hld-design", "lld-design"]),
+    ("architecture", &["hld-design", "lld-design"]),
+    ("requirements", &["requirements-analysis", "requirements-review"]),
+    ("analysis", &["requirements-analysis", "requirements-review"]),
+    ("planning", &["implementation-planning"]),
+    ("implementation", &["implementation"]),
+    ("code", &["implementation"]),
+    ("development", &["implementation"]),
+];
+
+/// YAML → JSON (string keys).
+fn yaml_to_json(y: &yaml_rust2::Yaml) -> Value {
+    use yaml_rust2::Yaml;
+    match y {
+        Yaml::Null | Yaml::BadValue | Yaml::Alias(_) => Value::Null,
+        Yaml::Boolean(b) => json!(b),
+        Yaml::Integer(i) => json!(i),
+        Yaml::Real(r) => r.parse::<f64>().map(|f| json!(f)).unwrap_or_else(|_| json!(r)),
+        Yaml::String(t) => json!(t),
+        Yaml::Array(a) => Value::Array(a.iter().map(yaml_to_json).collect()),
+        Yaml::Hash(h) => Value::Object(
+            h.iter()
+                .map(|(k, v)| {
+                    let key = match k {
+                        Yaml::String(t) => t.clone(),
+                        other => match yaml_to_json(other) {
+                            Value::String(t) => t,
+                            v => v.to_string(),
+                        },
+                    };
+                    (key, yaml_to_json(v))
+                })
+                .collect(),
+        ),
+    }
+}
+
+/// Lenient semver: `1.1.1`, `v1.2`, `1` → `1.1.1`, `1.2.0`, `1.0.0`.
+fn lenient_version(raw: &str) -> Option<semver::Version> {
+    let t = raw.trim().trim_start_matches(['v', 'V']);
+    if let Ok(v) = semver::Version::parse(t) {
+        return Some(v);
+    }
+    let parts: Vec<&str> = t.split('.').collect();
+    if parts.is_empty()
+        || parts.len() > 3
+        || parts
+            .iter()
+            .any(|p| p.is_empty() || !p.chars().all(|c| c.is_ascii_digit()))
+    {
+        return None;
+    }
+    let n = |i: usize| parts.get(i).and_then(|p| p.parse::<u64>().ok()).unwrap_or(0);
+    Some(semver::Version::new(n(0), n(1), n(2)))
+}
+
+/// A scalar or list of strings (`a, b` or `[a, b]`).
+fn string_list(v: &Value) -> Vec<String> {
+    match v {
+        Value::Array(a) => a
+            .iter()
+            .filter_map(|x| x.as_str().map(|s| s.trim().to_string()))
+            .filter(|s| !s.is_empty())
+            .collect(),
+        Value::String(s) => s
+            .split(',')
+            .map(|p| p.trim().to_string())
+            .filter(|p| !p.is_empty())
+            .collect(),
+        _ => vec![],
+    }
 }
 
 impl SkillDefinition {
@@ -170,9 +254,12 @@ impl SkillDefinition {
             .strip_prefix('\u{feff}')
             .unwrap_or(text)
             .replace("\r\n", "\n");
-        let rest = text
-            .strip_prefix("+++\n")
-            .ok_or_else(|| bad("must start with a `+++` line opening the TOML front matter".into()))?;
+        if text.starts_with("---\n") {
+            return Self::from_yaml_markdown(&text);
+        }
+        let rest = text.strip_prefix("+++\n").ok_or_else(|| {
+            bad("must start with front matter: `---` (YAML, community SKILL.md) or `+++` (TOML)".into())
+        })?;
         let end = rest
             .find("\n+++\n")
             .map(|i| (i, i + 5))
@@ -215,6 +302,117 @@ impl SkillDefinition {
         Ok(def)
     }
 
+    /// Community `SKILL.md` (COMMUNITY-SKILL-FORMAT-PLAN): YAML front matter between `---`
+    /// lines with required `name` and `description`; optional `license`, `metadata` and any
+    /// other properties are preserved, never rejected. The Markdown after the closing `---`
+    /// is the instruction text. Version: `metadata.version`, else `version`, else 1.0.0.
+    /// Layers: `metadata.eaeh-task-kinds` / `task_kinds`, else inferred from
+    /// `metadata.scope` ([`SCOPE_LAYERS`]), else none.
+    fn from_yaml_markdown(text: &str) -> Result<Self> {
+        let bad = |m: String| HarnessError::invalid_input(format!("SKILL.md: {m}"));
+        let rest = &text[4..];
+        let (front, body) = if let Some(i) = rest.find("\n---\n") {
+            (&rest[..i], &rest[i + 5..])
+        } else if let Some(r) = rest.strip_suffix("\n---") {
+            (r, "")
+        } else if let Some(r) = rest.strip_prefix("---\n") {
+            ("", r)
+        } else {
+            return Err(bad("the YAML front matter is not closed by a `---` line".into()));
+        };
+        let docs = yaml_rust2::YamlLoader::load_from_str(front)
+            .map_err(|e| bad(format!("invalid YAML front matter: {e}")))?;
+        let fm = match docs.as_slice() {
+            [d] => yaml_to_json(d),
+            [] => Value::Null,
+            _ => return Err(bad("the front matter must be a single YAML document".into())),
+        };
+        let Value::Object(map) = &fm else {
+            return Err(bad(
+                "the front matter must be a YAML mapping with `name` and `description`".into(),
+            ));
+        };
+        let text_field = |k: &str| {
+            map.get(k)
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+        };
+        let name =
+            text_field("name").ok_or_else(|| bad("required field `name` is missing or empty".into()))?;
+        let description = text_field("description")
+            .ok_or_else(|| bad("required field `description` is missing or empty".into()))?;
+        let id: SkillId = name.parse().map_err(|e: HarnessError| {
+            bad(format!(
+                "`name` must be a lowercase identifier like `architecture-designer`: {}",
+                e.message
+            ))
+        })?;
+        let meta = map.get("metadata").and_then(Value::as_object);
+        let raw_version = meta
+            .and_then(|m| m.get("version"))
+            .or_else(|| map.get("version"))
+            .map(|v| match v {
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            });
+        let version = match &raw_version {
+            Some(r) => {
+                lenient_version(r).ok_or_else(|| bad(format!("version '{r}' is not a version number")))?
+            }
+            None => semver::Version::new(1, 0, 0),
+        };
+        let explicit = meta
+            .and_then(|m| m.get("eaeh-task-kinds"))
+            .or_else(|| map.get("task_kinds"))
+            .map(string_list)
+            .unwrap_or_default();
+        let scope = meta
+            .and_then(|m| m.get("scope"))
+            .and_then(Value::as_str)
+            .map(|s| s.trim().to_ascii_lowercase());
+        let inferred = scope
+            .as_deref()
+            .and_then(|sc| SCOPE_LAYERS.iter().find(|(k, _)| *k == sc));
+        let (task_kinds, layers_from): (Vec<String>, String) = if !explicit.is_empty() {
+            (explicit, "explicit".into())
+        } else if let Some((sc, kinds)) = inferred {
+            (
+                kinds.iter().map(|k| k.to_string()).collect(),
+                format!("inferred from metadata.scope={sc}"),
+            )
+        } else {
+            (vec![], "none".into())
+        };
+        let mut caps: BTreeSet<String> = task_kinds.iter().cloned().collect();
+        if caps.is_empty() {
+            caps.insert(id.to_string());
+        }
+        let def = SkillDefinition {
+            id,
+            version,
+            description: description.to_string(),
+            capabilities: caps,
+            task_kinds,
+            // Community text may contain `{{…}}` (e.g. template examples). Skill text is
+            // never rendered as a prompt template; neutralise it so it cannot look like one.
+            instructions: body.trim().replace("{{", "{ {"),
+            required_knowledge: vec![],
+            required_tools: vec![],
+            input_schema: object_schema(),
+            output_schema: object_schema(),
+            max_risk: RiskClass::ReadOnly,
+            dependencies: vec![],
+            eaeh_api: api_req(),
+            evaluation_criteria: vec![],
+            package: None,
+            frontmatter: Some(fm),
+            layers_from: Some(layers_from),
+        };
+        def.validate()?;
+        Ok(def)
+    }
+
     /// Parse a skill file by extension: `.md` (Markdown) or JSON.
     pub fn from_file_text(path: &std::path::Path, text: &str) -> Result<Self> {
         let def = if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("md")) {
@@ -234,8 +432,8 @@ impl SkillDefinition {
                 self.reference()
             )))
         };
-        if self.description.trim().is_empty() || self.description.len() > 2000 {
-            return err("description must be 1..=2000 bytes".into());
+        if self.description.trim().is_empty() || self.description.len() > 4096 {
+            return err("description must be 1..=4096 bytes".into());
         }
         if self.instructions.trim().is_empty() || self.instructions.len() > MAX_INSTRUCTIONS {
             return err(format!("instructions must be 1..={MAX_INSTRUCTIONS} bytes"));
@@ -1002,5 +1200,151 @@ mod markdown_tests {
             let e = SkillDefinition::from_markdown(text).unwrap_err();
             assert_eq!(e.kind, eaeh_core::ErrorKind::InvalidInput, "{name}: {e:?}");
         }
+    }
+}
+
+#[cfg(test)]
+mod community_skill_tests {
+    //! Community `SKILL.md` (YAML front matter) – COMMUNITY-SKILL-FORMAT-PLAN.
+    use super::*;
+
+    const ARCHITECTURE_DESIGNER: &str = include_str!("../../../config/skills/architecture-designer/SKILL.md");
+
+    #[test]
+    fn the_supplied_architecture_designer_skill_parses_with_all_front_matter_preserved() {
+        let d = SkillDefinition::from_markdown(ARCHITECTURE_DESIGNER).unwrap();
+        assert_eq!(
+            d.reference(),
+            "architecture-designer@1.1.1",
+            "version from metadata.version"
+        );
+        assert!(
+            d.description
+                .starts_with("Use when designing new high-level system architecture")
+        );
+        assert_eq!(d.task_kinds, vec!["hld-design", "lld-design"]);
+        assert_eq!(
+            d.layers_from.as_deref(),
+            Some("inferred from metadata.scope=design")
+        );
+        assert_eq!(d.max_risk, RiskClass::ReadOnly);
+        assert!(d.instructions.starts_with("# Architecture Designer"));
+        assert!(d.instructions.contains("## Reference Guide"));
+        let fm = d.frontmatter.as_ref().unwrap();
+        assert_eq!(fm["license"], "MIT");
+        assert_eq!(fm["metadata"]["author"], "https://github.com/Jeffallan");
+        assert_eq!(fm["metadata"]["role"], "expert");
+        assert_eq!(fm["metadata"]["output-format"], "document");
+        assert!(
+            fm["metadata"]["related-skills"]
+                .as_str()
+                .unwrap()
+                .contains("microservices-architect")
+        );
+        // Every byte of the front matter is part of the approved definition.
+        let mut changed = d.clone();
+        changed.frontmatter.as_mut().unwrap()["license"] = json!("Apache-2.0");
+        assert_ne!(d.digest().unwrap(), changed.digest().unwrap());
+    }
+
+    #[test]
+    fn representative_community_variants_are_accepted() {
+        // Minimal: name + description only; no layer (approvable, applied nowhere).
+        let d = SkillDefinition::from_markdown(
+            "---\nname: commit-helper\ndescription: Writes commit messages.\n---\n\nWrite good commits.\n",
+        )
+        .unwrap();
+        assert_eq!(d.reference(), "commit-helper@1.0.0");
+        assert!(d.task_kinds.is_empty());
+        assert_eq!(d.layers_from.as_deref(), Some("none"));
+        assert_eq!(d.capabilities, ["commit-helper".to_string()].into());
+        // Additional properties of other ecosystems, nested maps, lists, numbers, booleans.
+        let d = SkillDefinition::from_markdown(
+            "---\nname: pdf-tools\ndescription: \"Extract text: tables, forms.\"\nlicense: Proprietary. See LICENSE.txt\nallowed-tools:\n  - Read\n  - Bash(python:*)\nmodel: sonnet\nuser-invocable: true\nmetadata:\n  version: 2\n  tags: [pdf, documents]\n  nested:\n    level: 3\n    ok: yes\n---\n# PDF\n\nUse pypdf.\n",
+        )
+        .unwrap();
+        assert_eq!(
+            d.version,
+            semver::Version::new(2, 0, 0),
+            "integer version normalised"
+        );
+        let fm = d.frontmatter.unwrap();
+        assert_eq!(fm["allowed-tools"], json!(["Read", "Bash(python:*)"]));
+        assert_eq!(fm["user-invocable"], true);
+        assert_eq!(fm["metadata"]["tags"], json!(["pdf", "documents"]));
+        assert_eq!(fm["metadata"]["nested"]["level"], 3);
+        // Explicit layers (comma list or YAML list) and a top-level version `v1.2`.
+        let d = SkillDefinition::from_markdown("---\nname: req-coach\ndescription: d\nversion: v1.2\nmetadata:\n  eaeh-task-kinds: requirements-analysis, requirements-review\n  scope: design\n---\nbody\n").unwrap();
+        assert_eq!(d.version, semver::Version::new(1, 2, 0));
+        assert_eq!(
+            d.task_kinds,
+            vec!["requirements-analysis", "requirements-review"],
+            "explicit wins over scope"
+        );
+        assert_eq!(d.layers_from.as_deref(), Some("explicit"));
+        let d = SkillDefinition::from_markdown(
+            "---\nname: x-plan\ndescription: d\ntask_kinds: [implementation-planning]\n---\nbody\n",
+        )
+        .unwrap();
+        assert_eq!(d.task_kinds, vec!["implementation-planning"]);
+        // Windows line endings and a BOM; template-like text neutralised, not rejected.
+        let d = SkillDefinition::from_markdown("\u{feff}---\r\nname: helm-charts\r\ndescription: Helm.\r\nmetadata:\r\n  scope: implementation\r\n---\r\nUse {{ .Values.image }}.\r\n").unwrap();
+        assert_eq!(d.task_kinds, vec!["implementation"]);
+        assert_eq!(d.instructions, "Use { { .Values.image }}.");
+    }
+
+    #[test]
+    fn invalid_community_skills_are_rejected_with_the_reason() {
+        let cases = [
+            ("missing name", "---\ndescription: d\n---\nbody", "`name`"),
+            ("missing description", "---\nname: a\n---\nbody", "`description`"),
+            (
+                "empty description",
+                "---\nname: a\ndescription: \"  \"\n---\nbody",
+                "`description`",
+            ),
+            (
+                "invalid yaml",
+                "---\nname: [unclosed\ndescription: d\n---\nbody",
+                "invalid YAML",
+            ),
+            ("not a mapping", "---\n- a\n- b\n---\nbody", "mapping"),
+            ("not closed", "---\nname: a\ndescription: d\nbody", "not closed"),
+            (
+                "empty body",
+                "---\nname: a\ndescription: d\n---\n\n",
+                "instructions",
+            ),
+            (
+                "bad name",
+                "---\nname: Architecture Designer\ndescription: d\n---\nbody",
+                "lowercase identifier",
+            ),
+            (
+                "bad version",
+                "---\nname: a\ndescription: d\nmetadata:\n  version: latest\n---\nbody",
+                "version",
+            ),
+        ];
+        for (case, text, why) in cases {
+            let e = SkillDefinition::from_markdown(text).unwrap_err();
+            assert_eq!(e.kind, eaeh_core::ErrorKind::InvalidInput, "{case}");
+            assert!(e.message.contains(why), "{case}: {}", e.message);
+        }
+    }
+
+    #[test]
+    fn eaeh_toml_and_json_skills_are_unchanged() {
+        let toml = include_str!("../../../config/skills/architecture-diagrams.md");
+        let d = SkillDefinition::from_markdown(toml).unwrap();
+        assert!(d.frontmatter.is_none() && d.layers_from.is_none());
+        let v = serde_json::to_value(&d).unwrap();
+        assert!(
+            v.get("frontmatter").is_none() && v.get("layers_from").is_none(),
+            "digests of existing skills unchanged"
+        );
+        let j: SkillDefinition =
+            serde_json::from_str(include_str!("../../../config/skills/hld-design.json")).unwrap();
+        assert!(serde_json::to_value(&j).unwrap().get("frontmatter").is_none());
     }
 }

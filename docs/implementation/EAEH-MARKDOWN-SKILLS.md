@@ -71,3 +71,25 @@ These are decisions O1–O4 of `docs/implementation/stages/SKILL-ONBOARDING-PLAN
 * **Skills are installation-wide.** There are no per-project skill folders.
 * **One governance project per discovery run.** Discovery uses the triggering project, else the project where skills were last governed. Approvers need access to that project.
 * **No YAML front matter**, by decision O1.
+
+## Community `SKILL.md` with YAML front matter (added 2026-11-16)
+
+This is [ADR-0030](../architecture/adr/ADR-0030-community-skill-md-yaml-front-matter.md), with plan `docs/implementation/stages/COMMUNITY-SKILL-FORMAT-PLAN.md`.
+
+| Area | Change |
+|---|---|
+| Parser (`eaeh-skills`) | `from_markdown` dispatches on the first line: `---` → `from_yaml_markdown`, `+++` → TOML (unchanged). JSON is unchanged.<br>The YAML path:<br>• requires `name` (a slug, used as the id) and `description`;<br>• validates the YAML syntax and that it is a single mapping;<br>• keeps the whole front matter as `frontmatter`;<br>• version from `metadata.version`, else `version`, else 1.0.0 (lenient);<br>• layers explicit (`metadata.eaeh-task-kinds` or `task_kinds`), else from `metadata.scope` (`SCOPE_LAYERS`), else none, recorded in `layers_from`;<br>• max risk `read_only`;<br>• `{{` in the body neutralised.<br>The description limit is 4096 bytes. |
+| Dependency | `yaml-rust2` 0.13 (`default-features = false`; MIT OR Apache-2.0; pure Rust) |
+| Loading | Single `.md` skill files with `---` front matter are recognised. Skill directories needed no change: nested resources are captured as before (ADR-0029). |
+| API and portal | `skill_view` adds `frontmatter` and `layers_from`. The review page and the skill viewer show a **SKILL.md front matter** card with every property, including nested metadata, and the source of the layers. |
+| Unchanged | Discovery, versioning, approval (reject needs comments), and activation of approved versions only |
+
+**Tests:**
+
+| Test | Proves |
+|---|---|
+| `eaeh-skills` `community_skill_tests` (4) | • the supplied `architecture-designer`: version 1.1.1, layers inferred from `scope: design`, licence and metadata preserved, the digest covers the front matter;<br>• representative community variants: minimal; extra properties (`allowed-tools`, `model`, booleans, nested maps, lists); integer, top-level and `v`-prefixed versions; explicit layers as a comma string or a list; CRLF and BOM; `{{` neutralised;<br>• 9 rejections, each with its reason;<br>• TOML and JSON skills unchanged (no new fields, so the same digests). |
+| `tests/tests/skills.rs` – `the_community_architecture_designer_skill_is_discovered_approved_and_applied` | • discovered as 1.1.1 with its 5 reference files;<br>• pending → not in the HLD request;<br>• approved → the LLD agent receives the body and the references, and provenance records the skill;<br>• a reference edit → 1.1.2 pending, while 1.1.1 stays active. |
+| `tests/tests/portal.rs` – `portal_reviews_a_community_skill_with_its_front_matter_and_files` | • the review shows the front matter, the layer source, the instructions and all 6 files;<br>• a reject with a blank comment is refused;<br>• approve → in force. |
+| `crates/eaeh-cli/tests/dx.rs` | The pending counts are now derived from the skill folders present, instead of fixed numbers. |
+| `portal/src/test/skill-onboarding.test.tsx` | The front matter card and the layer source. |

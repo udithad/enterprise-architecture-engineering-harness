@@ -87,3 +87,26 @@ describe("Skill onboarding pages", () => {
     expect(screen.getByTestId("skill-history")).toHaveTextContent("arthur · approve");
   });
 });
+
+describe("Community SKILL.md", () => {
+  it("shows the YAML front matter and how the layers were determined", async () => {
+    const { SkillReview } = await import("@/components/SkillReview");
+    render(
+      <SkillReview
+        skill={{
+          id: "architecture-designer", version: "1.1.1", reference: "architecture-designer@1.1.1", description: "Use when designing…",
+          task_kinds: ["hld-design", "lld-design"], capabilities: [], layers: ["engineering.design/hld", "engineering.design/lld"], required_tools: [], required_knowledge: [],
+          max_risk: "read_only", dependencies: [], evaluation_criteria: [], output_schema: {}, instructions: "# Architecture Designer",
+          layers_from: "inferred from metadata.scope=design",
+          frontmatter: { name: "architecture-designer", description: "Use when…", license: "MIT", metadata: { author: "https://github.com/Jeffallan", version: "1.1.1", scope: "design" } },
+        }}
+      />,
+    );
+    expect(screen.getByTestId("layers-from")).toHaveTextContent("inferred from metadata.scope=design");
+    const fm = screen.getByTestId("frontmatter");
+    expect(fm).toHaveTextContent("license");
+    expect(fm).toHaveTextContent("MIT");
+    expect(fm).toHaveTextContent("https://github.com/Jeffallan");
+    expect(fm).not.toHaveTextContent("Use when…");
+  });
+});

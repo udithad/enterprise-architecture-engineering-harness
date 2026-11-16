@@ -5,6 +5,7 @@ import { shortHash } from "@/lib/format";
 import { Link } from "react-router";
 import { useSkillFiles } from "@/hooks/queries";
 import { SkillFiles } from "@/components/SkillFiles";
+import { FrontMatter } from "@/components/FrontMatter";
 import type { SkillView } from "@/lib/types";
 
 /** The complete skill under review: metadata, the layers it is applied to, and the
@@ -34,7 +35,10 @@ export function SkillReview({ skill }: { skill: SkillView }) {
                 <span className="text-muted-foreground">no current workflow stage (task kinds: {skill.task_kinds.join(", ") || "none"})</span>
               )}
             </Row>
-            <Row label="Task kinds">{skill.task_kinds.join(", ") || "—"}</Row>
+            <Row label="Task kinds">
+              {skill.task_kinds.join(", ") || "—"}
+              {skill.layers_from && <div className="text-xs text-muted-foreground" data-testid="layers-from">layers: {skill.layers_from}</div>}
+            </Row>
             <Row label="Highest tool risk">{skill.max_risk}</Row>
             <Row label="Required tools">{skill.required_tools.join(", ") || "none"}</Row>
             <Row label="Required knowledge">{skill.required_knowledge.length ? skill.required_knowledge.map((k) => `"${k.query}" (top ${k.k})`).join("; ") : "none"}</Row>
@@ -49,6 +53,17 @@ export function SkillReview({ skill }: { skill: SkillView }) {
           </p>
         </CardContent>
       </Card>
+      {skill.frontmatter && (
+        <Card>
+          <CardHeader>
+            <CardTitle>SKILL.md front matter</CardTitle>
+            <CardDescription>Every property as written in the skill's YAML header, including license and metadata. All of it is part of what you approve.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FrontMatter value={skill.frontmatter} />
+          </CardContent>
+        </Card>
+      )}
       {skill.package && <PackageFiles skill={skill} />}
       <Card>
         <CardHeader>

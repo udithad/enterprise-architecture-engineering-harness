@@ -452,3 +452,173 @@ fn copy_dir(from: &std::path::Path, to: &std::path::Path) {
         }
     }
 }
+
+/// Community `SKILL.md` (YAML front matter) end to end with the supplied
+/// `architecture-designer` skill (COMMUNITY-SKILL-FORMAT-PLAN): discovered with its nested
+/// references, layers inferred from `metadata.scope: design`, front matter preserved, not
+/// used while pending, used by the HLD and LLD agents once a human approves it, and a
+/// changed reference becomes a new pending version.
+#[tokio::test]
+async fn the_community_architecture_designer_skill_is_discovered_approved_and_applied() {
+    let skills = tempfile::tempdir().unwrap();
+    let sd = skills.path().to_path_buf();
+    copy_dir(
+        &root().join("config/skills/architecture-designer"),
+        &sd.join("architecture-designer"),
+    );
+    let dd = sd.clone();
+    let good = example("requirements.json");
+    let read_brd = || Script::tool("knowledge.read", json!({"document": BRD}));
+    let w = world_cfg(
+        eaeh_runtime::ExecutionMode::DirectProvider,
+        vec![
+            read_brd(),
+            Script::json(good.clone()),
+            read_brd(),
+            Script::json(good),
+            Script::json(example("hld.json")),
+            Script::json(example("lld.json")),
+        ],
+        "",
+        move |c| c.definitions.skills_dir = dd,
+    )
+    .await;
+    use eaeh_runtime::project::{SkillState, discover_skills, skill_state};
+    let r = discover_skills(&w.h, None).await.unwrap();
+    assert_eq!(
+        (r[0].action.as_str(), r[0].version.as_deref()),
+        ("new", Some("1.1.1")),
+        "{r:?}"
+    );
+    let id: eaeh_core::SkillId = "architecture-designer".parse().unwrap();
+    let rec = w.h.skills.get(&id, &semver::Version::new(1, 1, 1)).await.unwrap();
+    let d = &rec.definition;
+    assert_eq!(
+        d.layers_from.as_deref(),
+        Some("inferred from metadata.scope=design")
+    );
+    assert_eq!(
+        d.frontmatter.as_ref().unwrap()["metadata"]["company"],
+        "https://synergetic.solutions"
+    );
+    let files: Vec<&str> = d
+        .package
+        .as_ref()
+        .unwrap()
+        .files
+        .iter()
+        .map(|f| f.path.as_str())
+        .collect();
+    assert_eq!(
+        files,
+        vec![
+            "SKILL.md",
+            "references/adr-template.md",
+            "references/architecture-patterns.md",
+            "references/database-selection.md",
+            "references/nfr-checklist.md",
+            "references/system-design.md",
+        ]
+    );
+    assert!(matches!(
+        skill_state(&w.h, &w.approver, "architecture-designer@^1")
+            .await
+            .unwrap(),
+        SkillState::PendingApproval { .. }
+    ));
+
+    let id_run =
+        w.h.engine
+            .start(
+                &w.operator,
+                &WorkflowDefinitionId::new("engineering.design").unwrap(),
+                w.scope,
+                json!({"brd": BRD}),
+                TraceContext::new_root(),
+            )
+            .await
+            .unwrap();
+    assert_eq!(
+        w.h.engine.drive(id_run).await.unwrap(),
+        InstanceStatus::WaitingApproval
+    );
+    // Requirements approved → HLD runs while the community skill is still pending: not used.
+    assert_eq!(decide(&w, ApprovalDecision::Approve, "ok").await.1, "approve_hld");
+    let marker = "APPROVED SKILL [architecture-designer@1.1.1]";
+    let hld = w
+        .provider
+        .requests()
+        .into_iter()
+        .find(|r| {
+            r.messages[0]
+                .content
+                .contains("APPROVED SKILL [hld-design@1.0.0]")
+        })
+        .unwrap();
+    assert!(!hld.messages[0].content.contains(marker));
+    // Approved (the registrant is the platform; a human approver decides) → the LLD uses it.
+    w.h.decide_approval(
+        &w.approver,
+        rec.approval_id.clone().unwrap().parse().unwrap(),
+        ApprovalDecision::Approve,
+        "community skill reviewed",
+        Some(&rec.digest),
+    )
+    .await
+    .unwrap();
+    assert_eq!(decide(&w, ApprovalDecision::Approve, "ok").await.1, "approve_lld");
+    let lld = w
+        .provider
+        .requests()
+        .into_iter()
+        .find(|r| {
+            r.messages[0]
+                .content
+                .contains("APPROVED SKILL [lld-design@1.0.0]")
+        })
+        .unwrap();
+    let sys = &lld.messages[0].content;
+    assert!(
+        sys.contains(marker),
+        "approved community skill applied at the LLD layer"
+    );
+    assert!(
+        sys.contains("# Architecture Designer"),
+        "Markdown body is the instruction text"
+    );
+    assert!(sys.contains("REFERENCE FILE references/adr-template.md"));
+    assert!(sys.contains("REFERENCE FILE references/nfr-checklist.md"));
+    let inst = w.h.engine.get(id_run).await.unwrap();
+    let meta =
+        w.h.artifacts
+            .meta(w.scope, inst.data.artifacts["lld"].id)
+            .await
+            .unwrap();
+    assert!(
+        meta.provenance
+            .skills
+            .iter()
+            .any(|s| s == "architecture-designer@1.1.1")
+    );
+
+    // A changed reference → 1.1.2 pending; 1.1.1 stays the active version.
+    std::fs::write(
+        sd.join("architecture-designer/references/nfr-checklist.md"),
+        "# NFR checklist\n\n- Availability target\n",
+    )
+    .unwrap();
+    let r = discover_skills(&w.h, None).await.unwrap();
+    assert_eq!(
+        (r[0].action.as_str(), r[0].version.as_deref()),
+        ("changed", Some("1.1.2")),
+        "{r:?}"
+    );
+    assert_eq!(
+        skill_state(&w.h, &w.approver, "architecture-designer@^1")
+            .await
+            .unwrap(),
+        SkillState::Approved {
+            version: "1.1.1".into()
+        }
+    );
+}

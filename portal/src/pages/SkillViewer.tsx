@@ -6,6 +6,7 @@ import { ErrorState, LoadingRows } from "@/components/States";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CopyText } from "@/components/CopyText";
 import { SkillFiles } from "@/components/SkillFiles";
+import { FrontMatter } from "@/components/FrontMatter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { skillStatus } from "@/lib/status";
@@ -48,7 +49,10 @@ export function SkillViewerPage() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardContent className="grid grid-cols-1 gap-x-6 gap-y-3 pt-5 text-sm md:grid-cols-4">
-            <Meta label="Layers">{s.layers.length ? s.layers.join(", ") : s.task_kinds.join(", ") || "—"}</Meta>
+            <Meta label="Layers">
+              {s.layers.length ? s.layers.join(", ") : s.task_kinds.join(", ") || "none – not applied to any stage"}
+              {s.layers_from && <div className="text-xs text-muted-foreground">{s.layers_from}</div>}
+            </Meta>
             <Meta label="Version in force">{s.in_force_version ?? "none approved yet"}</Meta>
             <Meta label="Source">
               {s.package ? `directory ${s.package.dir}/ · manifest ${s.package.source_version} · revision ${s.package.revision}` : "single file"}
@@ -60,6 +64,17 @@ export function SkillViewerPage() {
             <Meta label="Files">{s.package ? `${s.package.file_count} · ${(s.package.size / 1024).toFixed(1)} KiB` : s.files.length}</Meta>
           </CardContent>
         </Card>
+        {s.frontmatter && (
+          <Card>
+            <CardHeader>
+              <CardTitle>SKILL.md front matter</CardTitle>
+              <CardDescription>The YAML header as written: name, description, license, metadata and any other properties.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FrontMatter value={s.frontmatter} />
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Files</CardTitle>

@@ -394,10 +394,13 @@ pub fn repository_skills(h: &Harness) -> Result<Vec<(PathBuf, SkillDefinition)>>
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| p.extension().is_some_and(|x| x == "json" || x == "md"))
         .filter(|p| {
-            // README.md and other Markdown without front matter are documentation, not skills.
+            // README.md and other Markdown without front matter (`---` YAML or `+++` TOML) are
+            // documentation, not skills.
             p.extension().is_some_and(|x| x == "json")
-                || std::fs::read_to_string(p)
-                    .is_ok_and(|t| t.trim_start_matches('\u{feff}').starts_with("+++"))
+                || std::fs::read_to_string(p).is_ok_and(|t| {
+                    let t = t.trim_start_matches('\u{feff}');
+                    t.starts_with("+++") || t.starts_with("---\n") || t.starts_with("---\r\n")
+                })
         })
         .collect();
     files.sort();

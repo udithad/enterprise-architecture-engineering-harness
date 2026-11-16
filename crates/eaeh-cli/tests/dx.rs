@@ -8,6 +8,16 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+/// Skill directories shipped in `config/skills/` (each `<name>/SKILL.md`, EAEH or community
+/// format) – discovered automatically and registered as pending by `project init`.
+fn skill_dirs() -> usize {
+    std::fs::read_dir(repo().join("config/skills"))
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().join("SKILL.md").is_file())
+        .count()
+}
+
 fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
@@ -490,9 +500,9 @@ fn approval_review_needs_an_explicit_human_approver_and_confirms_each_item() {
         &[],
     );
     let pending = o.json()["pending"].as_array().unwrap().clone();
-    // 3 agent skills + 1 layer skill file (architecture-diagrams.md) + 1 discovered skill
-    // directory (api-error-handling/), all pending.
-    assert_eq!(pending.len(), 5, "{}", o.all());
+    // 3 agent skills + 1 layer skill file (architecture-diagrams.md) + every discovered skill
+    // directory (api-error-handling/, architecture-designer/ …), all pending.
+    assert_eq!(pending.len(), 4 + skill_dirs(), "{}", o.all());
     assert!(
         pending
             .iter()
@@ -566,8 +576,8 @@ fn approval_review_needs_an_explicit_human_approver_and_confirms_each_item() {
         ],
         &[],
     );
-    // The rest: the skipped agent skill, the layer skill file and the skill directory.
-    assert_eq!(o.json()["results"].as_array().unwrap().len(), 4);
+    // The rest: the skipped agent skill, the layer skill file and the skill directories.
+    assert_eq!(o.json()["results"].as_array().unwrap().len(), 3 + skill_dirs());
     let o = run(&e, &e.ws, &["--json", "skill", "pending"], &[]);
     let j = o.json();
     assert!(
@@ -943,8 +953,8 @@ fn mcp_server_exposes_governed_tools_without_approval_powers() {
     let v: Value = serde_json::from_str(&text(&r)).unwrap();
     assert_eq!(
         v["skills_and_standards"].as_array().unwrap().len(),
-        5,
-        "3 agent skills + 1 layer skill + 1 skill directory"
+        4 + skill_dirs(),
+        "3 agent skills + 1 layer skill + the skill directories"
     );
     assert!(
         v["note"]
@@ -1078,8 +1088,13 @@ fn external_ai_bootstrap_cli_and_mcp_hand_offs_without_model_calls() {
         ],
         &[],
     );
-    // Agent skills + the layer skill file + the discovered skill directory.
-    assert_eq!(o.json()["results"].as_array().unwrap().len(), 7, "{}", o.all());
+    // Agent skills + the layer skill file + the discovered skill directories.
+    assert_eq!(
+        o.json()["results"].as_array().unwrap().len(),
+        6 + skill_dirs(),
+        "{}",
+        o.all()
+    );
     let o = run(
         &e,
         &e.ws,

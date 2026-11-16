@@ -323,37 +323,47 @@ A **skill** is reusable instruction text that EAEH adds to the AI's task at spec
 | LLD | `lld-design` |
 | Implementation plan / code and tests | `implementation-planning` / `implementation` |
 
-### 10.1 Write a skill file
+### 10.1 Write a skill: the `SKILL.md` format
 
-Put a `.md` file in `config/skills/` (📁 EAEH folder). It applies to all projects of this installation. An example ships in `config/skills/architecture-diagrams.md`:
+EAEH reads the standard **`SKILL.md`** used by community skill repositories: a YAML header between `---` lines, then Markdown instructions. You can copy a community skill folder into `config/skills/` unchanged (📁 EAEH folder). It applies to all projects of this installation. Example: the supplied `config/skills/architecture-designer/`:
 
 ```markdown
-+++
-id = "architecture-diagrams"            # lowercase, unique
-version = "1.0.0"                       # raise it for every change
-description = "Consistent architecture diagrams for HLD and LLD."
-task_kinds = ["hld-design", "lld-design"]   # the layers
-# optional: required_knowledge = [{ query = "diagram standards", k = 3 }]
-# optional: evaluation_criteria = ["every component appears in a diagram"]
-+++
+---
+name: architecture-designer            # required: lowercase id
+description: Use when designing new high-level system architecture …   # required
+license: MIT                           # optional
+metadata:                              # optional, any keys
+  version: "1.1.1"                     # the skill version (default 1.0.0)
+  scope: design                        # → applied at HLD and LLD (see below)
+  author: https://github.com/Jeffallan
+---
 
-# Architecture diagrams
+# Architecture Designer
 
-- Use the component id as the identifier in every diagram.
-- …
+Senior software architect specializing in system design …
 ```
 
-* The part between the `+++` lines is the metadata. Everything below it is the **instruction text** the AI receives, verbatim.
-* JSON skill files (`*.json`) keep working.
-* To **change** a skill, edit the file and raise `version`. The new version needs approval again, and the old version keeps applying until then.
+* **Required:** `name` and `description`. Every other property is kept, shown to reviewers and covered by the approval. None is rejected.
+* **The instructions:** everything after the closing `---` is the instruction text the AI receives.
+* **Layers** (where EAEH applies the skill):
+
+  | Source | Rule |
+  |---|---|
+  | **Explicit** | `metadata.eaeh-task-kinds: hld-design, lld-design`, or `task_kinds:` |
+  | **Inferred** from `metadata.scope` | `design`, `architecture` → HLD and LLD<br>`requirements`, `analysis` → requirements<br>`planning` → implementation plan<br>`implementation`, `code`, `development` → implementation |
+  | **Otherwise** | No layer: the skill can be approved but isn't applied anywhere |
+
+  The portal shows the layers and how they were determined before you approve.
+* **Older formats keep working:** EAEH's TOML header (`+++` … `+++`, e.g. `config/skills/architecture-diagrams.md`) and JSON skill files (`*.json`).
+* **Changing a skill:** for a skill folder, edit any file and a new version is registered automatically (10.2). For a single file, raise the version.
 
 ### 10.2 Or: a skill folder (with reference files)
 
-For a skill with supporting material, copy a **folder** into `config/skills/`. It needs a `SKILL.md` (same header and body as 10.1); any other files and subfolders are optional:
+For a skill with supporting material, copy a **folder** into `config/skills/`. It needs a `SKILL.md` (10.1); any other files and subfolders are optional:
 
 ```
 config/skills/api-error-handling/          # example shipped with EAEH (LLD layer)
-├── SKILL.md                               # header (+++ … +++) + main instructions
+├── SKILL.md                               # header (--- YAML ---, or +++ TOML +++) + main instructions
 ├── references/error-catalog.md            # reference documents …
 ├── references/http/status-mapping.md      # … nested folders are fine
 ├── examples/error-response.json

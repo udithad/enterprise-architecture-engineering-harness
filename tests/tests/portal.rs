@@ -1146,3 +1146,79 @@ fn copy(from: &std::path::Path, to: &std::path::Path) {
         }
     }
 }
+
+/// A community `SKILL.md` (YAML front matter) is shown in full for review and decided with
+/// the existing approval flow (COMMUNITY-SKILL-FORMAT-PLAN).
+#[tokio::test]
+async fn portal_reviews_a_community_skill_with_its_front_matter_and_files() {
+    let skills = tempfile::tempdir().unwrap();
+    let sd = skills.path().to_path_buf();
+    copy(
+        &root().join("config/skills/architecture-designer"),
+        &sd.join("architecture-designer"),
+    );
+    let dd = sd.clone();
+    let w = world_cfg(
+        eaeh_runtime::ExecutionMode::DirectProvider,
+        vec![],
+        "",
+        move |c| c.definitions.skills_dir = dd,
+    )
+    .await;
+    let p = portal(&w, &w.operator, Some(&w.approver), None).await;
+    let (_, v) = p.post("/api/v1/skills/discover", json!({})).await;
+    assert_eq!(v["results"][0]["version"], "1.1.1", "{v}");
+    let aid = v["results"][0]["approval_id"].as_str().unwrap().to_string();
+    let (s, doc) = p.get(&format!("/api/v1/approvals/{aid}/document")).await;
+    assert_eq!(s, StatusCode::OK, "{doc}");
+    let sk = &doc["skill"];
+    assert_eq!(sk["frontmatter"]["license"], "MIT");
+    assert_eq!(
+        sk["frontmatter"]["metadata"]["triggers"]
+            .as_str()
+            .map(|t| t.contains("microservices")),
+        Some(true)
+    );
+    assert_eq!(sk["layers_from"], "inferred from metadata.scope=design");
+    assert!(sk["layers"].to_string().contains("engineering.design/hld"));
+    assert!(
+        sk["instructions"]
+            .as_str()
+            .unwrap()
+            .starts_with("# Architecture Designer")
+    );
+    let (_, f) = p.get("/api/v1/skills/architecture-designer/1.1.1/files").await;
+    assert_eq!(f["files"].as_array().unwrap().len(), 6);
+    assert!(
+        f["files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|x| x["path"] == "references/system-design.md" && x["content"].is_string())
+    );
+    // Existing approval workflow: reject needs comments; approve with the digest.
+    let digest = sk["digest"].as_str().unwrap();
+    let (s, _) = p
+        .post(
+            &format!("/api/v1/approvals/{aid}/decision"),
+            json!({"decision": "reject", "comments": " ", "artifact_hash": digest}),
+        )
+        .await;
+    assert_ne!(s, StatusCode::OK);
+    let (s, v) = p
+        .post(
+            &format!("/api/v1/approvals/{aid}/decision"),
+            json!({"decision": "approve", "comments": "reviewed", "artifact_hash": digest}),
+        )
+        .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    let (_, cat) = p.get("/api/v1/skills/catalog").await;
+    let it = cat["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|i| i["reference"] == "architecture-designer@1.1.1")
+        .unwrap()
+        .clone();
+    assert_eq!(it["in_force"], true);
+}

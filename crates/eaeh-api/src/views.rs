@@ -742,6 +742,10 @@ fn skill_view(d: &eaeh_skills::SkillDefinition, layers: &BTreeMap<String, Vec<St
         "required_tools": d.required_tools, "required_knowledge": d.required_knowledge, "max_risk": d.max_risk,
         "dependencies": d.dependencies, "evaluation_criteria": d.evaluation_criteria,
         "output_schema": d.output_schema, "instructions": d.instructions,
+        // Community SKILL.md: the complete YAML front matter (license, metadata, any other
+        // properties) and how the layers were determined.
+        "frontmatter": d.frontmatter,
+        "layers_from": d.layers_from,
         "package": d.package.as_ref().map(|p| json!({
             "dir": p.dir, "source_version": p.source_version.to_string(), "revision": p.revision,
             "tree_hash": p.tree_hash, "file_count": p.files.len(),

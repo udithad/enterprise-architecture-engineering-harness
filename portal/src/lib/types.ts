@@ -360,6 +360,10 @@ export interface SkillView {
   evaluation_criteria: string[];
   output_schema: unknown;
   instructions: string;
+  /** Community SKILL.md: the complete YAML front matter (name, description, license, metadata, …). */
+  frontmatter?: Record<string, unknown> | null;
+  /** How the layers were determined: `explicit`, `inferred from metadata.scope=…` or `none`. */
+  layers_from?: string | null;
   /** Skill directories: the captured package (all files are covered by the digest). */
   package?: { dir: string; source_version: string; revision: number; tree_hash: string; file_count: number; size: number } | null;
   digest?: string;
