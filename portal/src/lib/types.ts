@@ -24,7 +24,10 @@ export interface PortalSession {
   installation: { data_dir: string; config_dir: string; label?: string | null };
   viewer: Acting;
   approver: Acting | null;
+  /** Identity used only to register skill files (`eaeh portal --steward`). */
+  steward?: Acting | null;
   can_decide: boolean;
+  can_register_skills?: boolean;
   execution_mode: string;
   api_version: string;
   local_only: boolean;
@@ -336,7 +339,86 @@ export interface ApprovalDocument {
     workspace_document?: GateDocument | null;
     workspace?: WorkspaceRegistration | null;
   } | null;
+  /** Set for skill approvals: the full definition under review. */
+  skill?: SkillView | null;
   decision_endpoint: string;
+}
+
+export interface SkillView {
+  id: string;
+  version: string;
+  reference: string;
+  description: string;
+  task_kinds: string[];
+  capabilities: string[];
+  /** `workflow/stage` layers this skill is applied to (from its task kinds). */
+  layers: string[];
+  required_tools: string[];
+  required_knowledge: { query: string; k: number }[];
+  max_risk: string;
+  dependencies: { id: string; version: string }[];
+  evaluation_criteria: string[];
+  output_schema: unknown;
+  instructions: string;
+  /** Skill directories: the captured package (all files are covered by the digest). */
+  package?: { dir: string; source_version: string; revision: number; tree_hash: string; file_count: number; size: number } | null;
+  digest?: string;
+  status?: string;
+  registered_by?: string;
+  file?: string | null;
+  files_endpoint?: string;
+}
+
+export interface SkillFileEntry {
+  path: string;
+  sha256: string;
+  size: number;
+  kind: "markdown" | "json" | "yaml" | "toml" | "text" | "code" | "binary" | string;
+  content: string | null;
+  /** Compared with the version agents use now: `added`, `modified`, `unchanged` or null. */
+  change?: string | null;
+}
+
+export interface SkillFilesView extends SkillView {
+  approval_id: string | null;
+  in_force_version: string | null;
+  compared_with: string | null;
+  files: SkillFileEntry[];
+  removed_files: string[];
+  history: { version: string; approval_id: string; status: string; created_at: string; decided_at: string | null; decision: { approver_id: string; decision: string; comments: string; decided_at: string } | null }[];
+}
+
+export interface DiscoveryOutcome {
+  dir: string;
+  skill: string | null;
+  version: string | null;
+  action: "new" | "changed" | "unchanged" | "invalid" | string;
+  detail: string;
+  tree_hash: string | null;
+  approval_id: string | null;
+}
+
+export interface SkillCatalogItem extends SkillView {
+  format?: "markdown" | "json" | "directory";
+  in_force?: boolean;
+  file_digest?: string;
+  registration: { status: string; approval_id: string | null; digest: string; registered_by: string } | null;
+  file_changed: boolean;
+}
+
+export interface SkillCatalog {
+  skills_dir: string;
+  file_error: string | null;
+  items: SkillCatalogItem[];
+  directories?: { dir: string; skill?: string; manifest_version?: string; tree_hash?: string; registered?: string | null; error?: string }[];
+  layers: Record<string, string[]>;
+}
+
+export interface SkillSyncResult {
+  reference: string;
+  action: "registered" | "already_registered" | "missing_definition" | "failed" | string;
+  detail: string;
+  approval_id: string | null;
 }
 
 export interface ProjectRef {

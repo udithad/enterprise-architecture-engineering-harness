@@ -13,7 +13,8 @@ From `git clone` to approved Requirements, HLD and LLD in your own project. Foll
 | 7 | [Run the design and approve](#7-run-the-design-and-approve) | Every design |
 | 8 | [Day-to-day: CLI and portal side by side](#8-day-to-day-cli-and-portal-side-by-side) | Look up |
 | 9 | [Troubleshooting](#9-troubleshooting) | When something stops |
-| 10 | [Reference](#10-reference) | Look up |
+| 10 | [Skills: write, register, approve](#10-skills-write-register-approve) | When you add or change a skill |
+| 11 | [Reference](#11-reference) | Look up |
 
 Every command block starts with a 📁 line saying **where** to run it:
 * **EAEH folder** is the clone of this repository;
@@ -114,12 +115,12 @@ The shipped `config/eaeh.toml` is ready to use. It runs in `external_ai` mode: C
 📁 **Project folder** (or any folder), in **your own terminal window**, not in an AI assistant's shell:
 
 ```bash
-eaeh portal --as developer --approver approver --open
+eaeh portal --as developer --approver approver --steward steward --open
 ```
 
 * `--open` opens your browser with a one-time link: `http://127.0.0.1:8090/?launch=…`. **Keep the terminal open**; Ctrl-C stops the portal. Each start creates a new link and secret, and old links stop working.
-* `--as` is who the portal *views* as. `--approver` is who it *decides* as. Leave out `--approver` for a read-only portal.
-* The profiles `developer` and `approver` exist after your first `project init` (6.2). Before that, use `eaeh portal --as admin --open`.
+* `--as` is who the portal *views* as. `--approver` is who it *decides* as (documents and skills). `--steward` is who it *registers skill files* as. Leave out `--approver` for a read-only portal, and `--steward` if you don't register skills in the portal.
+* The profiles `developer`, `approver` and `steward` exist after your first `project init` (6.2). Before that, use `eaeh portal --as admin --open`.
 * The terminal shows `data dir …`, and the portal shows it at the top of every page. It must be your installation (`…/enterprise-architecture-engineering-harness/.eaeh-data`).
 
 | Page | Shows |
@@ -127,9 +128,10 @@ eaeh portal --as developer --approver approver --open
 | Dashboard | Work in progress (AI or approval), pending approvals, recent activity |
 | Projects | Every project: status (Ready, In progress, Waiting for approval, Blocked, Completed, Failed), current stage, workspace, stack |
 | Workflows | Each run's lifecycle, stages, governance checks, and documents written to the workspace |
-| Approvals | Review a document → **Approve**, **Request changes** or **Reject** (the last two need a comment) → confirm |
+| Approvals | Review a document or a skill → **Approve**, **Request changes** or **Reject** (the last two need a comment) → confirm |
+| Skills | Every skill file and its layers (stages) and status; **Register skill files**; Review links |
 
-The portal refreshes by itself (about every 10 seconds). Skills and standards are approved with the CLI only (6.3).
+The portal refreshes by itself (about every 10 seconds). Mandatory standards are approved with the CLI only.
 
 ---
 
@@ -207,7 +209,7 @@ eaeh approval review --as approver --all --yes   # approve them
 eaeh project readiness                           # must say READY
 ```
 
-* **Portal:** not available. Skills and standards are reviewed in the CLI. The project page shows the readiness result.
+* **Portal:** open **Skills**. Each pending skill has a **Review** link, which shows the whole skill (layers, tools, instructions, digest); approve it there. **Approvals** lists the same requests. The project page shows the readiness result.
 
 Later projects reuse the approved skills and are usually READY straight away.
 
@@ -277,7 +279,9 @@ Repeat sections 6 and 7 in the new project's folder, with a different `--name`. 
 | See a project's state | `eaeh workflow status` | **Projects → project** |
 | Follow a run | `eaeh workflow watch` | **Workflows → run** (auto-refresh) |
 | Decide a document | `eaeh review --as approver` | **Approvals → Review** |
-| Approve skills or standards | `eaeh approval review --as approver` | – (CLI only) |
+| Register skill files | `eaeh skill sync` | **Skills → Register skill files** (portal started with `--steward`) |
+| Approve skills | `eaeh approval review --as approver` | **Skills → Review** (or **Approvals**) |
+| Approve mandatory standards | `eaeh approval review --as approver` | – (CLI only) |
 | Check readiness | `eaeh project readiness` | **Projects → project** (Readiness) |
 | Check the documents in the repository | `eaeh artifact status` | **Workflows → run** (Documents card) |
 | Write missing approved documents | `eaeh artifact sync` | – (CLI only) |
@@ -308,7 +312,95 @@ Every error prints a `hint` with the fix. Exit codes: 3 credentials, 4 permissio
 
 ---
 
-## 10. Reference
+## 10. Skills: write, register, approve
+
+A **skill** is reusable instruction text that EAEH adds to the AI's task at specific **layers** (workflow stages). For example: rules for diagrams in every HLD and LLD. A skill never grants permissions, and it is applied only after a person approves it.
+
+| Layer (stage) | Task kind to put in `task_kinds` |
+|---|---|
+| Requirements: analysis / review | `requirements-analysis` / `requirements-review` |
+| HLD | `hld-design` |
+| LLD | `lld-design` |
+| Implementation plan / code and tests | `implementation-planning` / `implementation` |
+
+### 10.1 Write a skill file
+
+Put a `.md` file in `config/skills/` (📁 EAEH folder). It applies to all projects of this installation. An example ships in `config/skills/architecture-diagrams.md`:
+
+```markdown
++++
+id = "architecture-diagrams"            # lowercase, unique
+version = "1.0.0"                       # raise it for every change
+description = "Consistent architecture diagrams for HLD and LLD."
+task_kinds = ["hld-design", "lld-design"]   # the layers
+# optional: required_knowledge = [{ query = "diagram standards", k = 3 }]
+# optional: evaluation_criteria = ["every component appears in a diagram"]
++++
+
+# Architecture diagrams
+
+- Use the component id as the identifier in every diagram.
+- …
+```
+
+* The part between the `+++` lines is the metadata. Everything below it is the **instruction text** the AI receives, verbatim.
+* JSON skill files (`*.json`) keep working.
+* To **change** a skill, edit the file and raise `version`. The new version needs approval again, and the old version keeps applying until then.
+
+### 10.2 Or: a skill folder (with reference files)
+
+For a skill with supporting material, copy a **folder** into `config/skills/`. It needs a `SKILL.md` (same header and body as 10.1); any other files and subfolders are optional:
+
+```
+config/skills/api-error-handling/          # example shipped with EAEH (LLD layer)
+├── SKILL.md                               # header (+++ … +++) + main instructions
+├── references/error-catalog.md            # reference documents …
+├── references/http/status-mapping.md      # … nested folders are fine
+├── examples/error-response.json
+├── examples/config.yaml
+└── scripts/validate_errors.py             # shown to reviewers; never run, never sent to the AI
+```
+
+* **What the AI receives once approved:** the `SKILL.md` text and the text files (Markdown, JSON, YAML, TOML, text), up to 64 KiB per skill. Scripts and binary files are listed only.
+* **The approval covers every file.** If you change, add or remove **any** file after approval, EAEH registers a **new version automatically**, for example `1.0.1`, as *waiting for approval*. The approved version stays in use until someone approves the new one.
+* **Limits:** 2 MiB per folder, 512 KiB per file, 500 files. Symbolic links are refused.
+
+### 10.3 Register
+
+| | Do |
+|---|---|
+| **Skill folders** | Nothing to do: EAEH finds new and changed folders by itself. The running portal checks about every 30 seconds, and the CLI checks on `project init`, `skill sync`, `skill pending` and `project readiness`. **Portal:** **Skills → Scan now** checks immediately. |
+| **Single files, CLI** (📁 project folder, as the steward) | `eaeh skill sync`. It registers every skill file the project's layers use, as *waiting for approval*. `eaeh project init` does the same. |
+| **Single files, portal** (started with `--steward steward`) | **Skills → Register skill files** does the same for every file in the skills folder. |
+
+### 10.4 Review and approve
+
+| | Do |
+|---|---|
+| **CLI** (📁 project folder) | `eaeh approval review --as approver` (read), then `eaeh approval review --as approver <ITEM>` or `--all --yes`, or `<ITEM> --reject --comments "<REASON>"` |
+| **Portal** | **Skills**, then the **files** link of a version. This opens the skill viewer:<br>• the folder tree with every file;<br>• Markdown rendered; JSON and YAML formatted; code with line numbers;<br>• each file's hash;<br>• each file marked *added* or *modified* compared with the version in use;<br>• the approval history.<br>Then **Review and decide**: **Approve**, or **Reject** with a comment (required), and confirm. |
+
+Skills are approved or rejected; *request changes* is only for workflow documents. The person who registered a skill can't approve it. Once a skill is approved, every matching layer of the **next** stages uses it. Each document records which skills produced it.
+
+### 10.5 Check
+
+```bash
+eaeh skill pending     # 📁 project folder: skills per layer and their state
+eaeh skill list        # 📁 any folder: every registered skill version
+```
+
+* **Portal:** the **Skills** page shows the status of each skill:
+  * *Not registered*;
+  * *Waiting for approval*;
+  * *Approved · applied*, with an **in force** label on the version the AI uses;
+  * *Rejected*;
+  * *File changed – bump version*: a single file was edited without raising `version`. Skill folders get a new version automatically instead.
+
+A pending layer skill shows as a warning in `eaeh project readiness` and doesn't block the project. The skills the agents themselves require do block it.
+
+---
+
+## 11. Reference
 
 **Execution modes** (`[execution] mode` in `config/eaeh.toml`; 📁 EAEH folder):
 

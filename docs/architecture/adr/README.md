@@ -29,3 +29,5 @@
 | [ADR-0025](ADR-0025-external-ai-execution-mode.md) | External AI execution mode (Claude Code / Copilot reasoning via MCP hand-offs) and governed software delivery | Accepted (amends ADR-0010, ADR-0023, ADR-0024) |
 | [ADR-0026](ADR-0026-governance-portal-local-access-model.md) | Governance Portal and its local access model (no login, injected stored identities, launch secret, loopback only) | Accepted (supplementary UI enhancement, Phase 1–3 scope) |
 | [ADR-0027](ADR-0027-approved-artifact-materialization.md) | Approved design documents materialized into the project workspace (engine-driven on approval, hash-verified, blocks on failure) | Accepted (supplementary fix, Phase 1–3 scope) |
+| [ADR-0028](ADR-0028-markdown-skills-and-portal-skill-governance.md) | Markdown skills (TOML front matter), layer skills by task kind, skill registration and decisions in the portal | Accepted (amends ADR-0026 §4; Phase 1–3 scope) |
+| [ADR-0029](ADR-0029-skill-directories-and-automatic-discovery.md) | Skill directories (SKILL.md + nested files), automatic discovery, tree-hash-bound versions, reference files in agent context | Accepted (extends ADR-0028; Phase 1–3 scope) |

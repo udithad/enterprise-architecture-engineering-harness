@@ -436,6 +436,8 @@ pub async fn readiness_cmd(
     let (root, m) = manifest_required(project)?;
     let h = harness(cfg).await?;
     let p = caller_need(&h, Need::Any).await?;
+    // Newly copied or changed skill directories are registered (pending) first.
+    proj::discover_skills(&h, Some(m.project.id)).await?;
     let wf = (!workflow.is_empty()).then_some(workflow);
     let r = proj::readiness(&h, &p, &m, &root, wf.as_deref()).await?;
     out(&serde_json::to_value(&r)?, render_readiness(&r).trim_end());
@@ -1017,11 +1019,10 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     for w in &a.workflows {
         proj::workflow_definition(&h, w).await?;
     }
-    let required: Vec<String> = proj::required_skills(&h, &a.workflows)
-        .await?
-        .into_iter()
-        .map(|r| r.reference)
-        .collect();
+    for o in proj::discover_skills(&h, Some(project)).await? {
+        log.push(format!("skill directory {}: {} – {}", o.dir, o.action, o.detail));
+    }
+    let required = proj::project_skill_references(&h, &a.workflows).await?;
     for o in proj::sync_skills(&h, &admin, project, &required).await? {
         log.push(format!("skill {}: {} – {}", o.reference, o.action, o.detail));
     }
@@ -1261,21 +1262,26 @@ pub async fn skill_sync(cfg: &HarnessConfig, project: Option<&str>) -> Result<()
     let _ = root;
     let h = harness(cfg).await?;
     let p = caller_need(&h, Need::Action(Action::SkillManage, Some(m.project.id))).await?;
-    let req: Vec<String> = proj::required_skills(&h, &m.workflows)
-        .await?
-        .into_iter()
-        .map(|r| r.reference)
-        .collect();
+    let found = proj::discover_skills(&h, Some(m.project.id)).await?;
+    let req = proj::project_skill_references(&h, &m.workflows).await?;
     let res = proj::sync_skills(&h, &p, m.project.id, &req).await?;
-    let text = res
+    let mut text = res
         .iter()
         .map(|o| format!("  {:<28} {:<20} {}", o.reference, o.action, o.detail))
         .collect::<Vec<_>>()
         .join("\n");
+    for o in &found {
+        text.push_str(&format!(
+            "\n  {:<28} {:<20} {}",
+            format!("{}/ ({})", o.dir, o.version.as_deref().unwrap_or("-")),
+            o.action,
+            o.detail
+        ));
+    }
     out(
-        &json!({"skills": res}),
+        &json!({"skills": res, "directories": found}),
         &format!(
-            "Required skills for {}:\n{text}\nRegistered skills need human approval: an approver runs `eaeh approval review`.",
+            "Skills for {} (agents' skills and layer skills from skill files):\n{text}\nRegistered skills need human approval: an approver runs `eaeh approval review` (or the portal: Skills).",
             m.workflows.join(", ")
         ),
     );
@@ -1286,6 +1292,7 @@ pub async fn skill_pending(cfg: &HarnessConfig, project: Option<&str>) -> Result
     let (_, m) = manifest_required(project)?;
     let h = harness(cfg).await?;
     let p = caller_need(&h, Need::Any).await?;
+    proj::discover_skills(&h, Some(m.project.id)).await?;
     let mut rows = vec![];
     let mut text = String::new();
     for s in proj::required_skills(&h, &m.workflows).await? {
@@ -1297,10 +1304,21 @@ pub async fn skill_pending(cfg: &HarnessConfig, project: Option<&str>) -> Result
         ));
         rows.push(json!({"reference": s.reference, "agents": s.agents, "state": st}));
     }
+    let mut extra = vec![];
+    for s in proj::layer_skills(&h, &m.workflows).await? {
+        let st = proj::skill_state(&h, &p, &s.reference).await?;
+        text.push_str(&format!(
+            "  {:<28} {}   layer skill for {}\n",
+            s.reference,
+            serde_json::to_string(&st)?,
+            s.layers.iter().cloned().collect::<Vec<_>>().join(", ")
+        ));
+        extra.push(json!({"reference": s.reference, "file": s.file, "layers": s.layers, "state": st}));
+    }
     out(
-        &json!({"skills": rows}),
+        &json!({"skills": rows, "layer_skills": extra}),
         &format!(
-            "Skills required by {}:\n{}Approver action: `eaeh approval review --as <approver-profile>`",
+            "Skills required by {}:\n{}Approver action: `eaeh approval review --as <approver-profile>` (or the portal: Skills)",
             m.workflows.join(", "),
             text
         ),

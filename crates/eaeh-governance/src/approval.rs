@@ -321,6 +321,13 @@ impl ApprovalManager {
                 ));
             }
         }
+        // A rejected skill version must say why (SKILL-ONBOARDING-PLAN): the reason is the
+        // author's guidance for the next version and part of the approval history.
+        if decision == ApprovalDecision::Reject && rec.subject_type == "skill" && comments.trim().is_empty() {
+            return Err(HarnessError::invalid_input(
+                "rejecting a skill requires comments explaining the reason",
+            ));
+        }
         let now = ts(self.db.now());
         let decision_str = decision.as_str();
         let role_str = serde_json::to_value(rec.required_role)?

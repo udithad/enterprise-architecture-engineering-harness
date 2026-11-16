@@ -118,6 +118,10 @@ enum Cmd {
         /// read-only portal.
         #[arg(long)]
         approver: Option<String>,
+        /// Stored steward profile (skill.manage) used only for "Register skill files" on the
+        /// Skills page. Omit to disable registration in the portal.
+        #[arg(long)]
+        steward: Option<String>,
         /// Directory with the built web UI (`npm --prefix portal run build`).
         #[arg(long, default_value = "portal/dist", env = "EAEH_PORTAL_DIR")]
         static_dir: PathBuf,
@@ -651,7 +655,8 @@ enum KnowledgeCmd {
 
 #[derive(Subcommand)]
 enum SkillCmd {
-    /// Register a skill definition (JSON file); requests human approval.
+    /// Register a skill definition (JSON file, or Markdown `.md` with TOML front matter);
+    /// requests human approval.
     Register {
         #[arg(long)]
         file: PathBuf,
@@ -878,6 +883,11 @@ async fn run(cli: Cli) -> Result<()> {
             let h = harness(&cfg).await?;
             let recovered = h.start_background().await?;
             tracing::info!(recovered = recovered.len(), "background services started");
+            // New or changed skill directories are registered (pending approval) automatically.
+            let _discovery = eaeh_runtime::project::spawn_skill_discovery(
+                h.clone(),
+                eaeh_runtime::project::skill_discovery_interval(),
+            );
             let app = eaeh_api::router(eaeh_api::AppState::new(h.clone()));
             let listener = tokio::net::TcpListener::bind(&cfg.api.bind)
                 .await
@@ -895,6 +905,7 @@ async fn run(cli: Cli) -> Result<()> {
         Cmd::Portal {
             bind,
             approver,
+            steward,
             static_dir,
             dev_origins,
             open,
@@ -904,6 +915,7 @@ async fn run(cli: Cli) -> Result<()> {
                 portal::PortalArgs {
                     bind,
                     approver,
+                    steward,
                     static_dir,
                     dev_origins,
                     open,
@@ -1473,8 +1485,11 @@ async fn run(cli: Cli) -> Result<()> {
             match c {
                 SkillCmd::Sync { .. } | SkillCmd::Pending { .. } => unreachable!("handled above"),
                 SkillCmd::Register { file, project } => {
-                    let def: eaeh_skills::SkillDefinition =
-                        serde_json::from_str(&std::fs::read_to_string(&file)?)?;
+                    // JSON or Markdown (`.md`, TOML front matter + instructions body).
+                    let def = eaeh_skills::SkillDefinition::from_file_text(
+                        &file,
+                        &std::fs::read_to_string(&file)?,
+                    )?;
                     let rec = h
                         .skills
                         .register(&p, &def, parse::<ProjectId>(&project)?, TraceContext::new_root())

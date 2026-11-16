@@ -115,3 +115,19 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   workflow_cancelled: "Workflow cancelled",
   transition: "Transition",
 };
+
+/** Skill status for the Skills page (registration, approval, changed file). */
+export function skillStatus(i: { registration: { status: string } | null; file_changed: boolean }): StatusInfo {
+  if (!i.registration) return { label: "Not registered", tone: "neutral" };
+  if (i.file_changed) return { label: "File changed – bump version", tone: "failed" };
+  switch (i.registration.status) {
+    case "approved":
+      return { label: "Approved · applied", tone: "success" };
+    case "pending_approval":
+      return { label: "Waiting for approval", tone: "approval", waitingOn: "Human approval" };
+    case "rejected":
+      return { label: "Rejected", tone: "failed" };
+    default:
+      return { label: i.registration.status, tone: "neutral" };
+  }
+}

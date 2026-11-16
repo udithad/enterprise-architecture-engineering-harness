@@ -17,6 +17,7 @@ import { formatDateTime, humanize, shortHash } from "@/lib/format";
 import type { ApprovalDocument, TraceLink } from "@/lib/types";
 import { GenerationBadge, ReplayNotice } from "@/components/Generation";
 import { WorkspaceState } from "@/components/WorkspaceDocuments";
+import { SkillReview } from "@/components/SkillReview";
 
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -209,6 +210,9 @@ export function ApprovalReviewPage() {
               </dl>
             </CardContent>
           </Card>
+          {d.skill ? (
+            <SkillReview skill={d.skill} />
+          ) : (
           <Tabs defaultValue="document">
             <TabsList>
               <TabsTrigger value="document">Document</TabsTrigger>
@@ -269,6 +273,7 @@ export function ApprovalReviewPage() {
               </Card>
             </TabsContent>
           </Tabs>
+          )}
         </div>
         <div className="flex flex-col gap-6">
           <Card className="xl:sticky xl:top-20">

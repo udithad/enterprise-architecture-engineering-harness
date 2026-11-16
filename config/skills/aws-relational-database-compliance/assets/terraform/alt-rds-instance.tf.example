@@ -1,0 +1,36 @@
+# PARTIAL SNIPPET (alternative to main.tf). Reuses variables.tf, versions.tf and the subnet group from main.tf.
+# Use when a single RDS PostgreSQL instance is warranted instead of Aurora. Do not combine with the Aurora cluster
+# in main.tf without renaming resources and identifiers.
+# Standards: CSS_1 s2, s4; CGS_1 s2, s3, s4, s5, s6; EAS_1 s2.
+
+resource "aws_db_instance" "this" {
+  identifier     = "${var.environment}-app-db"
+  engine         = "postgres"
+  engine_version = var.engine_version
+  instance_class = var.instance_class
+
+  # CGS_1 s3: gp3 with storage autoscaling. Sizes are placeholders, not standard values.
+  # Never use io1 or io2 in dev or stage (CGS_1 s6).
+  storage_type          = "gp3"
+  allocated_storage     = 50
+  max_allocated_storage = 200
+
+  storage_encrypted = true
+  kms_key_id        = var.kms_key_arn
+
+  multi_az               = local.is_prod
+  publicly_accessible    = false
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+  vpc_security_group_ids = var.vpc_security_group_ids
+
+  username                    = var.master_username
+  manage_master_user_password = true
+
+  backup_retention_period   = var.backup_retention_days
+  copy_tags_to_snapshot     = true
+  deletion_protection       = local.is_prod
+  skip_final_snapshot       = !local.is_prod
+  final_snapshot_identifier = local.is_prod ? "${var.environment}-app-db-final" : null
+
+  tags = local.tags
+}

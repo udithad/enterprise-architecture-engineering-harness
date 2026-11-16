@@ -1,0 +1,29 @@
+# PARTIAL SNIPPET: restore an Aurora cluster from a snapshot. Reuses variables.tf and the subnet group from main.tf.
+# A restored cluster still needs aws_rds_cluster_instance resources (see main.tf).
+# Standards: CSS_1 s2, s5 (restores must not map to unencrypted targets; explicit customer-managed key).
+
+variable "restore_snapshot_identifier" {
+  description = "Snapshot to restore from (external input)."
+  type        = string
+}
+
+resource "aws_rds_cluster" "restored" {
+  cluster_identifier  = "${var.environment}-app-db-restored"
+  engine              = "aurora-postgresql"
+  engine_version      = var.engine_version
+  snapshot_identifier = var.restore_snapshot_identifier
+
+  storage_encrypted = true
+  kms_key_id        = var.kms_key_arn # explicit key; never rely on source or provider defaults
+
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+  vpc_security_group_ids = var.vpc_security_group_ids
+
+  backup_retention_period   = var.backup_retention_days
+  copy_tags_to_snapshot     = true
+  deletion_protection       = local.is_prod
+  skip_final_snapshot       = !local.is_prod
+  final_snapshot_identifier = local.is_prod ? "${var.environment}-app-db-restored-final" : null
+
+  tags = local.tags
+}

@@ -203,6 +203,14 @@ States come from `GET /v1/workflows/{id}/detail` (`documents`, `workspace`) and 
 
 Projects appear in every lifecycle state. Each row shows the derived status, current workflow and stage, stack, workspace, pending approvals and last activity. The project page shows the manifest, readiness, documents and audit. An installation panel and startup warnings make a CLI/portal installation mismatch visible, and the demo has its own port (8190) and a DEMO label. Details: [EAEH-GOVERNANCE-PORTAL-PROJECT-DISCOVERY-FIX.md](EAEH-GOVERNANCE-PORTAL-PROJECT-DISCOVERY-FIX.md).
 
+## 7d. Skills (added 2026-11-16)
+
+The **Skills** page lists every skill file (Markdown or JSON) with its layers and status.
+* With `--steward <profile>`, **Register skill files** registers the unregistered files as pending approval (`POST /v1/skills/sync`, the same service as `eaeh skill sync`).
+* Skill approvals are reviewed with their full definition and digest, and decided by the `--approver` identity.
+
+Mandatory standards stay CLI-only. See [ADR-0028](../architecture/adr/ADR-0028-markdown-skills-and-portal-skill-governance.md) and [EAEH-MARKDOWN-SKILLS.md](EAEH-MARKDOWN-SKILLS.md).
+
 ## 8. Local startup
 
 Prerequisites: Rust toolchain (repository pin), Node ≥ 22.12 and npm.

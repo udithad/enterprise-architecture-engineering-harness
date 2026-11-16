@@ -12,6 +12,7 @@ use std::path::PathBuf;
 pub struct PortalArgs {
     pub bind: String,
     pub approver: Option<String>,
+    pub steward: Option<String>,
     pub static_dir: PathBuf,
     pub dev_origins: Vec<String>,
     pub open: bool,
@@ -64,6 +65,33 @@ async fn resolve_approver(h: &Harness, name: &str) -> Result<Acting> {
     Ok(a)
 }
 
+/// The steward must be named explicitly and hold `skill.manage` (knowledge steward or
+/// administrator). It is used only to register skill files; it never decides.
+async fn resolve_steward(h: &Harness, name: &str) -> Result<Acting> {
+    let a = resolve_profile(
+        h,
+        Some(name),
+        Need::Action(eaeh_governance::authz::Action::SkillManage, None),
+    )
+    .await?;
+    if h.authz
+        .authorize(
+            &a.principal,
+            eaeh_governance::authz::Action::SkillManage,
+            eaeh_governance::authz::Target::Tenant(a.principal.tenant),
+        )
+        .is_err()
+        && !a.principal.has_role(Role::KnowledgeSteward)
+        && !a.principal.has_role(Role::Admin)
+    {
+        return Err(HarnessError::forbidden(format!(
+            "profile '{name}' ({}) cannot manage skills; choose the steward profile (`eaeh auth status`)",
+            a.principal.id
+        )));
+    }
+    Ok(a)
+}
+
 fn random_secret() -> Result<String> {
     let b = eaeh_core::hash::random_bytes::<32>()?;
     Ok(b.iter().map(|x| format!("{x:02x}")).collect())
@@ -83,6 +111,10 @@ pub async fn serve(cfg: &HarnessConfig, args: PortalArgs) -> Result<()> {
     let viewer = resolve_viewer(&h).await?;
     let approver = match &args.approver {
         Some(n) => Some(resolve_approver(&h, n).await?),
+        None => None,
+    };
+    let steward = match &args.steward {
+        Some(n) => Some(resolve_steward(&h, n).await?),
         None => None,
     };
     // `--static-dir`, else the EAEH repository's `portal/dist` next to the configuration
@@ -115,8 +147,14 @@ pub async fn serve(cfg: &HarnessConfig, args: PortalArgs) -> Result<()> {
         args.dev_origins,
         static_dir.clone(),
         h.execution_mode.to_string(),
-    );
+    )
+    .with_steward(steward);
     let app = app(h.clone(), state.clone());
+    // Skill directories copied into the skills folder appear without a restart (O3).
+    let _discovery = eaeh_runtime::project::spawn_skill_discovery(
+        h.clone(),
+        eaeh_runtime::project::skill_discovery_interval(),
+    );
 
     eprintln!("EAEH Governance Portal (local development only – no authentication)");
     eprintln!(
@@ -133,6 +171,15 @@ pub async fn serve(cfg: &HarnessConfig, args: PortalArgs) -> Result<()> {
             roles(&a.principal)
         ),
         None => eprintln!("  deciding as: nobody – read-only (start with --approver <profile> to decide)"),
+    }
+    match &state.steward {
+        Some(s) => eprintln!(
+            "  skills as : {} ({}) – registers skill files only",
+            s.label, s.principal.id
+        ),
+        None => eprintln!(
+            "  skills as : nobody – start with --steward <profile> to register skill files in the portal"
+        ),
     }
     if static_dir.is_none() {
         eprintln!(

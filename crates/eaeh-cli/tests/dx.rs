@@ -490,7 +490,9 @@ fn approval_review_needs_an_explicit_human_approver_and_confirms_each_item() {
         &[],
     );
     let pending = o.json()["pending"].as_array().unwrap().clone();
-    assert_eq!(pending.len(), 3, "{}", o.all());
+    // 3 agent skills + 1 layer skill file (architecture-diagrams.md) + 1 discovered skill
+    // directory (api-error-handling/), all pending.
+    assert_eq!(pending.len(), 5, "{}", o.all());
     assert!(
         pending
             .iter()
@@ -564,16 +566,27 @@ fn approval_review_needs_an_explicit_human_approver_and_confirms_each_item() {
         ],
         &[],
     );
-    assert_eq!(o.json()["results"].as_array().unwrap().len(), 2);
+    // The rest: the skipped agent skill, the layer skill file and the skill directory.
+    assert_eq!(o.json()["results"].as_array().unwrap().len(), 4);
     let o = run(&e, &e.ws, &["--json", "skill", "pending"], &[]);
+    let j = o.json();
     assert!(
-        o.json()["skills"]
+        j["skills"]
             .as_array()
             .unwrap()
             .iter()
+            .chain(j["layer_skills"].as_array().unwrap())
             .all(|s| s["state"]["state"] == "approved"),
         "{}",
         o.all()
+    );
+    let layer = &j["layer_skills"][0];
+    assert_eq!(layer["reference"], "architecture-diagrams@=1.0.0");
+    assert!(
+        layer["layers"]
+            .to_string()
+            .contains("engineering.design/hld (hld-design)"),
+        "{layer}"
     );
 }
 
@@ -928,7 +941,11 @@ fn mcp_server_exposes_governed_tools_without_approval_powers() {
         json!({"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "eaeh_pending_approvals", "arguments": {}}}),
     );
     let v: Value = serde_json::from_str(&text(&r)).unwrap();
-    assert_eq!(v["skills_and_standards"].as_array().unwrap().len(), 3);
+    assert_eq!(
+        v["skills_and_standards"].as_array().unwrap().len(),
+        5,
+        "3 agent skills + 1 layer skill + 1 skill directory"
+    );
     assert!(
         v["note"]
             .as_str()
@@ -1061,7 +1078,8 @@ fn external_ai_bootstrap_cli_and_mcp_hand_offs_without_model_calls() {
         ],
         &[],
     );
-    assert_eq!(o.json()["results"].as_array().unwrap().len(), 5, "{}", o.all());
+    // Agent skills + the layer skill file + the discovered skill directory.
+    assert_eq!(o.json()["results"].as_array().unwrap().len(), 7, "{}", o.all());
     let o = run(
         &e,
         &e.ws,

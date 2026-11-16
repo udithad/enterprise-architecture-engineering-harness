@@ -61,3 +61,10 @@ Otherwise it ends `failed` (`completion guard: …`). Every check is audited as 
 * **Per-decision profile picker in the UI.** Rejected: it auto-surfaces approver identities; the launch flag keeps the choice explicit (ADR-0024).
 * **Embedding the UI in the binary (`rust-embed`).** Rejected: new dependency, and `cargo build` would need Node.
 * **Separate portal service or database.** Rejected by the request and by ADR-0002 (modular monolith).
+
+## Amendment (2026-11-16): skills in the portal
+[ADR-0028](ADR-0028-markdown-skills-and-portal-skill-governance.md) amends §4:
+* the `--approver` identity may also decide **skill** approvals, with the full definition shown and the decision bound to its digest;
+* an explicit `--steward` identity may register skill files.
+
+Mandatory standards remain CLI-only.

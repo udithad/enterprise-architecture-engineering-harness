@@ -1,0 +1,7 @@
+# Default limits to state in the LLD (values are examples)
+errors:
+  include_request_id: true
+  max_detail_items: 50
+rate_limit:
+  requests_per_minute: 120
+  retry_after_seconds: 30

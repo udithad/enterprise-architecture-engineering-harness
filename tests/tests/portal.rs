@@ -68,6 +68,38 @@ async fn portal(
     }
 }
 
+async fn portal_with_steward(
+    w: &World,
+    viewer: &Principal,
+    approver: Option<&Principal>,
+    steward: Option<&Principal>,
+) -> Portal {
+    let mut p = portal(w, viewer, approver, None).await;
+    let st = match steward {
+        Some(s) => {
+            let t = token(w, s).await;
+            p.tokens.push(t.clone());
+            Some(Acting::new("steward", t, s.clone()))
+        }
+        None => None,
+    };
+    let state = PortalState::new(
+        Acting::new("viewer", p.tokens[0].clone(), viewer.clone()),
+        match approver {
+            Some(a) => Some(Acting::new("approver", p.tokens[1].clone(), a.clone())),
+            None => None,
+        },
+        SECRET.into(),
+        HOST.parse().unwrap(),
+        vec![],
+        None,
+        w.h.execution_mode.to_string(),
+    )
+    .with_steward(st);
+    p.app = app(w.h.clone(), state);
+    p
+}
+
 impl Portal {
     async fn send(&self, req: Request<Body>) -> (StatusCode, Value, String) {
         let res = self.app.clone().oneshot(req).await.unwrap();
@@ -588,36 +620,183 @@ async fn static_ui_is_served_with_spa_fallback_security_headers_and_no_traversal
     }
 }
 
+/// Skills are registered (steward) and decided (approver) in the portal through the same
+/// services as the CLI; mandatory standards stay CLI-only (ADR-0028).
 #[tokio::test]
-async fn portal_decides_workflow_gates_only_not_skills_or_standards() {
+async fn portal_registers_and_decides_skills_but_not_standards() {
     let w = world(vec![], "").await;
-    // A skill registration awaiting approval (not a workflow gate).
-    let mut def: eaeh_skills::SkillDefinition = serde_json::from_str(
-        &std::fs::read_to_string(root().join("config/skills/requirements-analysis.json")).unwrap(),
+    // Catalog: the Markdown example skill is a file, not registered yet, for the HLD/LLD layers.
+    let ro = portal(&w, &w.operator, Some(&w.approver), None).await;
+    let (s, cat) = ro.get("/api/v1/skills/catalog").await;
+    assert_eq!(s, StatusCode::OK, "{cat}");
+    let md = cat["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|i| i["id"] == "architecture-diagrams")
+        .unwrap()
+        .clone();
+    assert_eq!(md["format"], "markdown");
+    assert_eq!(md["registration"], Value::Null);
+    assert!(
+        md["layers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|l| l == "engineering.design/hld"),
+        "{md}"
+    );
+    assert!(
+        md["layers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|l| l == "engineering.design/lld"),
+        "{md}"
+    );
+    assert!(
+        md["instructions"]
+            .as_str()
+            .unwrap()
+            .starts_with("# Architecture diagrams")
+    );
+    let hld = cat["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|i| i["id"] == "hld-design")
+        .unwrap();
+    assert_eq!(hld["registration"]["status"], "approved");
+
+    // Registration needs the explicit steward identity.
+    let (s, v) = ro
+        .post("/api/v1/skills/sync", json!({"project_id": w.scope.project}))
+        .await;
+    assert_eq!(
+        (s, v["error"]["code"].as_str()),
+        (StatusCode::FORBIDDEN, Some("steward_not_configured")),
+        "{v}"
+    );
+    let p = portal_with_steward(&w, &w.operator, Some(&w.approver), Some(&w.steward)).await;
+    let (s, v) = p
+        .post("/api/v1/skills/sync", json!({"project_id": w.scope.project}))
+        .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    let r = v["results"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["reference"] == "architecture-diagrams@=1.0.0")
+        .unwrap()
+        .clone();
+    assert_eq!(r["action"], "registered", "{r}");
+    let aid = r["approval_id"].as_str().unwrap().to_string();
+    // Idempotent.
+    let (_, v) = p
+        .post("/api/v1/skills/sync", json!({"project_id": w.scope.project}))
+        .await;
+    assert!(
+        v["results"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|r| r["action"] == "already_registered"),
+        "{v}"
+    );
+    let (audits,): (i64,) = eaeh_store::sqlx::query_as(
+        "SELECT COUNT(*) FROM audit_log WHERE action LIKE 'skill.register%' AND actor_id = ?",
     )
+    .bind(w.steward.id.to_string())
+    .fetch_one(w.h.db.pool())
+    .await
     .unwrap();
-    def.version.patch += 1;
-    let rec =
-        w.h.skills
-            .register(&w.steward, &def, w.scope.project, TraceContext::new_root())
-            .await
-            .unwrap();
-    let aid: eaeh_core::ApprovalId = rec.approval_id.clone().unwrap().parse().unwrap();
-    let p = portal(&w, &w.operator, Some(&w.approver), None).await;
+    assert!(audits >= 1);
+
+    // The review page shows the whole skill and its digest.
+    let (s, doc) = p.get(&format!("/api/v1/approvals/{aid}/document")).await;
+    assert_eq!(s, StatusCode::OK, "{doc}");
+    assert_eq!(doc["approval"]["document_type"], "Skill");
+    assert_eq!(doc["skill"]["reference"], "architecture-diagrams@1.0.0");
+    assert!(
+        doc["skill"]["instructions"]
+            .as_str()
+            .unwrap()
+            .contains("component id")
+    );
+    let digest = doc["skill"]["digest"].as_str().unwrap().to_string();
+    assert_eq!(doc["approval"]["artifact_hash"].as_str(), Some(digest.as_str()));
+
+    // Stale digest refused; the registrant (steward) can never approve.
+    let (s, _) = p
+        .post(
+            &format!("/api/v1/approvals/{aid}/decision"),
+            json!({"decision": "approve", "comments": "", "artifact_hash": "0".repeat(64)}),
+        )
+        .await;
+    assert_ne!(s, StatusCode::OK);
+    let sp = portal(&w, &w.operator, Some(&w.steward), None).await;
+    let (s, _) = sp
+        .post(
+            &format!("/api/v1/approvals/{aid}/decision"),
+            json!({"decision": "approve", "comments": "", "artifact_hash": digest}),
+        )
+        .await;
+    assert_ne!(s, StatusCode::OK, "a steward/registrant cannot approve");
+    assert_eq!(
+        w.h.approvals.get(aid.parse().unwrap()).await.unwrap().status,
+        eaeh_governance::ApprovalStatus::Pending
+    );
+    // The approver decides it in the portal; the skill becomes usable.
     let (s, v) = p
         .post(
             &format!("/api/v1/approvals/{aid}/decision"),
-            json!({"decision": "approve", "comments": "", "artifact_hash": rec.digest}),
+            json!({"decision": "approve", "comments": "diagram rules reviewed", "artifact_hash": digest}),
+        )
+        .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    let (_, cat) = p.get("/api/v1/skills/catalog").await;
+    let md = cat["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|i| i["id"] == "architecture-diagrams")
+        .unwrap()
+        .clone();
+    assert_eq!(md["registration"]["status"], "approved", "{md}");
+
+    // Mandatory standards remain CLI-only.
+    let std_doc =
+        w.h.knowledge
+            .ingest(
+                &w.steward,
+                eaeh_knowledge::IngestRequest {
+                    source: "demo-api-standards".into(),
+                    subject: "naming".into(),
+                    title: "Naming".into(),
+                    format: eaeh_knowledge::Format::Markdown,
+                    content: "# Naming\n\nUse kebab-case ids.\n".into(),
+                    scope: eaeh_knowledge::KnowledgeScope::Enterprise,
+                    classification: eaeh_core::Classification::Internal,
+                    tags: vec![],
+                    mandatory: true,
+                    review_by: None,
+                    governance_project: w.scope.project,
+                },
+                TraceContext::new_root(),
+            )
+            .await
+            .unwrap();
+    let sid = std_doc.approval_id.clone().unwrap();
+    let (s, v) = p
+        .post(
+            &format!("/api/v1/approvals/{sid}/decision"),
+            json!({"decision": "approve", "comments": "", "artifact_hash": std_doc.content_hash}),
         )
         .await;
     assert_eq!(
         (s, v["error"]["code"].as_str()),
         (StatusCode::FORBIDDEN, Some("not_available_in_portal")),
         "{v}"
-    );
-    assert_eq!(
-        w.h.approvals.get(aid).await.unwrap().status,
-        eaeh_governance::ApprovalStatus::Pending
     );
 }
 
@@ -796,4 +975,174 @@ async fn completed_design_run_is_verified_gate_by_gate_with_generation_provenanc
         doc["workflow"]["workspace_document"]["target_dir"],
         "docs/architecture/lld"
     );
+}
+
+/// Skill onboarding in the portal: "Scan now" discovers a copied skill directory, the viewer
+/// returns the full nested tree with contents and hashes, a reviewer rejects (with comments)
+/// or approves through the existing approval service, and a changed file shows up as a new
+/// version with per-file change markers.
+#[tokio::test]
+async fn portal_skill_onboarding_discovers_shows_files_and_decides_versions() {
+    let skills = tempfile::tempdir().unwrap();
+    let sd = skills.path().to_path_buf();
+    let dd = sd.clone();
+    let w = world_cfg(
+        eaeh_runtime::ExecutionMode::DirectProvider,
+        vec![],
+        "",
+        move |c| c.definitions.skills_dir = dd,
+    )
+    .await;
+    let dir = sd.join("api-error-handling");
+    copy(&root().join("config/skills/api-error-handling"), &dir);
+    let p = portal(&w, &w.operator, Some(&w.approver), None).await;
+
+    // Visible on disk before registration; "Scan now" registers it as pending (viewer token).
+    let (_, cat) = p.get("/api/v1/skills/catalog").await;
+    let d = cat["directories"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["dir"] == "api-error-handling")
+        .unwrap()
+        .clone();
+    assert_eq!(d["registered"], Value::Null, "{d}");
+    let (s, v) = p.post("/api/v1/skills/discover", json!({})).await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    assert_eq!(v["results"][0]["action"], "new");
+    let (_, cat) = p.get("/api/v1/skills/catalog").await;
+    let item = cat["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|i| i["reference"] == "api-error-handling@1.0.0")
+        .unwrap()
+        .clone();
+    assert_eq!(item["registration"]["status"], "pending_approval");
+    assert_eq!(item["registration"]["registered_by"], "system:skill-discovery");
+    assert_eq!(item["format"], "directory");
+    assert_eq!(item["package"]["file_count"], 6);
+    assert!(item["layers"].to_string().contains("engineering.design/lld"));
+
+    // Viewer: complete tree with contents (nested), kinds and hashes; binary-safe.
+    let (s, f) = p.get("/api/v1/skills/api-error-handling/1.0.0/files").await;
+    assert_eq!(s, StatusCode::OK, "{f}");
+    let files = f["files"].as_array().unwrap();
+    let nested = files
+        .iter()
+        .find(|x| x["path"] == "references/http/status-mapping.md")
+        .unwrap();
+    assert_eq!(nested["kind"], "markdown");
+    assert!(nested["content"].as_str().unwrap().contains("RESOURCE_NOT_FOUND"));
+    assert_eq!(
+        files
+            .iter()
+            .find(|x| x["path"] == "examples/config.yaml")
+            .unwrap()["kind"],
+        "yaml"
+    );
+    assert_eq!(
+        files
+            .iter()
+            .find(|x| x["path"] == "examples/error-response.json")
+            .unwrap()["kind"],
+        "json"
+    );
+    assert_eq!(
+        files
+            .iter()
+            .find(|x| x["path"] == "scripts/validate_errors.py")
+            .unwrap()["kind"],
+        "code"
+    );
+    assert!(files.iter().all(|x| x["sha256"].as_str().unwrap().len() == 64));
+    assert_eq!(f["in_force_version"], Value::Null);
+
+    // Approve 1.0.0 in the portal (the registrant is the system, so any human approver may).
+    let aid = item["registration"]["approval_id"].as_str().unwrap().to_string();
+    let (_, doc) = p.get(&format!("/api/v1/approvals/{aid}/document")).await;
+    let digest = doc["skill"]["digest"].as_str().unwrap().to_string();
+    assert_eq!(doc["skill"]["package"]["tree_hash"], item["package"]["tree_hash"]);
+    let (s, v) = p
+        .post(
+            &format!("/api/v1/approvals/{aid}/decision"),
+            json!({"decision": "approve", "comments": "", "artifact_hash": digest}),
+        )
+        .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+
+    // Change a nested file and add one ⇒ 1.0.1 pending, with change markers against 1.0.0.
+    std::fs::write(
+        dir.join("references/error-catalog.md"),
+        "# Error catalog\n\n| `CONFLICT` | changed |\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("references/extra.md"), "# Extra\n").unwrap();
+    let (_, v) = p.post("/api/v1/skills/discover", json!({})).await;
+    assert_eq!(
+        (
+            v["results"][0]["action"].as_str(),
+            v["results"][0]["version"].as_str()
+        ),
+        (Some("changed"), Some("1.0.1")),
+        "{v}"
+    );
+    let (_, f) = p.get("/api/v1/skills/api-error-handling/1.0.1/files").await;
+    assert_eq!(f["in_force_version"], "1.0.0");
+    assert_eq!(f["compared_with"], "1.0.0");
+    let ch = |path: &str| {
+        f["files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["path"] == path)
+            .unwrap()["change"]
+            .clone()
+    };
+    assert_eq!(ch("references/error-catalog.md"), "modified");
+    assert_eq!(ch("references/extra.md"), "added");
+    assert_eq!(ch("SKILL.md"), "unchanged");
+    assert_eq!(f["package"]["revision"], 2);
+
+    // Reject 1.0.1 with comments (required by the service for rejections).
+    let aid2 = f["approval_id"].as_str().unwrap().to_string();
+    let (s, _) = p
+        .post(
+            &format!("/api/v1/approvals/{aid2}/decision"),
+            json!({"decision": "reject", "comments": "", "artifact_hash": f["digest"]}),
+        )
+        .await;
+    assert_ne!(s, StatusCode::OK, "a rejection needs a comment");
+    let (s, v) = p
+        .post(
+            &format!("/api/v1/approvals/{aid2}/decision"),
+            json!({"decision": "reject", "comments": "CONFLICT text is wrong", "artifact_hash": f["digest"]}),
+        )
+        .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    let (_, f) = p.get("/api/v1/skills/api-error-handling/1.0.1/files").await;
+    assert_eq!(f["status"], "rejected");
+    let h = f["history"].as_array().unwrap();
+    assert_eq!(h.len(), 2, "approval history of both versions");
+    assert!(
+        h.iter()
+            .any(|x| x["decision"]["comments"] == "CONFLICT text is wrong")
+    );
+    assert_eq!(
+        f["in_force_version"], "1.0.0",
+        "the approved version stays in force"
+    );
+}
+
+fn copy(from: &std::path::Path, to: &std::path::Path) {
+    std::fs::create_dir_all(to).unwrap();
+    for e in std::fs::read_dir(from).unwrap() {
+        let e = e.unwrap();
+        let t = to.join(e.file_name());
+        if e.file_type().unwrap().is_dir() {
+            copy(&e.path(), &t);
+        } else {
+            std::fs::copy(e.path(), t).unwrap();
+        }
+    }
 }

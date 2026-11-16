@@ -32,6 +32,7 @@ export const qk = {
   approvalDoc: (id: string) => ["approval-doc", id] as const,
   activity: (project: string) => ["activity", project] as const,
   audit: (before: number | null) => ["audit", before] as const,
+  skills: ["skills"] as const,
 };
 
 const qs = (o: Record<string, string | undefined>) => {
@@ -126,6 +127,42 @@ export interface DecisionInput {
   decision: Decision;
   comments: string;
   artifact_hash: string | null;
+}
+
+export function useSkillCatalog() {
+  return useQuery({ queryKey: qk.skills, queryFn: () => api.get<import("@/lib/types").SkillCatalog>("/v1/skills/catalog"), refetchInterval: POLL.lists });
+}
+
+export function useSkillFiles(id: string, version: string) {
+  return useQuery({
+    queryKey: ["skill-files", id, version],
+    queryFn: () => api.get<import("@/lib/types").SkillFilesView>(`/v1/skills/${encodeURIComponent(id)}/${encodeURIComponent(version)}/files`),
+    enabled: !!id && !!version,
+    refetchInterval: POLL.lists,
+  });
+}
+
+/** "Scan now": automatic discovery on demand; registers new or changed skill directories as pending. */
+export function useSkillDiscover() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<{ results: import("@/lib/types").DiscoveryOutcome[] }>("/v1/skills/discover", {}),
+    onSettled: () => {
+      void qc.invalidateQueries();
+    },
+  });
+}
+
+/** "Register skill files": the same registration service as `eaeh skill sync` (steward). */
+export function useSkillSync() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (project_id: string) =>
+      api.post<{ results: import("@/lib/types").SkillSyncResult[] }>("/v1/skills/sync", { project_id }),
+    onSettled: () => {
+      void qc.invalidateQueries();
+    },
+  });
 }
 
 /** Submits through the existing approval service; the backend is authoritative. */

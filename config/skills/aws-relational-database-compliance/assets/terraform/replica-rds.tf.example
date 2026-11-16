@@ -1,0 +1,21 @@
+# PARTIAL SNIPPET for the RDS instance in alt-rds-instance.tf.example (same region).
+# Aurora readers are extra aws_rds_cluster_instance resources and inherit the cluster key; no replica resource is needed.
+# Standards: CSS_1 s2 (replicas encrypted with approved customer-managed keys), s5.
+#
+# NOT SHOWN: cross-region replicas. They need a provider alias for the destination region (one of the approved
+# regions), a customer-managed key ARN authorised in that region, and the source given as an ARN.
+# Produce them only when the destination region and key are supplied; otherwise report NOT VERIFIED.
+
+resource "aws_db_instance" "replica" {
+  identifier          = "${var.environment}-app-db-replica"
+  replicate_source_db = aws_db_instance.this.identifier
+  instance_class      = var.instance_class
+
+  storage_encrypted = true
+  kms_key_id        = var.kms_key_arn
+
+  publicly_accessible = false
+  skip_final_snapshot = true
+
+  tags = local.tags
+}

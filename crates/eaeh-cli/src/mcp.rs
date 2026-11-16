@@ -120,6 +120,10 @@ impl Server {
                 for s in proj::required_skills(&self.h, &m.workflows).await? {
                     skills.push(json!({"reference": s.reference, "agents": s.agents, "state": proj::skill_state(&self.h, &p, &s.reference).await?}));
                 }
+                let mut layer = vec![];
+                for s in proj::layer_skills(&self.h, &m.workflows).await? {
+                    layer.push(json!({"reference": s.reference, "layers": s.layers, "description": s.description, "state": proj::skill_state(&self.h, &p, &s.reference).await?}));
+                }
                 let ctx = self.h.knowledge.context_for_human(&p, m.project.id).await?;
                 let standards: Vec<Value> = self
                     .h
@@ -135,7 +139,7 @@ impl Server {
                     "expected_execution": m.execution, "delivery": m.delivery, "you": {"principal": p.id, "roles": p.roles().iter().map(|r| r.as_str()).collect::<Vec<_>>()},
                     "activities": proj::ACTIVITIES.iter().map(|(a, w, d)| json!({"activity": a, "workflow": w, "description": d})).collect::<Vec<_>>(),
                     "not_available": proj::UNAVAILABLE.iter().map(|(a, why)| json!({"activity": a, "reason": why})).collect::<Vec<_>>(),
-                    "required_skills": skills, "mandatory_standards": standards,
+                    "required_skills": skills, "layer_skills": layer, "mandatory_standards": standards,
                 }))
             }
             "eaeh_readiness" => {

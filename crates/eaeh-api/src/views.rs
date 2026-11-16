@@ -34,6 +34,10 @@ pub(crate) fn routes() -> Router<Arc<AppState>> {
         .route("/v1/workflows/{id}/detail", get(workflow_detail))
         .route("/v1/approvals/{id}/document", get(approval_document))
         .route("/v1/projects/{id}/overview", get(project_overview))
+        .route("/v1/skills/catalog", get(skills_catalog))
+        .route("/v1/skills/sync", axum::routing::post(skills_sync))
+        .route("/v1/skills/discover", axum::routing::post(skills_discover))
+        .route("/v1/skills/{id}/{version}/files", get(skill_files))
 }
 
 // ---------------------------------------------------------------- helpers
@@ -160,6 +164,7 @@ fn document_type(artifact_name: Option<&str>, subject_type: &str) -> String {
         "hld" | "hld-model.json" => "HLD".into(),
         "lld" | "lld-model.json" => "LLD".into(),
         _ if !n.is_empty() => n.to_string(),
+        _ if subject_type == "skill" => "Skill".into(),
         _ => subject_type.to_string(),
     }
 }
@@ -683,12 +688,333 @@ async fn approval_document(
             "execution_mode": st.harness.execution_mode,
         });
     }
+    // Skill approvals: the full definition under review (MARKDOWN-SKILLS-PLAN, K4).
+    let skill = if rec.subject_type == "skill" {
+        skill_review(&st, &p, &rec).await?
+    } else {
+        Value::Null
+    };
     Ok(Json(json!({
         "approval": view,
         "document": document,
+        "skill": skill,
         "workflow": workflow,
         "decision_endpoint": format!("/v1/approvals/{id}/decision"),
     })))
+}
+
+/// Stage layers (`workflow/stage`) per task kind, from the latest workflow definitions.
+async fn layers_by_task_kind(st: &AppState) -> BTreeMap<String, Vec<String>> {
+    let mut ids: Vec<String> = st
+        .harness
+        .engine
+        .definitions()
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|d| d.id.to_string())
+        .collect();
+    ids.sort();
+    ids.dedup();
+    let mut out: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (w, stage, kind) in eaeh_runtime::project::workflow_layers(&st.harness, &ids)
+        .await
+        .unwrap_or_default()
+    {
+        let e = out.entry(kind).or_default();
+        let l = format!("{w}/{stage}");
+        if !e.contains(&l) {
+            e.push(l);
+        }
+    }
+    out
+}
+
+fn skill_view(d: &eaeh_skills::SkillDefinition, layers: &BTreeMap<String, Vec<String>>) -> Value {
+    let applies: Vec<&String> = d
+        .task_kinds
+        .iter()
+        .flat_map(|k| layers.get(k).into_iter().flatten())
+        .collect();
+    json!({
+        "id": d.id, "version": d.version.to_string(), "reference": d.reference(), "description": d.description,
+        "task_kinds": d.task_kinds, "capabilities": d.capabilities, "layers": applies,
+        "required_tools": d.required_tools, "required_knowledge": d.required_knowledge, "max_risk": d.max_risk,
+        "dependencies": d.dependencies, "evaluation_criteria": d.evaluation_criteria,
+        "output_schema": d.output_schema, "instructions": d.instructions,
+        "package": d.package.as_ref().map(|p| json!({
+            "dir": p.dir, "source_version": p.source_version.to_string(), "revision": p.revision,
+            "tree_hash": p.tree_hash, "file_count": p.files.len(),
+            "size": p.files.iter().map(|f| f.size).sum::<u64>(),
+        })),
+    })
+}
+
+/// Highest approved version of a skill id (the one agents use).
+fn in_force(records: &[eaeh_skills::SkillRecord], id: &eaeh_core::SkillId) -> Option<semver::Version> {
+    records
+        .iter()
+        .filter(|r| &r.definition.id == id && r.status == eaeh_skills::SkillStatus::Approved)
+        .map(|r| r.definition.version.clone())
+        .max()
+}
+
+/// The skill an approval request is for, with its full definition and digest.
+async fn skill_review(st: &AppState, p: &Principal, rec: &ApprovalRecord) -> ApiResult<Value> {
+    authorize(st, p, Action::SkillRead, Target::Tenant(p.tenant)).await?;
+    let layers = layers_by_task_kind(st).await;
+    let id = rec.id.to_string();
+    let found = st
+        .harness
+        .skills
+        .list(p)
+        .await?
+        .into_iter()
+        .find(|r| r.approval_id.as_deref() == Some(id.as_str()));
+    let files = eaeh_runtime::project::repository_skills(&st.harness).unwrap_or_default();
+    Ok(match found {
+        Some(r) => {
+            let file = files
+                .iter()
+                .find(|(_, d)| d.id == r.definition.id && d.version == r.definition.version)
+                .map(|(f, _)| f.display().to_string());
+            let mut v = skill_view(&r.definition, &layers);
+            v["digest"] = json!(r.digest);
+            v["status"] = json!(r.status);
+            v["registered_by"] = json!(r.registered_by);
+            v["file"] = json!(file);
+            v["files_endpoint"] = json!(format!(
+                "/v1/skills/{}/{}/files",
+                r.definition.id, r.definition.version
+            ));
+            v
+        }
+        None => Value::Null,
+    })
+}
+
+/// Skill catalog (`skill.read`): every registered version (status, approval request,
+/// whether agents use it) and every skill file or directory in `definitions.skills_dir`
+/// that is not registered yet or whose content changed.
+async fn skills_catalog(State(st): St, Extension(p): Extension<Principal>) -> ApiResult<Json<Value>> {
+    authorize(&st, &p, Action::SkillRead, Target::Tenant(p.tenant)).await?;
+    let layers = layers_by_task_kind(&st).await;
+    let registered = st.harness.skills.list(&p).await?;
+    let (files, file_error) = match eaeh_runtime::project::repository_skills(&st.harness) {
+        Ok(f) => (f, None),
+        Err(e) => (vec![], Some(e.message)),
+    };
+    let dirs = eaeh_runtime::project::skill_directories(&st.harness).unwrap_or_default();
+    let mut items: BTreeMap<String, Value> = BTreeMap::new();
+    for r in &registered {
+        let mut v = skill_view(&r.definition, &layers);
+        v["registration"] = json!({"status": r.status, "approval_id": r.approval_id, "digest": r.digest, "registered_by": r.registered_by});
+        v["in_force"] =
+            json!(in_force(&registered, &r.definition.id).as_ref() == Some(&r.definition.version));
+        v["file"] = Value::Null;
+        v["file_changed"] = json!(false);
+        items.insert(r.definition.reference(), v);
+    }
+    for (f, d) in &files {
+        let digest = d.digest().unwrap_or_default();
+        let reg = registered
+            .iter()
+            .find(|r| r.definition.id == d.id && r.definition.version == d.version);
+        let v = items.entry(d.reference()).or_insert_with(|| {
+            let mut v = skill_view(d, &layers);
+            v["registration"] = Value::Null;
+            v["in_force"] = json!(false);
+            v
+        });
+        v["file"] = json!(f.display().to_string());
+        v["format"] = json!(if f.extension().is_some_and(|x| x == "md") {
+            "markdown"
+        } else {
+            "json"
+        });
+        v["file_digest"] = json!(digest);
+        v["file_changed"] = json!(reg.is_some_and(|r| r.digest != digest));
+    }
+    let mut directories = vec![];
+    for (path, def) in &dirs {
+        let name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+        match def {
+            Ok(d) => {
+                let tree = d.tree_hash().unwrap_or_default();
+                let reg = registered
+                    .iter()
+                    .find(|r| r.definition.id == d.id && r.definition.tree_hash() == Some(tree));
+                match reg {
+                    Some(r) => {
+                        if let Some(v) = items.get_mut(&r.definition.reference()) {
+                            v["file"] = json!(path.display().to_string());
+                            v["format"] = json!("directory");
+                        }
+                    }
+                    None => {
+                        let mut v = skill_view(d, &layers);
+                        v["reference"] = json!(format!("{} (not registered yet)", d.reference()));
+                        v["registration"] = Value::Null;
+                        v["in_force"] = json!(false);
+                        v["file"] = json!(path.display().to_string());
+                        v["format"] = json!("directory");
+                        v["file_changed"] = json!(registered.iter().any(|r| r.definition.id == d.id));
+                        items.insert(format!("{}#disk", d.reference()), v);
+                    }
+                }
+                directories.push(json!({"dir": name, "skill": d.id, "manifest_version": d.version.to_string(), "tree_hash": tree, "registered": reg.map(|r| r.definition.version.to_string())}));
+            }
+            Err(e) => directories.push(json!({"dir": name, "error": e.message})),
+        }
+    }
+    Ok(Json(json!({
+        "skills_dir": st.harness.config.resolve(&st.harness.config.definitions.skills_dir),
+        "file_error": file_error,
+        "items": items.into_values().collect::<Vec<_>>(),
+        "directories": directories,
+        "layers": layers,
+    })))
+}
+
+/// Complete content of a registered skill version (`skill.read`): every file with its kind,
+/// hash and text, and – per file – how it differs from the version agents use now.
+async fn skill_files(
+    State(st): St,
+    Extension(p): Extension<Principal>,
+    ApiPath((id, version)): ApiPath<(String, String)>,
+) -> ApiResult<Json<Value>> {
+    authorize(&st, &p, Action::SkillRead, Target::Tenant(p.tenant)).await?;
+    let records = st.harness.skills.list(&p).await?;
+    let rec = records
+        .iter()
+        .find(|r| r.definition.id.as_str() == id && r.definition.version.to_string() == version)
+        .ok_or_else(|| ApiError::from(HarnessError::not_found("skill version not found")))?;
+    let layers = layers_by_task_kind(&st).await;
+    let current = in_force(&records, &rec.definition.id);
+    let base = current
+        .as_ref()
+        .filter(|v| **v != rec.definition.version)
+        .and_then(|v| {
+            records
+                .iter()
+                .find(|r| r.definition.id == rec.definition.id && &r.definition.version == v)
+        });
+    let base_files: BTreeMap<String, String> = base
+        .and_then(|b| b.definition.package.as_ref())
+        .map(|p| {
+            p.files
+                .iter()
+                .map(|f| (f.path.clone(), f.sha256.clone()))
+                .collect()
+        })
+        .unwrap_or_default();
+    // Single-file skills are shown as one manifest file.
+    let files: Vec<eaeh_skills::SkillFile> = match &rec.definition.package {
+        Some(pk) => pk.files.clone(),
+        None => {
+            let text = serde_json::to_string_pretty(&rec.definition).unwrap_or_default();
+            vec![eaeh_skills::SkillFile {
+                path: format!("{}.json", rec.definition.id),
+                sha256: eaeh_core::hash::sha256_hex(text.as_bytes()),
+                size: text.len() as u64,
+                kind: "json".into(),
+                content: Some(text),
+            }]
+        }
+    };
+    let mut out = vec![];
+    for f in &files {
+        let change = match (base, base_files.get(&f.path)) {
+            (None, _) => Value::Null,
+            (Some(_), None) => json!("added"),
+            (Some(_), Some(h)) if h == &f.sha256 => json!("unchanged"),
+            (Some(_), Some(_)) => json!("modified"),
+        };
+        out.push(json!({"path": f.path, "sha256": f.sha256, "size": f.size, "kind": f.kind, "content": f.content, "change": change}));
+    }
+    let removed: Vec<&String> = base_files
+        .keys()
+        .filter(|k| !files.iter().any(|f| &f.path == *k))
+        .collect();
+    let mut v = skill_view(&rec.definition, &layers);
+    v["digest"] = json!(rec.digest);
+    v["status"] = json!(rec.status);
+    v["approval_id"] = json!(rec.approval_id);
+    v["registered_by"] = json!(rec.registered_by);
+    v["in_force_version"] = json!(current.map(|c| c.to_string()));
+    v["compared_with"] = json!(base.map(|b| b.definition.version.to_string()));
+    v["files"] = json!(out);
+    v["removed_files"] = json!(removed);
+    // Approval history of every version of this skill (approval service records).
+    let mut history = vec![];
+    for r in records.iter().filter(|r| r.definition.id == rec.definition.id) {
+        if let Some(aid) = r
+            .approval_id
+            .as_deref()
+            .and_then(|a| a.parse::<ApprovalId>().ok())
+            && let Ok(a) = st.harness.approvals.get(aid).await
+        {
+            history.push(json!({"version": r.definition.version.to_string(), "approval_id": a.id, "status": a.status, "created_at": a.created_at, "decided_at": a.decided_at, "decision": a.decision}));
+        }
+    }
+    history.sort_by(|a, b| b["created_at"].as_str().cmp(&a["created_at"].as_str()));
+    v["history"] = json!(history);
+    Ok(Json(v))
+}
+
+#[derive(Deserialize)]
+struct DiscoverSkills {
+    #[serde(default)]
+    project_id: Option<ProjectId>,
+}
+
+/// "Scan now": automatic discovery on demand (`skill.read`). New or changed skill
+/// directories are registered by `system:skill-discovery` as pending approval; nothing is
+/// approved here.
+async fn skills_discover(
+    State(st): St,
+    Extension(p): Extension<Principal>,
+    Json(b): Json<DiscoverSkills>,
+) -> ApiResult<Json<Value>> {
+    authorize(&st, &p, Action::SkillRead, Target::Tenant(p.tenant)).await?;
+    if let Some(pid) = b.project_id {
+        visible_projects(&st, &p, Some(pid)).await?;
+    }
+    let out = eaeh_runtime::project::discover_skills(&st.harness, b.project_id).await?;
+    Ok(Json(json!({"results": out})))
+}
+
+#[derive(Deserialize)]
+struct SyncSkills {
+    /// Governance project of the approval requests (the caller's project).
+    project_id: ProjectId,
+}
+
+/// Register every skill file of `definitions.skills_dir` that is not registered yet, as
+/// pending human approval – the same service and validation as `eaeh skill sync`
+/// (`skill.manage` on the project). Nothing is approved here.
+async fn skills_sync(
+    State(st): St,
+    Extension(p): Extension<Principal>,
+    Json(b): Json<SyncSkills>,
+) -> ApiResult<Json<Value>> {
+    visible_projects(&st, &p, Some(b.project_id)).await?;
+    authorize(
+        &st,
+        &p,
+        Action::SkillManage,
+        Target::Scope(Scope::new(p.tenant, b.project_id)),
+    )
+    .await?;
+    let refs: Vec<String> = eaeh_runtime::project::repository_skills(&st.harness)?
+        .iter()
+        .map(|(_, d)| format!("{}@={}", d.id, d.version))
+        .collect();
+    let out = eaeh_runtime::project::sync_skills(&st.harness, &p, b.project_id, &refs).await?;
+    Ok(Json(json!({"results": out})))
 }
 
 async fn project_overview(

@@ -99,6 +99,8 @@ fn cmd(e: &Env, cwd: &Path) -> Command {
         .env_remove("EAEH_TOKEN")
         .env_remove("EAEH_PROFILE")
         .env_remove("EAEH_INSTALLATION_LABEL")
+        // Periodic skill discovery every second (default 30 s) so tests need not wait.
+        .env("EAEH_SKILL_DISCOVERY_INTERVAL_SECS", "1")
         .env("EAEH_HOME", &e.home);
     c
 }
@@ -580,4 +582,162 @@ fn a_portal_on_another_installation_warns_that_the_folder_project_is_not_there()
     child.stderr.take().unwrap().read_to_string(&mut err).unwrap();
     let _ = child.wait();
     assert!(err.contains("installation: DEMO – test"), "{err}");
+}
+
+fn copy_tree(from: &Path, to: &Path) {
+    std::fs::create_dir_all(to).unwrap();
+    for e in std::fs::read_dir(from).unwrap() {
+        let e = e.unwrap();
+        let t = to.join(e.file_name());
+        if e.file_type().unwrap().is_dir() {
+            copy_tree(&e.path(), &t);
+        } else {
+            std::fs::copy(e.path(), t).unwrap();
+        }
+    }
+}
+
+/// Skill onboarding end to end (SKILL-ONBOARDING-PLAN), real binary: a skill directory
+/// copied into the skills folder while `eaeh portal` runs is discovered without a restart,
+/// shown with its nested files, approved in the portal, and a later change to a nested file
+/// becomes a new pending version that is rejected with comments – the approved version stays
+/// in force.
+#[test]
+fn skill_directories_copied_in_are_discovered_reviewed_and_versioned_through_the_portal() {
+    let e = env();
+    // Own skills folder: the shipped single-file skills (needed by project init) only.
+    let skills = e.dir.join("skills");
+    std::fs::create_dir_all(&skills).unwrap();
+    for f in std::fs::read_dir(repo().join("config/skills")).unwrap() {
+        let f = f.unwrap();
+        if f.file_type().unwrap().is_file() {
+            std::fs::copy(f.path(), skills.join(f.file_name())).unwrap();
+        }
+    }
+    let cfg = std::fs::read_to_string(&e.cfg).unwrap();
+    let cfg = cfg
+        .lines()
+        .map(|l| {
+            if l.starts_with("skills_dir") {
+                format!("skills_dir = \"{}\"", skills.display())
+            } else {
+                l.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    std::fs::write(&e.cfg, cfg).unwrap();
+    admin_login(&e);
+    let ws = workspace(&e, "simple-springboot-api");
+    assert!(matches!(
+        project_init(&e, &ws, "simple-springboot-api").code,
+        0 | 7
+    ));
+
+    // `cmd` runs every process with a 1 s skill discovery interval.
+    let p = start_portal(
+        &e,
+        &ws,
+        &[
+            "--as",
+            "developer",
+            "--approver",
+            "approver",
+            "--bind",
+            "127.0.0.1:0",
+        ],
+    );
+
+    // Copy a skill directory with nested folders in; it appears pending without a restart.
+    let dir = skills.join("api-error-handling");
+    copy_tree(&repo().join("config/skills/api-error-handling"), &dir);
+    let find = |cat: &Value, reference: &str| {
+        cat["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|i| i["reference"] == reference)
+            .cloned()
+    };
+    let t = Instant::now();
+    let item = loop {
+        let cat = p.get("/api/v1/skills/catalog");
+        if let Some(i) = find(&cat, "api-error-handling@1.0.0") {
+            break i;
+        }
+        assert!(t.elapsed() < Duration::from_secs(30), "not discovered: {cat}");
+        std::thread::sleep(Duration::from_millis(300));
+    };
+    assert_eq!(item["registration"]["status"], "pending_approval");
+    assert_eq!(item["registration"]["registered_by"], "system:skill-discovery");
+    assert_eq!(item["package"]["file_count"], 6);
+    let f = p.get("/api/v1/skills/api-error-handling/1.0.0/files");
+    let nested = f["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["path"] == "references/http/status-mapping.md")
+        .unwrap()
+        .clone();
+    assert!(nested["content"].as_str().unwrap().contains("RESOURCE_NOT_FOUND"));
+    // Approve it in the portal.
+    let aid = item["registration"]["approval_id"].as_str().unwrap();
+    let doc = p.get(&format!("/api/v1/approvals/{aid}/document"));
+    let (s, _, v) = p.http("POST", &format!("/api/v1/approvals/{aid}/decision"), Some(json!({"decision": "approve", "comments": "reviewed every file", "artifact_hash": doc["skill"]["digest"]})));
+    assert_eq!(s, 200, "{v}");
+
+    // Change a nested file ⇒ 1.0.1 pending (no restart), compared with 1.0.0 in force.
+    std::fs::write(
+        dir.join("references/http/status-mapping.md"),
+        "# HTTP status mapping\n\n| Invalid input | 422 |\n",
+    )
+    .unwrap();
+    let t = Instant::now();
+    let item = loop {
+        let cat = p.get("/api/v1/skills/catalog");
+        if let Some(i) = find(&cat, "api-error-handling@1.0.1") {
+            break i;
+        }
+        assert!(
+            t.elapsed() < Duration::from_secs(30),
+            "change not discovered: {cat}"
+        );
+        std::thread::sleep(Duration::from_millis(300));
+    };
+    assert_eq!(item["registration"]["status"], "pending_approval");
+    let f = p.get("/api/v1/skills/api-error-handling/1.0.1/files");
+    assert_eq!(f["in_force_version"], "1.0.0");
+    assert_eq!(
+        f["files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["path"] == "references/http/status-mapping.md")
+            .unwrap()["change"],
+        "modified"
+    );
+    // Reject with comments.
+    let aid = item["registration"]["approval_id"].as_str().unwrap();
+    let (s, _, v) = p.http("POST", &format!("/api/v1/approvals/{aid}/decision"), Some(json!({"decision": "reject", "comments": "422 is not allowed by the API standard", "artifact_hash": f["digest"]})));
+    assert_eq!(s, 200, "{v}");
+    let cat = p.get("/api/v1/skills/catalog");
+    assert_eq!(
+        find(&cat, "api-error-handling@1.0.1").unwrap()["registration"]["status"],
+        "rejected"
+    );
+    assert_eq!(find(&cat, "api-error-handling@1.0.0").unwrap()["in_force"], true);
+    // The CLI sees the same: the approved version is the one agents use.
+    let o = run(&e, &ws, &["--json", "skill", "pending"]);
+    let layer = o.json()["layer_skills"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["reference"] == "api-error-handling@^1")
+        .unwrap()
+        .clone();
+    assert_eq!(
+        layer["state"],
+        json!({"state": "approved", "version": "1.0.0"}),
+        "{layer}"
+    );
 }

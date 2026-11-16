@@ -35,6 +35,12 @@ use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
+pub mod package;
+pub use package::{SkillFile, SkillPackage};
+
+/// Registrant recorded for skill versions found by automatic discovery (O3).
+pub const DISCOVERY_ACTOR: &str = "system:skill-discovery";
+
 /// Skill API version; definitions declare a compatible requirement.
 pub const SKILL_API_VERSION: semver::Version = semver::Version::new(1, 0, 0);
 const MAX_INSTRUCTIONS: usize = 32 * 1024;
@@ -92,15 +98,132 @@ pub struct SkillDefinition {
     pub eaeh_api: semver::VersionReq,
     #[serde(default)]
     pub evaluation_criteria: Vec<String>,
+    /// Skill directories only: every file of the directory (path, hash, content), so the
+    /// approval digest covers the whole tree (SKILL-ONBOARDING-PLAN). Absent for
+    /// single-file skills, whose digests are therefore unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub package: Option<SkillPackage>,
 }
 
 impl SkillDefinition {
+    /// Load a skill directory: `SKILL.md` (TOML front matter + instructions) plus every
+    /// nested file. The definition carries the captured package (revision 1).
+    pub fn from_directory(dir: &std::path::Path) -> Result<Self> {
+        let files = package::read_dir_files(dir)?;
+        let manifest = files
+            .iter()
+            .find(|f| f.path == package::MANIFEST)
+            .and_then(|f| f.content.clone())
+            .ok_or_else(|| {
+                HarnessError::invalid_input(format!(
+                    "skill directory {}: {} is missing or not text",
+                    dir.display(),
+                    package::MANIFEST
+                ))
+            })?;
+        let mut def = Self::from_markdown(&manifest)
+            .map_err(|e| e.context(format!("{}/{}", dir.display(), package::MANIFEST)))?;
+        let name = dir
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+        def.package = Some(SkillPackage {
+            dir: name,
+            source_version: def.version.clone(),
+            revision: 1,
+            tree_hash: package::tree_hash(&files),
+            files,
+        });
+        def.validate()?;
+        Ok(def)
+    }
+
+    /// Tree hash of a directory skill (`None` for single-file skills).
+    pub fn tree_hash(&self) -> Option<&str> {
+        self.package.as_ref().map(|p| p.tree_hash.as_str())
+    }
     pub fn reference(&self) -> String {
         format!("{}@{}", self.id, self.version)
     }
 
     pub fn digest(&self) -> Result<String> {
         Ok(canonical_json_hash(&serde_json::to_value(self)?))
+    }
+
+    /// Parse a Markdown skill file (MARKDOWN-SKILLS-PLAN, K1): TOML front matter between
+    /// `+++` lines carries the metadata, and the Markdown body *is* the instructions,
+    /// verbatim. `capabilities` defaults to `task_kinds` and `max_risk` to `read_only`.
+    /// The result is validated exactly like a JSON definition.
+    ///
+    /// ```text
+    /// +++
+    /// id = "architecture-diagrams"
+    /// version = "1.0.0"
+    /// description = "…"
+    /// task_kinds = ["hld-design"]
+    /// +++
+    /// # Instructions in Markdown …
+    /// ```
+    pub fn from_markdown(text: &str) -> Result<Self> {
+        let bad = |m: String| HarnessError::invalid_input(format!("markdown skill: {m}"));
+        let text = text
+            .strip_prefix('\u{feff}')
+            .unwrap_or(text)
+            .replace("\r\n", "\n");
+        let rest = text
+            .strip_prefix("+++\n")
+            .ok_or_else(|| bad("must start with a `+++` line opening the TOML front matter".into()))?;
+        let end = rest
+            .find("\n+++\n")
+            .map(|i| (i, i + 5))
+            .or_else(|| rest.strip_suffix("\n+++").map(|r| (r.len(), rest.len())))
+            .ok_or_else(|| bad("the front matter is not closed by a `+++` line".into()))?;
+        let (front, body) = (&rest[..end.0], rest[end.1..].trim());
+        let meta: toml::Table = toml::from_str(front).map_err(|e| bad(format!("front matter: {e}")))?;
+        const KEYS: &[&str] = &[
+            "id",
+            "version",
+            "description",
+            "capabilities",
+            "task_kinds",
+            "required_knowledge",
+            "required_tools",
+            "input_schema",
+            "output_schema",
+            "max_risk",
+            "dependencies",
+            "eaeh_api",
+            "evaluation_criteria",
+        ];
+        if let Some(k) = meta.keys().find(|k| !KEYS.contains(&k.as_str())) {
+            return Err(bad(if k == "instructions" {
+                "`instructions` belongs in the Markdown body, not the front matter".into()
+            } else {
+                format!("unknown front matter key '{k}' (allowed: {})", KEYS.join(", "))
+            }));
+        }
+        let mut v = serde_json::to_value(&meta).map_err(|e| bad(e.to_string()))?;
+        if v.get("capabilities").is_none() {
+            v["capabilities"] = v.get("task_kinds").cloned().unwrap_or(json!([]));
+        }
+        if v.get("max_risk").is_none() {
+            v["max_risk"] = json!("read_only");
+        }
+        v["instructions"] = json!(body);
+        let def: SkillDefinition = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        def.validate()?;
+        Ok(def)
+    }
+
+    /// Parse a skill file by extension: `.md` (Markdown) or JSON.
+    pub fn from_file_text(path: &std::path::Path, text: &str) -> Result<Self> {
+        let def = if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("md")) {
+            Self::from_markdown(text)?
+        } else {
+            serde_json::from_str(text)
+                .map_err(|e| HarnessError::invalid_input(format!("skill definition: {e}")))?
+        };
+        Ok(def)
     }
 
     /// Structural validation (no registry lookups).
@@ -143,6 +266,9 @@ impl SkillDefinition {
         }
         CompiledSchema::compile(&self.input_schema)?;
         CompiledSchema::compile(&self.output_schema)?;
+        if let Some(p) = &self.package {
+            package::validate(p)?;
+        }
         Ok(())
     }
 }
@@ -237,21 +363,55 @@ impl Resolution {
         self.skills.iter().map(|s| s.reference.clone()).collect()
     }
 
-    /// Skill instructions at `skill` trust (the only producer of such items).
+    /// Skill instructions at `skill` trust (the only producer of such items). For skill
+    /// directories, text reference files follow, within [`package::REFERENCE_BUDGET`] per
+    /// skill; further files, code and binaries are only listed – never executed or sent (O4).
     pub fn instruction_items(&self) -> Vec<ContextItem> {
-        self.skills
-            .iter()
-            .map(|s| {
-                ContextItem::skill_instruction(
-                    &format!("skill:{}", s.reference),
+        let mut out = vec![];
+        for s in &self.skills {
+            out.push(ContextItem::skill_instruction(
+                &format!("skill:{}", s.reference),
+                format!(
+                    "APPROVED SKILL [{}]: {}\n{}",
+                    s.reference, s.definition.description, s.definition.instructions
+                ),
+                &s.reference,
+            ));
+            let Some(p) = &s.definition.package else { continue };
+            let mut used = 0usize;
+            let mut listed = vec![];
+            for f in &p.files {
+                if f.path == package::MANIFEST {
+                    continue;
+                }
+                match (&f.content, f.is_reference_text()) {
+                    (Some(c), true) if used + c.len() <= package::REFERENCE_BUDGET => {
+                        used += c.len();
+                        out.push(ContextItem::skill_instruction(
+                            &format!("skill:{}:{}", s.reference, f.path),
+                            format!(
+                                "APPROVED SKILL [{}] REFERENCE FILE {} (sha256 {}):\n{c}",
+                                s.reference, f.path, f.sha256
+                            ),
+                            &s.reference,
+                        ));
+                    }
+                    _ => listed.push(format!("{} ({}, {} bytes)", f.path, f.kind, f.size)),
+                }
+            }
+            if !listed.is_empty() {
+                out.push(ContextItem::skill_instruction(
+                    &format!("skill:{}:files", s.reference),
                     format!(
-                        "APPROVED SKILL [{}]: {}\n{}",
-                        s.reference, s.definition.description, s.definition.instructions
+                        "APPROVED SKILL [{}] further files (not included; never executed): {}",
+                        s.reference,
+                        listed.join(", ")
                     ),
                     &s.reference,
-                )
-            })
-            .collect()
+                ));
+            }
+        }
+        out
     }
 }
 
@@ -309,6 +469,32 @@ impl SkillRegistry {
         let gov = Scope::new(actor.tenant, governance_project);
         self.authz
             .authorize(actor, Action::SkillManage, Target::Scope(gov))?;
+        self.register_as(Some(actor), def, gov, trace).await
+    }
+
+    /// Register a version found by automatic discovery (O3). The trusted platform component
+    /// [`DISCOVERY_ACTOR`] is the registrant: same validation, approval request bound to the
+    /// digest, events and audit as [`Self::register`]. A human approver still decides.
+    pub async fn register_discovered(
+        &self,
+        def: &SkillDefinition,
+        gov: Scope,
+        trace: TraceContext,
+    ) -> Result<SkillRecord> {
+        self.register_as(None, def, gov, trace).await
+    }
+
+    async fn register_as(
+        &self,
+        actor: Option<&Principal>,
+        def: &SkillDefinition,
+        gov: Scope,
+        trace: TraceContext,
+    ) -> Result<SkillRecord> {
+        let registrant = match actor {
+            Some(a) => a.id.clone(),
+            None => eaeh_core::PrincipalId::new(DISCOVERY_ACTOR)?,
+        };
         def.validate()?;
         for t in &def.required_tools {
             let d = self
@@ -360,7 +546,7 @@ impl SkillRegistry {
         .bind(def.version.to_string())
         .bind(to_json(def)?)
         .bind(&digest)
-        .bind(actor.id.as_str())
+        .bind(registrant.as_str())
         .bind(&now)
         .bind(&now)
         .execute(tx.conn())
@@ -378,8 +564,8 @@ impl SkillRegistry {
                         digest: digest.clone(),
                     },
                     required_role: Role::Approver,
-                    authors: vec![actor.id.clone()],
-                    requested_by: actor.id.clone(),
+                    authors: vec![registrant.clone()],
+                    requested_by: registrant.clone(),
                     trace,
                 },
             )
@@ -394,10 +580,20 @@ impl SkillRegistry {
         self.db
             .audit_in(
                 &mut tx,
-                AuditEntry::new(actor, "skill.register", "skill", def.reference(), AuditOutcome::Succeeded)
-                    .scope(gov)
-                    .correlation(trace.correlation)
-                    .details(json!({"digest": digest, "tools": def.required_tools, "max_risk": def.max_risk, "dependencies": def.dependencies})),
+                match actor {
+                    Some(a) => AuditEntry::new(a, "skill.register", "skill", def.reference(), AuditOutcome::Succeeded),
+                    None => AuditEntry::system("skill-discovery", "skill.register", "skill", def.reference(), AuditOutcome::Succeeded),
+                }
+                .scope(gov)
+                .correlation(trace.correlation)
+                .details(json!({
+                    "digest": digest, "tools": def.required_tools, "max_risk": def.max_risk, "dependencies": def.dependencies,
+                    "discovered": actor.is_none(),
+                    "package": def.package.as_ref().map(|p| json!({
+                        "dir": p.dir, "source_version": p.source_version.to_string(), "revision": p.revision,
+                        "tree_hash": p.tree_hash, "files": p.files.iter().map(|f| json!({"path": f.path, "sha256": f.sha256, "size": f.size})).collect::<Vec<_>>(),
+                    })),
+                })),
             )
             .await?;
         emit(
@@ -548,6 +744,12 @@ impl SkillRegistry {
     pub async fn list(&self, actor: &Principal) -> Result<Vec<SkillRecord>> {
         self.authz
             .authorize(actor, Action::SkillRead, Target::Tenant(actor.tenant))?;
+        self.all().await
+    }
+
+    /// Every registered version, for trusted platform components (automatic discovery).
+    /// Callers acting for a person use [`Self::list`], which authorizes `skill.read`.
+    pub async fn all_records(&self) -> Result<Vec<SkillRecord>> {
         self.all().await
     }
 
@@ -726,4 +928,79 @@ fn to_record(row: (String, String, String, Option<String>, String)) -> Result<Sk
         approval_id: row.3,
         registered_by: row.4,
     })
+}
+
+#[cfg(test)]
+mod markdown_tests {
+    use super::*;
+
+    const OK: &str = "+++\nid = \"architecture-diagrams\"\nversion = \"1.2.0\"\ndescription = \"Diagram rules for HLDs\"\ntask_kinds = [\"hld-design\", \"lld-design\"]\nrequired_knowledge = [{ query = \"diagram standards\", k = 2 }]\nevaluation_criteria = [\"every component appears in a diagram\"]\n+++\n\n# Diagrams\n\n- Draw a **context** diagram.\n- Use C4 names.\n";
+
+    #[test]
+    fn front_matter_is_metadata_and_the_body_is_the_instructions() {
+        let d = SkillDefinition::from_markdown(OK).unwrap();
+        assert_eq!(d.reference(), "architecture-diagrams@1.2.0");
+        assert_eq!(d.task_kinds, vec!["hld-design", "lld-design"]);
+        assert_eq!(
+            d.capabilities,
+            ["hld-design".to_string(), "lld-design".to_string()].into()
+        );
+        assert_eq!(d.max_risk, RiskClass::ReadOnly);
+        assert_eq!(d.required_knowledge[0].k, 2);
+        assert_eq!(
+            d.instructions,
+            "# Diagrams\n\n- Draw a **context** diagram.\n- Use C4 names."
+        );
+        // Same digest whatever the line endings: the definition, not the bytes, is approved.
+        assert_eq!(
+            d.digest().unwrap(),
+            SkillDefinition::from_markdown(&OK.replace('\n', "\r\n"))
+                .unwrap()
+                .digest()
+                .unwrap()
+        );
+        let p = std::path::Path::new("x.md");
+        assert_eq!(SkillDefinition::from_file_text(p, OK).unwrap(), d);
+    }
+
+    #[test]
+    fn malformed_markdown_skills_are_rejected_with_a_reason() {
+        let cases = [
+            ("no front matter", "# just text"),
+            ("not closed", "+++\nid = \"a\"\n# body"),
+            ("bad toml", "+++\nid = \n+++\nbody"),
+            (
+                "instructions key",
+                "+++\nid=\"a\"\nversion=\"1.0.0\"\ndescription=\"d\"\ntask_kinds=[\"hld-design\"]\ninstructions=\"x\"\n+++\nbody",
+            ),
+            (
+                "unknown key",
+                "+++\nid=\"a\"\nversion=\"1.0.0\"\ndescription=\"d\"\ntask_kind=[\"hld-design\"]\n+++\nbody",
+            ),
+            (
+                "empty body",
+                "+++\nid=\"a\"\nversion=\"1.0.0\"\ndescription=\"d\"\ntask_kinds=[\"hld-design\"]\n+++\n   \n",
+            ),
+            (
+                "bad version",
+                "+++\nid=\"a\"\nversion=\"one\"\ndescription=\"d\"\ntask_kinds=[\"hld-design\"]\n+++\nbody",
+            ),
+            (
+                "no capability",
+                "+++\nid=\"a\"\nversion=\"1.0.0\"\ndescription=\"d\"\n+++\nbody",
+            ),
+            (
+                "placeholder",
+                "+++\nid=\"a\"\nversion=\"1.0.0\"\ndescription=\"d\"\ntask_kinds=[\"hld-design\"]\n+++\nUse {{x}}",
+            ),
+            (
+                "bad risk",
+                "+++\nid=\"a\"\nversion=\"1.0.0\"\ndescription=\"d\"\ntask_kinds=[\"hld-design\"]\nmax_risk=\"root\"\n+++\nbody",
+            ),
+        ];
+        for (name, text) in cases {
+            let e = SkillDefinition::from_markdown(text).unwrap_err();
+            assert_eq!(e.kind, eaeh_core::ErrorKind::InvalidInput, "{name}: {e:?}");
+        }
+    }
 }

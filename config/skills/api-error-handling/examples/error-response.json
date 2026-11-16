@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "The request contains invalid fields.",
+    "details": [
+      { "field": "price", "issue": "must be greater than 0" },
+      { "field": "name", "issue": "must not be empty" }
+    ],
+    "request_id": "c0a8012e-7f3d-4b1a-9e2f-5d6c7b8a9f01"
+  }
+}

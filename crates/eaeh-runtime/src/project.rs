@@ -297,6 +297,92 @@ pub async fn required_skills(h: &Harness, workflows: &[String]) -> Result<Vec<Re
     Ok(m.into_values().collect())
 }
 
+/// A skill file applied to workflow layers by its `task_kinds` (dynamic selection), in
+/// addition to the agents' own skills (MARKDOWN-SKILLS-PLAN, K2).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LayerSkill {
+    /// `id@=version` – the exact version in the skill file.
+    pub reference: String,
+    pub file: String,
+    pub description: String,
+    /// `workflow/stage (task kind)` the skill applies to.
+    pub layers: BTreeSet<String>,
+}
+
+/// Task kinds of the agent stages of `workflows`, as `(workflow, stage, task kind)`.
+pub async fn workflow_layers(h: &Harness, workflows: &[String]) -> Result<Vec<(String, String, String)>> {
+    let mut out = vec![];
+    for w in workflows {
+        let def = workflow_definition(h, w).await?;
+        for s in &def.states {
+            if let StateKind::AgentTask { task_kind, .. } = &s.kind {
+                out.push((w.clone(), s.name.clone(), task_kind.clone()));
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Skill files in `definitions.skills_dir` that apply to a layer of `workflows` and are not
+/// already an agent's own skill (those are [`required_skills`]).
+pub async fn layer_skills(h: &Harness, workflows: &[String]) -> Result<Vec<LayerSkill>> {
+    let layers = workflow_layers(h, workflows).await?;
+    let explicit: Vec<SkillRef> = required_skills(h, workflows)
+        .await?
+        .iter()
+        .filter_map(|r| SkillRef::parse(&r.reference).ok())
+        .collect();
+    let mut out = vec![];
+    let dirs: Vec<(PathBuf, SkillDefinition)> = skill_directories(h)?
+        .into_iter()
+        .filter_map(|(p, r)| r.ok().map(|d| (p, d)))
+        .collect();
+    let files = repository_skills(h)?;
+    for (file, d) in files.into_iter().chain(dirs) {
+        if explicit.iter().any(|r| r.id == d.id) {
+            continue;
+        }
+        let hits: BTreeSet<String> = layers
+            .iter()
+            .filter(|(_, _, k)| d.task_kinds.contains(k))
+            .map(|(w, s, k)| format!("{w}/{s} ({k})"))
+            .collect();
+        if !hits.is_empty() {
+            out.push(LayerSkill {
+                // A directory may be registered as a later patch (O2): match the major.
+                reference: if d.package.is_some() {
+                    format!("{}@^{}", d.id, d.version.major)
+                } else {
+                    format!("{}@={}", d.id, d.version)
+                },
+                file: file.display().to_string(),
+                description: d.description.clone(),
+                layers: hits,
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// Every skill reference a project's workflows use: the agents' own skills and the layer
+/// skills. `project init` and `skill sync` register these.
+pub async fn project_skill_references(h: &Harness, workflows: &[String]) -> Result<Vec<String>> {
+    let mut refs: Vec<String> = required_skills(h, workflows)
+        .await?
+        .into_iter()
+        .map(|r| r.reference)
+        .collect();
+    // Skill directories are registered by discovery (versions may be later patches).
+    refs.extend(
+        layer_skills(h, workflows)
+            .await?
+            .into_iter()
+            .filter(|s| !s.reference.contains("@^"))
+            .map(|s| s.reference),
+    );
+    Ok(refs)
+}
+
 /// Repository-approved skill definitions (`definitions.skills_dir`).
 pub fn repository_skills(h: &Harness) -> Result<Vec<(PathBuf, SkillDefinition)>> {
     let dir = h.config.resolve(&h.config.definitions.skills_dir);
@@ -306,15 +392,255 @@ pub fn repository_skills(h: &Harness) -> Result<Vec<(PathBuf, SkillDefinition)>>
     };
     let mut files: Vec<PathBuf> = rd
         .filter_map(|e| e.ok().map(|e| e.path()))
-        .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .filter(|p| p.extension().is_some_and(|x| x == "json" || x == "md"))
+        .filter(|p| {
+            // README.md and other Markdown without front matter are documentation, not skills.
+            p.extension().is_some_and(|x| x == "json")
+                || std::fs::read_to_string(p)
+                    .is_ok_and(|t| t.trim_start_matches('\u{feff}').starts_with("+++"))
+        })
         .collect();
     files.sort();
     for f in files {
-        let def: SkillDefinition = serde_json::from_str(&std::fs::read_to_string(&f)?)
-            .map_err(|e| HarnessError::invalid_input(format!("skill definition {}: {e}", f.display())))?;
+        let def = SkillDefinition::from_file_text(&f, &std::fs::read_to_string(&f)?).map_err(|e| {
+            HarnessError::invalid_input(format!("skill definition {}: {}", f.display(), e.message))
+        })?;
+        if let Some((other, _)) = out
+            .iter()
+            .find(|(_, d): &&(PathBuf, SkillDefinition)| d.id == def.id && d.version == def.version)
+        {
+            return Err(HarnessError::invalid_input(format!(
+                "skill {} is defined twice: {} and {}",
+                def.reference(),
+                other.display(),
+                f.display()
+            )));
+        }
         out.push((f, def));
     }
     Ok(out)
+}
+
+/// Skill directories (`<skills_dir>/<name>/SKILL.md` + nested files), each loaded or with
+/// the reason it is invalid (SKILL-ONBOARDING-PLAN).
+pub fn skill_directories(h: &Harness) -> Result<Vec<(PathBuf, Result<SkillDefinition>)>> {
+    let dir = h.config.resolve(&h.config.definitions.skills_dir);
+    let Ok(rd) = std::fs::read_dir(&dir) else {
+        return Ok(vec![]);
+    };
+    let mut dirs: Vec<PathBuf> = rd
+        .filter_map(|e| e.ok())
+        .filter(|e| !e.file_name().to_string_lossy().starts_with('.'))
+        .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+        .map(|e| e.path())
+        .filter(|p| p.join(eaeh_skills::package::MANIFEST).is_file())
+        .collect();
+    dirs.sort();
+    Ok(dirs
+        .into_iter()
+        .map(|d| {
+            let r = SkillDefinition::from_directory(&d);
+            (d, r)
+        })
+        .collect())
+}
+
+/// What automatic discovery did with one skill directory.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DiscoveryOutcome {
+    pub dir: String,
+    pub skill: Option<String>,
+    /// Registered version (may be a later patch of the manifest version).
+    pub version: Option<String>,
+    /// `new`, `changed`, `unchanged` or `invalid`.
+    pub action: String,
+    pub detail: String,
+    pub tree_hash: Option<String>,
+    pub approval_id: Option<String>,
+}
+
+/// Governance scope of discovered skill approvals: the given project, else the project
+/// where skills were last governed, else the first project of the installation.
+async fn discovery_scope(h: &Harness, project: Option<ProjectId>) -> Result<Option<Scope>> {
+    use eaeh_store::DbResultExt;
+    if let Some(p) = project {
+        let row: Option<(String,)> =
+            eaeh_store::sqlx::query_as("SELECT tenant_id FROM projects WHERE id = ?")
+                .bind(p.to_string())
+                .fetch_optional(h.db.pool())
+                .await
+                .db()?;
+        if let Some((t,)) = row {
+            return Ok(Some(Scope::new(t.parse()?, p)));
+        }
+    }
+    let last: Option<(String, String)> = eaeh_store::sqlx::query_as(
+        "SELECT tenant_id, project_id FROM approvals WHERE subject_type = 'skill' ORDER BY created_at DESC LIMIT 1",
+    )
+    .fetch_optional(h.db.pool())
+    .await
+    .db()?;
+    let pick = match last {
+        Some(r) => Some(r),
+        None => eaeh_store::sqlx::query_as(
+            "SELECT tenant_id, id FROM projects ORDER BY CASE WHEN name = 'platform' THEN 1 ELSE 0 END, created_at LIMIT 1",
+        )
+        .fetch_optional(h.db.pool())
+        .await
+        .db()?,
+    };
+    Ok(match pick {
+        Some((t, p)) => Some(Scope::new(t.parse()?, p.parse()?)),
+        None => None,
+    })
+}
+
+/// Automatic skill discovery (O2/O3): register every new or changed skill directory as
+/// *pending approval*, attributed to `system:skill-discovery`. An unchanged directory
+/// (its tree hash is already registered) is left alone. Changed content whose manifest
+/// version is already registered becomes the next free patch version; the approved version
+/// stays in force until a human approves the new one. Idempotent.
+pub async fn discover_skills(h: &Harness, project: Option<ProjectId>) -> Result<Vec<DiscoveryOutcome>> {
+    let dirs = skill_directories(h)?;
+    if dirs.is_empty() {
+        return Ok(vec![]);
+    }
+    let Some(gov) = discovery_scope(h, project).await? else {
+        return Ok(vec![]); // not bootstrapped yet
+    };
+    let mut out = vec![];
+    for (path, def) in dirs {
+        let name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+        let mut def = match def {
+            Ok(d) => d,
+            Err(e) => {
+                out.push(DiscoveryOutcome {
+                    dir: name,
+                    skill: None,
+                    version: None,
+                    action: "invalid".into(),
+                    detail: e.message,
+                    tree_hash: None,
+                    approval_id: None,
+                });
+                continue;
+            }
+        };
+        let tree = def.tree_hash().unwrap_or_default().to_string();
+        let all = h.skills.all_records().await?;
+        let same: Vec<&eaeh_skills::SkillRecord> = all.iter().filter(|r| r.definition.id == def.id).collect();
+        if let Some(r) = same
+            .iter()
+            .find(|r| r.definition.tree_hash() == Some(tree.as_str()))
+        {
+            out.push(DiscoveryOutcome {
+                dir: name,
+                skill: Some(def.id.to_string()),
+                version: Some(r.definition.version.to_string()),
+                action: "unchanged".into(),
+                detail: format!("registered ({})", r.status.as_str()),
+                tree_hash: Some(tree),
+                approval_id: r.approval_id.clone(),
+            });
+            continue;
+        }
+        let source = def.version.clone();
+        let taken = |v: &semver::Version| same.iter().any(|r| &r.definition.version == v);
+        let changed = taken(&source)
+            || same.iter().any(|r| {
+                r.definition
+                    .package
+                    .as_ref()
+                    .is_some_and(|p| p.source_version == source)
+            });
+        if taken(&source) {
+            let mut next = same
+                .iter()
+                .map(|r| r.definition.version.clone())
+                .filter(|v| v.major == source.major && v.minor == source.minor && v >= &source)
+                .max()
+                .unwrap_or_else(|| source.clone());
+            next.patch += 1;
+            next.pre = semver::Prerelease::EMPTY;
+            while taken(&next) {
+                next.patch += 1;
+            }
+            def.version = next;
+        }
+        let revision = 1 + same
+            .iter()
+            .filter(|r| {
+                r.definition
+                    .package
+                    .as_ref()
+                    .is_some_and(|p| p.source_version == source)
+            })
+            .count() as u32;
+        if let Some(p) = def.package.as_mut() {
+            p.revision = revision;
+        }
+        match h.skills.register_discovered(&def, gov, TraceContext::new_root()).await {
+            Ok(rec) => out.push(DiscoveryOutcome {
+                dir: name,
+                skill: Some(def.id.to_string()),
+                version: Some(def.version.to_string()),
+                action: if changed { "changed".into() } else { "new".into() },
+                detail: if def.version != source {
+                    format!(
+                        "files changed: registered as {} (from manifest {source}, revision {revision}); awaiting human approval",
+                        def.version
+                    )
+                } else {
+                    "registered; awaiting human approval".into()
+                },
+                tree_hash: Some(tree),
+                approval_id: rec.approval_id,
+            }),
+            Err(e) => out.push(DiscoveryOutcome {
+                dir: name,
+                skill: Some(def.id.to_string()),
+                version: None,
+                action: "invalid".into(),
+                detail: e.message,
+                tree_hash: Some(tree),
+                approval_id: None,
+            }),
+        }
+    }
+    Ok(out)
+}
+
+/// Scan interval of periodic discovery: 30 s, or `EAEH_SKILL_DISCOVERY_INTERVAL_SECS` (≥ 1).
+pub fn skill_discovery_interval() -> std::time::Duration {
+    let secs = std::env::var("EAEH_SKILL_DISCOVERY_INTERVAL_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .filter(|s| *s >= 1)
+        .unwrap_or(30);
+    std::time::Duration::from_secs(secs)
+}
+
+/// Periodic discovery for long-running processes (`eaeh portal`, `eaeh serve`).
+pub fn spawn_skill_discovery(
+    h: std::sync::Arc<Harness>,
+    every: std::time::Duration,
+) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            match discover_skills(&h, None).await {
+                Ok(r) => {
+                    for o in r.iter().filter(|o| o.action != "unchanged") {
+                        tracing::info!(dir = %o.dir, action = %o.action, version = ?o.version, detail = %o.detail, "skill discovery");
+                    }
+                }
+                Err(e) => tracing::warn!(error = %e, "skill discovery failed"),
+            }
+            tokio::time::sleep(every).await;
+        }
+    })
 }
 
 pub async fn skill_state(h: &Harness, actor: &Principal, reference: &str) -> Result<SkillState> {
@@ -771,6 +1097,40 @@ pub async fn readiness(
                 format!("add a definition to {}", h.config.resolve(&h.config.definitions.skills_dir).display()),
             ),
             Err(e) => r.block("skills", format!("{}: {}", s.reference, e.message), "eaeh auth status"),
+        }
+    }
+    // Additional layer skills (skill files matched by task kind): applied once approved;
+    // a pending one does not block the project (K2).
+    for s in layer_skills(h, &workflows).await? {
+        let at = s.layers.iter().cloned().collect::<Vec<_>>().join(", ");
+        match skill_state(h, caller, &s.reference).await {
+            Ok(SkillState::Approved { .. }) => {
+                r.ok("skills", format!("{} approved; applied at {at}", s.reference))
+            }
+            Ok(SkillState::PendingApproval { approval_id, .. }) => r.warn(
+                "skills",
+                format!(
+                    "{} (for {at}) awaits approval {}; it is not applied until approved",
+                    s.reference,
+                    approval_id.unwrap_or_default()
+                ),
+                "eaeh approval review --as <approver-profile>   # or the portal: Skills → Review",
+            ),
+            Ok(SkillState::NotRegistered { .. }) => r.warn(
+                "skills",
+                format!("{} ({}) for {at} is not registered", s.reference, s.file),
+                "eaeh skill sync   # or the portal: Skills → Register skill files",
+            ),
+            Ok(SkillState::Unusable { status, .. }) => r.warn(
+                "skills",
+                format!("{} for {at} is {status} and is not applied", s.reference),
+                "register a new version of the skill file (bump `version`), then approve it",
+            ),
+            Err(e) => r.warn(
+                "skills",
+                format!("{}: {}", s.reference, e.message),
+                "eaeh auth status",
+            ),
         }
     }
 

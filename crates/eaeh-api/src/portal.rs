@@ -31,6 +31,7 @@ use std::sync::Arc;
 pub const COOKIE: &str = "eaeh_portal";
 
 /// An identity the portal acts as. The token never leaves this process.
+#[derive(Clone)]
 pub struct Acting {
     pub label: String,
     token: String,
@@ -46,9 +47,12 @@ impl std::fmt::Debug for Acting {
     }
 }
 
+#[derive(Clone)]
 pub struct PortalState {
     pub viewer: Acting,
     pub approver: Option<Acting>,
+    /// Identity used only to register skill files (`--steward`, `skill.manage`).
+    pub steward: Option<Acting>,
     secret: String,
     allowed_hosts: Vec<String>,
     allowed_origins: Vec<String>,
@@ -57,6 +61,13 @@ pub struct PortalState {
 }
 
 impl PortalState {
+    /// Same state with a steward identity for skill registration (`--steward`).
+    pub fn with_steward(self: Arc<Self>, steward: Option<Acting>) -> Arc<Self> {
+        let mut s = Arc::try_unwrap(self).unwrap_or_else(|a| (*a).clone());
+        s.steward = steward;
+        Arc::new(s)
+    }
+
     pub fn new(
         viewer: Acting,
         approver: Option<Acting>,
@@ -81,6 +92,7 @@ impl PortalState {
         Arc::new(Self {
             viewer,
             approver,
+            steward: None,
             secret,
             allowed_hosts: hosts,
             allowed_origins: origins,
@@ -254,7 +266,9 @@ async fn session_info(
         "installation": inst.0,
         "viewer": acting_json(&st.viewer),
         "approver": st.approver.as_ref().map(acting_json),
+        "steward": st.steward.as_ref().map(acting_json),
         "can_decide": st.approver.is_some(),
+        "can_register_skills": st.steward.is_some(),
         "execution_mode": st.execution_mode,
         "api_version": "v1",
         "local_only": true,
@@ -268,6 +282,8 @@ fn allowed_api(method: &Method, path: &str) -> bool {
     let segs: Vec<&str> = path.trim_start_matches('/').split('/').collect();
     match (method.clone(), segs.as_slice()) {
         (Method::POST, ["v1", "approvals", _, "decision"]) => true,
+        (Method::POST, ["v1", "skills", "sync"]) => true,
+        (Method::POST, ["v1", "skills", "discover"]) => true,
         (Method::GET | Method::HEAD, s) => matches!(
             s,
             ["v1", "health"]
@@ -291,6 +307,8 @@ fn allowed_api(method: &Method, path: &str) -> bool {
                 | ["v1", "audit", "verify"]
                 | ["v1", "traceability"]
                 | ["v1", "agents"]
+                | ["v1", "skills", "catalog"]
+                | ["v1", "skills", _, _, "files"]
         ),
         _ => false,
     }
@@ -310,8 +328,24 @@ async fn inject_identity(
             "this operation is not available through the portal; use the eaeh CLI",
         );
     }
-    let decision = req.method() == Method::POST;
-    let acting = if decision {
+    let register = req.method() == Method::POST && path == "/v1/skills/sync";
+    // "Scan now" registers nothing in a person's name (system:skill-discovery): viewer token.
+    let scan = req.method() == Method::POST && path == "/v1/skills/discover";
+    let decision = req.method() == Method::POST && !register && !scan;
+    let acting = if register {
+        // Skill registration is the steward's (skill.manage), never the approver's: the
+        // registrant of a skill can never approve it (separation of duties).
+        match &st.steward {
+            Some(s) => s,
+            None => {
+                return err(
+                    StatusCode::FORBIDDEN,
+                    "steward_not_configured",
+                    "registering skills needs a steward identity: restart the portal with `--steward <profile>`",
+                );
+            }
+        }
+    } else if decision {
         match &st.approver {
             Some(a) => a,
             None => {
@@ -325,9 +359,9 @@ async fn inject_identity(
     } else {
         &st.viewer
     };
-    // Initial portal scope: workflow document gates only. Skills and standards are reviewed
-    // with `eaeh approval review`, which shows their full content (the API itself is
-    // unchanged and still accepts them from the CLI).
+    // Portal decisions: workflow document gates and skills (ADR-0028, amending ADR-0026 §4;
+    // the review page shows a skill's full definition and digest). Mandatory standards are
+    // still reviewed with `eaeh approval review`.
     if decision {
         let id = path
             .split('/')
@@ -336,11 +370,12 @@ async fn inject_identity(
         if let Some(id) = id
             && let Ok(rec) = h.approvals.get(id).await
             && rec.workflow_instance_id.is_none()
+            && rec.subject_type != "skill"
         {
             return err(
                 StatusCode::FORBIDDEN,
                 "not_available_in_portal",
-                "the portal decides workflow document gates only; review skills and standards with `eaeh approval review`",
+                "the portal decides workflow documents and skills; review mandatory standards with `eaeh approval review`",
             );
         }
     }
@@ -360,6 +395,9 @@ async fn inject_identity(
     }
     if decision {
         tracing::info!(path = %path, approver = %acting.principal.id, "portal approval decision submitted");
+    }
+    if register {
+        tracing::info!(steward = %acting.principal.id, "portal skill registration submitted");
     }
     next.run(req).await
 }

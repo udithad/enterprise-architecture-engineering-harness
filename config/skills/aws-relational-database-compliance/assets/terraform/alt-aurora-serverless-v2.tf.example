@@ -1,0 +1,43 @@
+# PARTIAL SNIPPET (alternative to the Aurora cluster in main.tf). Reuses variables.tf, versions.tf and the subnet group.
+# RECOMMENDATION, not a mandate (CGS_1 s3 "should default"): variable or low-throughput workloads
+# (fewer than 50 queries/sec baseline, or batch cycles). Record the reason when deviating.
+# Standards: CSS_1 s2, s4; CGS_1 s2, s3, s4, s5; EAS_1 s2.
+
+resource "aws_rds_cluster" "serverless" {
+  cluster_identifier = "${var.environment}-batch-db"
+  engine             = "aurora-postgresql"
+  engine_version     = var.engine_version
+
+  storage_encrypted = true
+  kms_key_id        = var.kms_key_arn
+
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+  vpc_security_group_ids = var.vpc_security_group_ids
+
+  master_username             = var.master_username
+  manage_master_user_password = true
+
+  backup_retention_period   = var.backup_retention_days
+  copy_tags_to_snapshot     = true
+  deletion_protection       = local.is_prod
+  skip_final_snapshot       = !local.is_prod
+  final_snapshot_identifier = local.is_prod ? "${var.environment}-batch-db-final" : null
+
+  serverlessv2_scaling_configuration {
+    min_capacity = 0.5 # placeholder
+    max_capacity = 16  # CGS_1 s3 auto-scaling cap
+  }
+
+  tags = local.tags
+}
+
+resource "aws_rds_cluster_instance" "serverless" {
+  identifier         = "${var.environment}-batch-db-0"
+  cluster_identifier = aws_rds_cluster.serverless.id
+  engine             = aws_rds_cluster.serverless.engine
+  engine_version     = aws_rds_cluster.serverless.engine_version
+  instance_class     = "db.serverless"
+
+  publicly_accessible = false
+  tags                = local.tags
+}

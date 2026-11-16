@@ -15,6 +15,8 @@ const WorkflowDetailPage = page(() => import("@/pages/WorkflowDetail"), "Workflo
 const ApprovalsPage = page(() => import("@/pages/Approvals"), "ApprovalsPage");
 const ApprovalReviewPage = page(() => import("@/pages/ApprovalReview"), "ApprovalReviewPage");
 const ActivityPage = page(() => import("@/pages/Activity"), "ActivityPage");
+const SkillsPage = page(() => import("@/pages/Skills"), "SkillsPage");
+const SkillViewerPage = page(() => import("@/pages/SkillViewer"), "SkillViewerPage");
 const SettingsPage = page(() => import("@/pages/Settings"), "SettingsPage");
 const NotFoundPage = page(() => import("@/pages/NotFound"), "NotFoundPage");
 
@@ -33,6 +35,8 @@ export const routes = [
       { path: "approvals", element: s(<ApprovalsPage />) },
       { path: "approvals/:id", element: s(<ApprovalReviewPage />) },
       { path: "activity", element: s(<ActivityPage />) },
+      { path: "skills", element: s(<SkillsPage />) },
+      { path: "skills/:id/:version", element: s(<SkillViewerPage />) },
       { path: "settings", element: s(<SettingsPage />) },
       { path: "*", element: s(<NotFoundPage />) },
     ],

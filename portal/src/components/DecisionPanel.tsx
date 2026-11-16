@@ -103,14 +103,15 @@ export function DecisionPanel({ doc, session }: { doc: ApprovalDocument; session
     );
   }
 
-  // Initial portal scope: workflow document gates (Requirements, HLD, LLD). Skills and
-  // standards are reviewed in full with the CLI, which shows their content.
-  if (!a.workflow || !doc.document) {
+  // Portal decisions: workflow document gates (Requirements, HLD, LLD) and skills, whose
+  // full definition is shown (ADR-0028). Mandatory standards are reviewed with the CLI.
+  const isSkill = a.subject_type === "skill" && !!doc.skill;
+  if (!isSkill && (!a.workflow || !doc.document)) {
     return (
       <div className="rounded-md border border-slate-200 bg-muted/40 p-3 text-sm">
         <p className="font-medium">Review this {a.subject_type.replaceAll("_", " ")} with the CLI</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          The portal decides workflow document gates (Requirements, HLD, LLD). Use <code className="font-mono">eaeh approval review --as &lt;approver-profile&gt;</code>, which shows the full content first.
+          The portal decides workflow documents (Requirements, HLD, LLD) and skills. Use <code className="font-mono">eaeh approval review --as &lt;approver-profile&gt;</code>, which shows the full content first.
         </p>
       </div>
     );
@@ -166,7 +167,7 @@ export function DecisionPanel({ doc, session }: { doc: ApprovalDocument; session
   return (
     <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()} aria-label="Approval decision">
       <p className="text-xs text-muted-foreground">
-        Deciding as <b className="text-foreground">{session.approver.principal}</b> on version v{doc.document?.artifact.version ?? "?"} (hash{" "}
+        Deciding as <b className="text-foreground">{session.approver.principal}</b> on {isSkill ? `skill ${doc.skill!.reference}` : `version v${doc.document?.artifact.version ?? "?"}`} ({isSkill ? "digest" : "hash"}{" "}
         <span className="font-mono">{shortHash(reviewedHash)}</span>).
       </p>
       {blocked.length > 0 && (
@@ -194,9 +195,9 @@ export function DecisionPanel({ doc, session }: { doc: ApprovalDocument; session
         <Button type="button" variant="success" disabled={mutation.isPending || blocked.length > 0} onClick={() => open("approve")}>
           <CheckCircle2 /> Approve
         </Button>
-        <Button type="button" variant="warning" disabled={mutation.isPending || blocked.length > 0} onClick={() => open("request_changes")}>
+        {!isSkill && <Button type="button" variant="warning" disabled={mutation.isPending || blocked.length > 0} onClick={() => open("request_changes")}>
           <MessageSquareWarning /> Request changes
-        </Button>
+        </Button>}
         <Button type="button" variant="destructive" disabled={mutation.isPending || blocked.length > 0} onClick={() => open("reject")}>
           <XCircle /> Reject
         </Button>
@@ -219,7 +220,7 @@ export function DecisionPanel({ doc, session }: { doc: ApprovalDocument; session
             <>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {LABEL[confirm.decision]} {a.document_type} v{doc.document?.artifact.version ?? "?"}?
+                  {LABEL[confirm.decision]} {isSkill ? `skill ${doc.skill!.reference}` : `${a.document_type} v${doc.document?.artifact.version ?? "?"}`}?
                 </AlertDialogTitle>
                 <AlertDialogDescription>{CONSEQUENCE[confirm.decision]}</AlertDialogDescription>
               </AlertDialogHeader>
