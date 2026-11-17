@@ -7,6 +7,8 @@ import { EmptyState, ErrorState, LoadingRows } from "@/components/States";
 import { StatusBadge } from "@/components/StatusBadge";
 import { InstallationPanel } from "@/components/InstallationPanel";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FolderPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { projectStatus } from "@/lib/status";
@@ -32,7 +34,17 @@ export function ProjectsPage() {
   }, [q.data, search]);
   return (
     <>
-      <PageHeader title="Projects" description="Every project registered in this EAEH installation that your identity can access. Projects are registered with `eaeh project init`." />
+      <PageHeader
+        title="Projects"
+        description="Every project registered in this EAEH installation that your identity can access. Register a project here or with `eaeh project init`."
+        actions={
+          <Button asChild>
+            <Link to="/projects/register">
+              <FolderPlus /> Register existing project
+            </Link>
+          </Button>
+        }
+      />
       <div className="mb-4 flex flex-col gap-3">
         <InstallationPanel projectCount={q.data?.projects.length} />
         <div className="relative w-full sm:w-72">

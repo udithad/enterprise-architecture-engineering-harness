@@ -278,7 +278,6 @@ async fn portal_exposes_only_reads_and_the_decision_endpoint_and_ignores_client_
         ("GET", "/api/v1/tokens"),
         ("POST", "/api/v1/tokens"),
         ("POST", "/api/v1/principals"),
-        ("POST", "/api/v1/workflows"),
         ("POST", "/api/v1/knowledge/documents"),
         ("POST", "/api/v1/skills"),
         ("GET", "/api/v1/plugins"),

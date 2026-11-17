@@ -94,6 +94,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/principals/{id}/teams", post(set_principal_teams))
         // Governance Portal read models (ADR-0026)
         .merge(crate::views::routes())
+        // Workflow and task operations (PORTAL-OPERATIONS-PLAN)
+        .merge(crate::ops::routes())
         .layer(middleware::from_fn_with_state(state.clone(), authenticate));
     Router::new()
         .route("/v1/health", get(health))

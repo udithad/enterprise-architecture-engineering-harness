@@ -32,6 +32,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
 
+#[path = "restart.rs"]
+mod restart;
+pub use restart::{RestartPlan, StagePlan, TaskDetail};
+
 pub const ENGINE_COMPONENT: &str = "workflow-engine";
 
 /// What a work state asks the executor to do.
@@ -193,6 +197,28 @@ pub struct WorkflowData {
     /// every drive (and `eaeh artifact sync`) retries.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blocked: Option<BlockedGate>,
+    /// Derived runs (restart/retry/reinitiation, PORTAL-OPERATIONS-PLAN W1): approvals of
+    /// gates before the restart stage, carried from an ancestor run. `check_gate` accepts
+    /// them only through verified lineage (`workflow_lineage`).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub carried_approvals: BTreeMap<String, CarriedApproval>,
+    /// The run this one was derived from, and the stage it restarted at.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub restarted_from: Option<RestartOrigin>,
+}
+
+/// An approval made in an ancestor run, carried into a derived run.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CarriedApproval {
+    /// The run in which the approval was made (its subject is `"{origin}:{gate}"`).
+    pub origin_instance: WorkflowInstanceId,
+    pub approval_id: ApprovalId,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RestartOrigin {
+    pub source: WorkflowInstanceId,
+    pub stage: String,
 }
 
 /// Why an instance is held at an approved gate.
@@ -340,6 +366,18 @@ pub struct TaskSummary {
     pub error: Option<String>,
     pub created_at: String,
     pub updated_at: String,
+}
+
+/// Filters of [`WorkflowEngine::task_list`]; `None` means "any".
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TaskFilter {
+    pub workflow: Option<String>,
+    pub instance: Option<String>,
+    pub stage: Option<String>,
+    pub status: Option<String>,
+    pub since: Option<String>,
+    pub until: Option<String>,
+    pub before: Option<String>,
 }
 
 /// Static SQL prefix shared by the task read models (a macro so `concat!` keeps it `&'static`).
@@ -786,6 +824,57 @@ impl WorkflowEngine {
         .bind(scope.tenant.to_string())
         .bind(scope.project.to_string())
         .bind(i64::from(limit.clamp(1, 100)))
+        .fetch_all(self.db.pool())
+        .await
+        .db()?;
+        Ok(rows.into_iter().map(task_summary).collect())
+    }
+
+    /// Tasks of a project, most recently updated first, filtered by workflow definition,
+    /// stage, task status and update time (`since`/`until`, RFC 3339), with a keyset cursor
+    /// (`before` = the last `updated_at|id` of the previous page).
+    pub async fn task_list(
+        &self,
+        actor: &Principal,
+        scope: Scope,
+        filter: &TaskFilter,
+        limit: u32,
+    ) -> Result<Vec<TaskSummary>> {
+        self.authz
+            .authorize(actor, Action::WorkflowRead, Target::Scope(scope))?;
+        let (before_ts, before_id) = match filter.before.as_deref().and_then(|c| c.split_once('|')) {
+            Some((t, i)) => (Some(t.to_string()), Some(i.to_string())),
+            None => (None, None),
+        };
+        let rows: Vec<TaskRow> = sqlx::query_as(concat!(
+            task_select!(),
+            " WHERE t.tenant_id = ? AND t.project_id = ? \
+             AND (? IS NULL OR t.workflow_instance_id IN (SELECT w.id FROM workflow_instances w WHERE w.definition_id = ?)) \
+             AND (? IS NULL OR t.workflow_instance_id = ?) \
+             AND (? IS NULL OR t.state_name = ?) AND (? IS NULL OR t.status = ?) \
+             AND (? IS NULL OR t.updated_at >= ?) AND (? IS NULL OR t.updated_at <= ?) \
+             AND (? IS NULL OR t.updated_at < ? OR (t.updated_at = ? AND t.id < ?)) \
+             ORDER BY t.updated_at DESC, t.id DESC LIMIT ?"
+        ))
+        .bind(scope.tenant.to_string())
+        .bind(scope.project.to_string())
+        .bind(&filter.workflow)
+        .bind(&filter.workflow)
+        .bind(&filter.instance)
+        .bind(&filter.instance)
+        .bind(&filter.stage)
+        .bind(&filter.stage)
+        .bind(&filter.status)
+        .bind(&filter.status)
+        .bind(&filter.since)
+        .bind(&filter.since)
+        .bind(&filter.until)
+        .bind(&filter.until)
+        .bind(&before_ts)
+        .bind(&before_ts)
+        .bind(&before_ts)
+        .bind(&before_id)
+        .bind(i64::from(limit.clamp(1, 200)))
         .fetch_all(self.db.pool())
         .await
         .db()?;
@@ -1316,7 +1405,20 @@ impl WorkflowEngine {
             c.issues
                 .push(format!("approval {aid} is {:?}, not approved", rec.status));
         }
-        if rec.subject_ref != format!("{}:{g}", inst.id) || rec.scope != inst.scope {
+        // Own approval, or one carried from an ancestor run through verified lineage.
+        let expected_subject = match inst.data.carried_approvals.get(g) {
+            Some(cr) if cr.approval_id == *aid => {
+                let ancestors = self.ancestors(inst.id).await.unwrap_or_default();
+                if !ancestors.contains(&cr.origin_instance) {
+                    c.issues.push(format!(
+                        "carried approval {aid} is not from an ancestor run of this workflow"
+                    ));
+                }
+                format!("{}:{g}", cr.origin_instance)
+            }
+            _ => format!("{}:{g}", inst.id),
+        };
+        if rec.subject_ref != expected_subject || rec.scope != inst.scope {
             c.issues
                 .push(format!("approval {aid} belongs to another workflow or project"));
         }

@@ -37,6 +37,18 @@ pub use tokio_util::sync::CancellationToken;
 
 const COMPONENT: &str = "execution-coordinator";
 
+/// Tools of the task-scoped MCP server (`eaeh mcp --task`): the only tools a worker session
+/// uses. One list for the server, the worker's pre-attempt check and the tests.
+pub const TASK_MCP_TOOLS: [&str; 7] = [
+    "eaeh_task_get",
+    "eaeh_task_section",
+    "eaeh_task_ack",
+    "eaeh_task_blob",
+    "eaeh_task_tool",
+    "eaeh_task_validate",
+    "eaeh_task_submit",
+];
+
 // ------------------------------------------------------------------ provider interface
 
 /// Why an execution attempt did not produce an accepted result.
@@ -53,8 +65,24 @@ pub enum FailureClass {
     UsageLimit,
     /// The attempt exceeded `task_timeout_secs`.
     Timeout,
-    /// Submissions were made but none was accepted before the session ended.
+    /// Submissions were made but none was accepted before the session ended
+    /// (reported as `result_validation_failed`).
     InvalidOutput,
+    /// The AI client could not retrieve or read its task package (not acknowledged). Does not
+    /// use an execution attempt or a correction attempt; bounded by `max_context_attempts`.
+    ContextDeliveryFailed,
+    /// The attempt was denied access to its own task context (no, expired or revoked
+    /// capability, a denied tool permission, or a worker/MCP build mismatch). Not retried:
+    /// it needs a fix (usually restarting the worker).
+    ContextAccessDenied,
+    /// The context the client assembled differs from the delivered package (wrong version or
+    /// checksum). The attempt is repeated with a fresh delivery, bounded like delivery failures.
+    ContextIntegrityFailed,
+    /// The task package was delivered and acknowledged, then the client failed while working.
+    AiExecutionFailed,
+    /// The client submitted, but EAEH could not store or process the submission
+    /// (infrastructure, not the AI's result).
+    SubmissionFailed,
     /// The client ended without submitting a result.
     NoSubmission,
     /// The client reported an error while working (tool or MCP failure).
@@ -75,20 +103,52 @@ impl FailureClass {
             Self::BillingUnsafe => "billing_unsafe",
             Self::UsageLimit => "usage_limit",
             Self::Timeout => "timeout",
-            Self::InvalidOutput => "invalid_output",
+            Self::InvalidOutput => "result_validation_failed",
+            Self::ContextDeliveryFailed => "context_delivery_failed",
+            Self::AiExecutionFailed => "ai_execution_failed",
             Self::NoSubmission => "no_submission",
             Self::ToolFailure => "tool_failure",
             Self::Interrupted => "interrupted",
             Self::Crashed => "crashed",
-            Self::Cancelled => "cancelled",
+            Self::Cancelled => "task_cancelled",
+            Self::ContextAccessDenied => "context_access_denied",
+            Self::ContextIntegrityFailed => "context_integrity_failed",
+            Self::SubmissionFailed => "submission_failed",
         }
+    }
+
+    pub fn from_str_name(s: &str) -> Option<Self> {
+        [
+            Self::CliUnavailable,
+            Self::AuthUnavailable,
+            Self::BillingUnsafe,
+            Self::UsageLimit,
+            Self::Timeout,
+            Self::InvalidOutput,
+            Self::ContextDeliveryFailed,
+            Self::ContextAccessDenied,
+            Self::ContextIntegrityFailed,
+            Self::AiExecutionFailed,
+            Self::SubmissionFailed,
+            Self::NoSubmission,
+            Self::ToolFailure,
+            Self::Interrupted,
+            Self::Crashed,
+            Self::Cancelled,
+        ]
+        .into_iter()
+        .find(|c| c.as_str() == s)
     }
 
     /// Conditions that another attempt cannot fix on its own: the task stops as `blocked`.
     pub fn blocks(self) -> bool {
         matches!(
             self,
-            Self::CliUnavailable | Self::AuthUnavailable | Self::BillingUnsafe | Self::UsageLimit
+            Self::CliUnavailable
+                | Self::AuthUnavailable
+                | Self::BillingUnsafe
+                | Self::UsageLimit
+                | Self::ContextAccessDenied
         )
     }
 
@@ -111,7 +171,24 @@ impl FailureClass {
             Self::InvalidOutput => {
                 "the AI client's results failed validation; see the task feedback (`eaeh task show <task>`)"
             }
-            Self::NoSubmission => "the AI client ended without submitting a result",
+            Self::ContextDeliveryFailed => {
+                "the AI client could not retrieve or read its task package; see `eaeh worker history` (delivery column) and `eaeh worker log`; after fixing the cause run `eaeh worker retry <task>`"
+            }
+            Self::ContextAccessDenied => {
+                "the AI client was not allowed to read its task context (see `eaeh worker history`). Most often the worker is an older build than the MCP server: run `eaeh worker stop` then `eaeh worker start`, then `eaeh worker retry <task>`"
+            }
+            Self::ContextIntegrityFailed => {
+                "the context the AI assembled did not match the delivered package; it is delivered again automatically"
+            }
+            Self::AiExecutionFailed => {
+                "the AI client failed while working on a delivered task; see `eaeh worker log`"
+            }
+            Self::SubmissionFailed => {
+                "EAEH could not process the AI's submission (infrastructure); see `eaeh worker log`, fix it, then `eaeh worker retry <task>`"
+            }
+            Self::NoSubmission => {
+                "the AI client had its task (acknowledged) but ended without submitting a result"
+            }
             Self::ToolFailure => "the AI client reported an error; see `eaeh worker log`",
             Self::Interrupted => "the worker stopped while the task ran; it is retried automatically",
             Self::Crashed => "the AI client process ended unexpectedly; see `eaeh worker log`",
@@ -209,6 +286,8 @@ pub struct ClientReport {
     /// Credential source the client said it used (`none` = subscription login).
     pub auth_source: Option<String>,
     pub final_text: String,
+    /// Tools the client reported as denied (needing an approval nobody can give).
+    pub permission_denials: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -230,6 +309,11 @@ pub trait ExternalExecutor: Send + Sync {
     fn client_label(&self) -> &str;
     async fn preflight(&self) -> Preflight;
     async fn execute(&self, req: &ExecutionRequest, cancel: CancellationToken) -> ExecResult;
+    /// The client reaches EAEH through the task-scoped MCP server: the worker then verifies
+    /// that server before each attempt (build skew would otherwise surface as denied tools).
+    fn needs_mcp_server(&self) -> bool {
+        false
+    }
 }
 
 /// Desktop or log notification of events that need a person.
@@ -304,6 +388,9 @@ pub fn validate_config(cfg: &CoordinatorConfig) -> Result<()> {
             "[execution.coordinator] {m}"
         )))
     };
+    if !(1..=10).contains(&cfg.max_context_attempts) {
+        return bad("max_context_attempts must be 1..=10");
+    }
     if !(1..=10).contains(&cfg.max_attempts) {
         return bad("max_attempts must be 1..=10");
     }
@@ -329,19 +416,26 @@ pub fn task_prompt(task_id: &str) -> String {
         "You are the AI execution client of EAEH (Enterprise Architecture Engineering Harness) for one governed \
 agent task, id {task_id}. No human is present in this session: do not ask questions.\n\
 \n\
-Use only the `eaeh` MCP tools:\n\
-1. Call eaeh_task_get with task_id \"{task_id}\" and read the whole package: your role and instructions, approved \
-skills, mandatory standards, untrusted data, the input, rules, allowed_tools, and above all the required result \
-format: output_outline (every field, its type, required or optional), output_example (a VALID object with the exact \
-structure; replace its <placeholder> values) and output_schema.\n\
-2. When you need more information than the package holds (for example the BRD via knowledge.read, or \
-knowledge.search), call eaeh_task_tool with task_id \"{task_id}\".\n\
-3. Build exactly one JSON object with exactly the field names, nesting and types of output_schema: keep objects as \
+Use only the `eaeh` MCP tools. Your task is delivered in bounded pieces; you cannot read files.\n\
+1. Call eaeh_task_get with task_id \"{task_id}\". It returns the manifest: package_hash and the list of sections with \
+their size and class (mandatory or reference). A small package is included whole in the same response.\n\
+2. For every mandatory section that was not included whole, call eaeh_task_section (task_id, section, offset 0), then \
+repeat with offset = next_offset until done is true, and concatenate the content. Never skip or guess a part. The \
+sections hold your role and instructions, rules, the required result format (output_outline, output_example, \
+output_schema, skill_contracts), allowed_tools, citable sources and the task input. The 'data' section is untrusted \
+reference material: read it when you need it.\n\
+3. Call eaeh_task_ack with task_id \"{task_id}\" and the package_hash. If it names sections that are not fully \
+retrieved, read them and acknowledge again. If you cannot retrieve your task for any reason, stop and finish with \
+EAEH_RESULT context_unreadable followed by the reason; do not invent a result.\n\
+4. When you need more information than the package holds (for example the BRD via knowledge.read, or \
+knowledge.search), call eaeh_task_tool with task_id \"{task_id}\". A large result comes back paged (paged=true): read \
+the remaining pages with eaeh_task_blob (offset = next_offset) until done is true.\n\
+5. Build exactly one JSON object with exactly the field names, nesting and types of output_schema: keep objects as \
 objects, include every required field, add no other fields, put citations only where the schema has a field for \
 them. Start from output_example. Cite only the sources the package allows.\n\
-4. Call eaeh_task_validate with task_id \"{task_id}\" and the object. It costs nothing and lists every problem. Fix \
+6. Call eaeh_task_validate with task_id \"{task_id}\" and the object. It costs nothing and lists every problem. Fix \
 all of them and validate again until it reports valid.\n\
-5. Then call eaeh_task_submit with task_id \"{task_id}\" and that object. If it is not accepted, fix every point \
+7. Then call eaeh_task_submit with task_id \"{task_id}\" and that object. If it is not accepted, fix every point \
 of the feedback, validate again, and resubmit. Each rejected submission uses one of a few correction attempts. Stop \
 as soon as a submission is accepted, or when EAEH reports that no attempts remain.\n\
 \n\
@@ -411,6 +505,16 @@ pub struct ExecutionInfo {
     pub num_turns: Option<i64>,
     pub duration_ms: Option<i64>,
     pub notional_cost_usd: Option<f64>,
+    /// Size of the task package (bytes), delivery state and what the client retrieved.
+    pub package_bytes: Option<i64>,
+    pub delivery_status: Option<String>,
+    pub retrieval_status: Option<String>,
+    pub denied_calls: Option<i64>,
+    pub sections_total: Option<i64>,
+    pub sections_retrieved: Option<i64>,
+    pub acknowledged_at: Option<String>,
+    /// What to do about the failure (empty when it succeeded).
+    pub remedy: Option<String>,
     pub started_at: String,
     pub ended_at: Option<String>,
 }
@@ -539,7 +643,8 @@ pub async fn executions(
     let rows = sqlx::query(
         "SELECT id, task_id, workflow_instance_id, state_name, agent_definition, worker_id, provider, client_version, \
          execution_mode, auth_status, attempt, outcome, failure_class, detail, task_status_after, num_turns, duration_ms, \
-         notional_cost_usd, started_at, ended_at FROM external_executions \
+         notional_cost_usd, package_bytes, delivery_status, retrieval_status, denied_calls, sections_total, sections_retrieved, acknowledged_at, \
+         started_at, ended_at FROM external_executions \
          WHERE tenant_id = ? AND project_id = ? AND (? IS NULL OR task_id = ?) ORDER BY started_at DESC, attempt DESC LIMIT ?",
     )
     .bind(scope.tenant.to_string())
@@ -572,6 +677,18 @@ pub async fn executions(
                 num_turns: r.try_get("num_turns").db()?,
                 duration_ms: r.try_get("duration_ms").db()?,
                 notional_cost_usd: r.try_get("notional_cost_usd").db()?,
+                package_bytes: r.try_get("package_bytes").db()?,
+                delivery_status: r.try_get("delivery_status").db()?,
+                retrieval_status: r.try_get("retrieval_status").db()?,
+                denied_calls: r.try_get("denied_calls").db()?,
+                sections_total: r.try_get("sections_total").db()?,
+                sections_retrieved: r.try_get("sections_retrieved").db()?,
+                acknowledged_at: r.try_get("acknowledged_at").db()?,
+                remedy: r
+                    .try_get::<Option<String>, _>("failure_class")
+                    .db()?
+                    .and_then(|c| FailureClass::from_str_name(&c))
+                    .map(|c| c.remedy().to_string()),
                 started_at: r.try_get("started_at").db()?,
                 ended_at: r.try_get("ended_at").db()?,
             })
@@ -581,14 +698,60 @@ pub async fn executions(
 
 /// Make a `blocked` or `exhausted` hand-off eligible for automatic execution again.
 pub async fn retry_task(h: &Harness, actor: &Principal, task: TaskId) -> Result<Scope> {
-    let row: Option<(String, String, String, String)> = sqlx::query_as(
-        "SELECT tenant_id, project_id, status, dispatch_state FROM external_tasks WHERE id = ?",
+    retry_task_checked(h, actor, task, None).await.map(|r| r.scope)
+}
+
+/// What a retry changed, and the chain it belongs to.
+#[derive(Debug, Clone, Serialize)]
+pub struct RetryReport {
+    #[serde(skip)]
+    pub scope: Scope,
+    pub task: String,
+    pub stage: String,
+    pub workflow: String,
+    pub workflow_status: String,
+    pub workflow_stage: String,
+    pub package_hash: String,
+    pub submissions: i64,
+    pub previous_dispatch_state: String,
+    pub previous_failure: Option<String>,
+    /// Earlier tasks of the same workflow and their status (accepted results are preserved).
+    pub predecessors: Vec<(String, String, String)>,
+    pub revoked_capabilities: u64,
+}
+
+/// Make a stopped hand-off eligible again **after the cause was fixed**: verifies that the
+/// task belongs to the intended workflow (`expect_workflow`) and that the workflow still waits
+/// at that very stage; keeps the package (same version), the submissions and every accepted
+/// result; resets only the dispatch and delivery counters; revokes stale capabilities.
+pub async fn retry_task_checked(
+    h: &Harness,
+    actor: &Principal,
+    task: TaskId,
+    expect_workflow: Option<&str>,
+) -> Result<RetryReport> {
+    type R = (
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        i64,
+        Option<String>,
+        String,
+    );
+    let row: Option<R> = sqlx::query_as(
+        "SELECT e.tenant_id, e.project_id, e.status, e.dispatch_state, e.workflow_instance_id, e.state_name, e.package_hash,          w.status, e.submissions, e.last_failure, w.state FROM external_tasks e JOIN workflow_instances w ON w.id = e.workflow_instance_id \
+         WHERE e.id = ?",
     )
     .bind(task.to_string())
     .fetch_optional(h.db.pool())
     .await
     .db()?;
-    let (t, p, status, dispatch) =
+    let (t, p, status, dispatch, wf, stage, hash, wf_status, submissions, last_failure, wf_state) =
         row.ok_or_else(|| HarnessError::not_found(format!("external task {task} not found")))?;
     let scope = Scope::new(t.parse()?, p.parse()?);
     if !actor.can_access(&scope) {
@@ -596,9 +759,21 @@ pub async fn retry_task(h: &Harness, actor: &Principal, task: TaskId) -> Result<
     }
     h.authz
         .authorize(actor, Action::TaskExecuteExternal, Target::Scope(scope))?;
+    if let Some(w) = expect_workflow
+        && w != wf
+    {
+        return Err(HarnessError::conflict(format!(
+            "task {task} belongs to workflow {wf}, not {w}: nothing was changed. `eaeh task list` shows each task with its workflow"
+        )));
+    }
     if status != "awaiting" {
         return Err(HarnessError::conflict(format!(
             "external task {task} is {status}; only a task that awaits a result can be retried"
+        )));
+    }
+    if wf_status != "waiting_external" || wf_state != stage {
+        return Err(HarnessError::conflict(format!(
+            "workflow {wf} is {wf_status} at '{wf_state}', not waiting for the AI at '{stage}': retrying this task would do nothing. Nothing was changed"
         )));
     }
     if dispatch == "leased" {
@@ -606,9 +781,21 @@ pub async fn retry_task(h: &Harness, actor: &Principal, task: TaskId) -> Result<
             "external task {task} is being executed by a worker"
         )));
     }
+    let predecessors: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT id, state_name, status FROM external_tasks WHERE workflow_instance_id = ? AND id <> ? ORDER BY created_at",
+    )
+    .bind(&wf)
+    .bind(task.to_string())
+    .fetch_all(h.db.pool())
+    .await
+    .db()?;
+    let revoked = h
+        .agents
+        .external_revoke_task_capabilities(&task.to_string(), "retry")
+        .await?;
     let mut tx = h.db.write().await?;
     sqlx::query(
-        "UPDATE external_tasks SET dispatch_state = 'pending', dispatch_attempts = 0, next_attempt_at = NULL, \
+        "UPDATE external_tasks SET dispatch_state = 'pending', dispatch_attempts = 0, context_failures = 0, next_attempt_at = NULL, \
          last_failure = NULL, lease_owner = NULL, lease_expires_at = NULL WHERE id = ? AND dispatch_state <> 'leased'",
     )
     .bind(task.to_string())
@@ -625,10 +812,23 @@ pub async fn retry_task(h: &Harness, actor: &Principal, task: TaskId) -> Result<
             AuditOutcome::Recorded,
         )
         .scope(scope)
-        .details(json!({"previous_dispatch_state": dispatch})),
+        .details(json!({"previous_dispatch_state": dispatch, "workflow": wf, "stage": stage, "package_hash": hash, "previous_failure": last_failure, "revoked_capabilities": revoked})),
     )
     .await?;
-    Ok(scope)
+    Ok(RetryReport {
+        scope,
+        task: task.to_string(),
+        stage,
+        workflow: wf,
+        workflow_status: wf_status,
+        workflow_stage: wf_state,
+        package_hash: hash,
+        submissions,
+        previous_dispatch_state: dispatch,
+        previous_failure: last_failure,
+        predecessors,
+        revoked_capabilities: revoked,
+    })
 }
 
 // ------------------------------------------------------------------ coordinator
@@ -1146,6 +1346,24 @@ impl Coordinator {
             self.executor.provider(),
             self.cfg.max_attempts
         ));
+        // The attempt's capability: read of exactly this task's own context, until the attempt
+        // timeout passes (no margin: it never outlives the attempt), the attempt ends or the task is retried / cancelled.
+        let ttl = i64::try_from(self.cfg.task_timeout_secs).unwrap_or(1800);
+        self.h
+            .agents
+            .external_issue_capability(&self.principal, &c.task, &exec_id, ttl)
+            .await?;
+        if let Err(why) = self.check_mcp_server(&c, &exec_id).await {
+            self.conclude(
+                &c,
+                attempt,
+                &exec_id,
+                Some((FailureClass::ContextAccessDenied, why)),
+                None,
+            )
+            .await?;
+            return Ok(false);
+        }
         let workdir = self.workdir_root.join(&exec_id);
         std::fs::create_dir_all(&workdir)?;
         restrict_dir(&workdir);
@@ -1155,7 +1373,7 @@ impl Coordinator {
                 .mcp
                 .args
                 .iter()
-                .map(|a| a.replace("{task}", &c.task))
+                .map(|a| a.replace("{task}", &c.task).replace("{execution}", &exec_id))
                 .collect(),
             env: self.mcp.env.clone(),
         };
@@ -1224,6 +1442,68 @@ impl Coordinator {
         };
         self.conclude(&c, attempt, &exec_id, failure, report.as_ref())
             .await
+    }
+
+    /// Verify that the MCP server the client will use exposes exactly the tools this worker's
+    /// protocol uses. A worker started before an upgrade would otherwise launch Claude Code
+    /// with a stale tool list and every new tool would be denied for lack of an approval.
+    async fn check_mcp_server(&self, c: &Candidate, exec_id: &str) -> std::result::Result<(), String> {
+        if !self.executor.needs_mcp_server() {
+            return Ok(());
+        }
+        let args: Vec<String> = self
+            .mcp
+            .args
+            .iter()
+            .map(|a| a.replace("{task}", &c.task).replace("{execution}", exec_id))
+            .collect();
+        let upto = args.iter().position(|a| a == "mcp").map_or(args.len(), |i| i + 1);
+        let mut cmd = tokio::process::Command::new(&self.mcp.program);
+        cmd.args(&args[..upto])
+            .arg("--task-tools")
+            .envs(self.mcp.env.iter().cloned())
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .kill_on_drop(true);
+        let out = tokio::time::timeout(Duration::from_secs(20), cmd.output())
+            .await
+            .map_err(|_| "the MCP server did not answer `eaeh mcp --task-tools` within 20 s".to_string())?
+            .map_err(|e| format!("cannot run the MCP server {}: {e}", self.mcp.program.display()))?;
+        let theirs: Vec<String> = serde_json::from_slice(&out.stdout).map_err(|_| {
+            "the MCP server is an older build (it does not answer `eaeh mcp --task-tools`): run `eaeh worker stop` and `eaeh worker start` so the worker uses the same build".to_string()
+        })?;
+        let ours: Vec<&str> = TASK_MCP_TOOLS.to_vec();
+        // (names are shown without the `eaeh_` prefix: stored details are scanned for token-like words)
+        let missing: Vec<&str> = ours
+            .iter()
+            .copied()
+            .filter(|t| !theirs.iter().any(|x| x == t))
+            .collect();
+        let extra: Vec<&String> = theirs.iter().filter(|t| !ours.contains(&t.as_str())).collect();
+        if missing.is_empty() && extra.is_empty() {
+            return Ok(());
+        }
+        Err(format!(
+            "worker and MCP server are different builds (server lacks: {}; server has unknown: {}): run `eaeh worker stop` then `eaeh worker start`",
+            if missing.is_empty() {
+                "-".into()
+            } else {
+                missing
+                    .iter()
+                    .map(|m| m.trim_start_matches("eaeh_"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            },
+            if extra.is_empty() {
+                "-".into()
+            } else {
+                extra
+                    .iter()
+                    .map(|s| s.trim_start_matches("eaeh_"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            }
+        ))
     }
 
     async fn extend_lease(&self, task: &str) -> Result<()> {
@@ -1296,6 +1576,16 @@ impl Coordinator {
     ) -> Result<bool> {
         let (status, submissions, wf, feedback) = self.task_state(&c.task).await?;
         let now = self.now();
+        let delivery = self.h.agents.delivery_summary(&c.task, exec_id).await?;
+        let package_bytes = self.h.agents.package_bytes(&c.task).await?;
+        let context_failures: i64 =
+            sqlx::query_as::<_, (i64,)>("SELECT context_failures FROM external_tasks WHERE id = ?")
+                .bind(&c.task)
+                .fetch_optional(self.h.db.pool())
+                .await
+                .db()?
+                .map_or(0, |r| r.0);
+        let acknowledged = delivery.as_ref().is_some_and(|d| d.status == "acknowledged");
         let redact = |s: &str| -> String {
             self.h
                 .redactor
@@ -1353,9 +1643,90 @@ impl Coordinator {
                         )
                     }
                 });
+                // Attribute the failure: delivery, authorization, AI execution or submission.
+                let denied_tools = report.map(|r| r.permission_denials.clone()).unwrap_or_default();
+                let kind = delivery.as_ref().and_then(|d| d.failure_kind.clone());
+                let reason = delivery
+                    .as_ref()
+                    .and_then(|d| d.failure_reason.clone())
+                    .unwrap_or_default();
+                let fell_short = matches!(
+                    class,
+                    FailureClass::NoSubmission | FailureClass::ToolFailure | FailureClass::Crashed
+                );
+                let (class, why) = match class {
+                    _ if fell_short && !denied_tools.is_empty() => (
+                        FailureClass::ContextAccessDenied,
+                        format!(
+                            "the AI session was refused {} call(s) of EAEH tools ({}) because they needed an approval nobody can give in a worker session; the worker and the MCP server are probably different builds; client ended: {why}",
+                            denied_tools.len(),
+                            denied_tools
+                                .iter()
+                                .take(5)
+                                .cloned()
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        ),
+                    ),
+                    _ if fell_short && kind.as_deref() == Some("access_denied") => (
+                        FailureClass::ContextAccessDenied,
+                        format!("EAEH denied the attempt's context access: {reason}; client ended: {why}"),
+                    ),
+                    _ if fell_short && !acknowledged && kind.as_deref() == Some("integrity") => (
+                        FailureClass::ContextIntegrityFailed,
+                        format!("{reason}; client ended: {why}"),
+                    ),
+                    _ if fell_short && acknowledged && kind.as_deref() == Some("submission_failed") => (
+                        FailureClass::SubmissionFailed,
+                        format!("{reason}; client ended: {why}"),
+                    ),
+                    _ if fell_short && !acknowledged && submissions == 0 => {
+                        let how = match &delivery {
+                            None => {
+                                "the client never requested the task package (no eaeh_task_get reached EAEH)"
+                                    .to_string()
+                            }
+                            Some(d) => format!(
+                                "the task package was not acknowledged: delivery {} ({}){}",
+                                d.status,
+                                d.retrieval(),
+                                d.failure_reason
+                                    .as_ref()
+                                    .map(|r| format!("; {r}"))
+                                    .unwrap_or_default()
+                            ),
+                        };
+                        (
+                            FailureClass::ContextDeliveryFailed,
+                            format!(
+                                "{how}; package {} bytes; client ended: {why}",
+                                package_bytes.unwrap_or(0)
+                            ),
+                        )
+                    }
+                    FailureClass::ToolFailure | FailureClass::Crashed => {
+                        (FailureClass::AiExecutionFailed, why)
+                    }
+                    other => (other, why),
+                };
                 if class == FailureClass::Interrupted {
                     // Not the task's fault: give the attempt back and run it again later.
                     ("interrupted", "pending", Some(class), None, why)
+                } else if matches!(
+                    class,
+                    FailureClass::ContextDeliveryFailed | FailureClass::ContextIntegrityFailed
+                ) {
+                    // Not an execution attempt and not a correction attempt: bounded separately.
+                    if context_failures + 1 >= i64::from(self.cfg.max_context_attempts) {
+                        ("blocked", "blocked", Some(class), None, why)
+                    } else {
+                        let backoff = self
+                            .cfg
+                            .backoff_secs
+                            .saturating_mul(1u64 << context_failures.clamp(0, 10));
+                        let at = ts(now + chrono::Duration::seconds(i64::try_from(backoff).unwrap_or(3600)));
+                        ("retry", "retry_wait", Some(class), Some(at), why)
+                    }
                 } else if class.blocks() {
                     ("blocked", "blocked", Some(class), None, why)
                 } else if attempt >= i64::from(self.cfg.max_attempts) {
@@ -1378,20 +1749,36 @@ impl Coordinator {
             ),
         };
         let detail = redact(&detail);
-        let attempts_after = if outcome == "interrupted" {
+        let context_failed = matches!(
+            class,
+            Some(
+                FailureClass::ContextDeliveryFailed
+                    | FailureClass::ContextIntegrityFailed
+                    | FailureClass::ContextAccessDenied
+            )
+        );
+        let attempts_after = if outcome == "interrupted" || context_failed {
             attempt - 1
         } else {
             attempt
         };
+        let context_failures_after = if context_failed {
+            context_failures + 1
+        } else if acknowledged {
+            0
+        } else {
+            context_failures
+        };
         let mut tx = self.h.db.write().await?;
         sqlx::query(
             "UPDATE external_tasks SET dispatch_state = ?, lease_owner = NULL, lease_expires_at = NULL, next_attempt_at = ?, \
-             last_failure = ?, dispatch_attempts = ? WHERE id = ? AND (lease_owner = ? OR lease_owner IS NULL)",
+             last_failure = ?, dispatch_attempts = ?, context_failures = ? WHERE id = ? AND (lease_owner = ? OR lease_owner IS NULL)",
         )
         .bind(dispatch)
         .bind(&next)
         .bind(class.map(|k| format!("{}: {detail}", k.as_str())))
         .bind(attempts_after)
+        .bind(context_failures_after)
         .bind(&c.task)
         .bind(&self.worker_id)
         .execute(tx.conn())
@@ -1399,7 +1786,8 @@ impl Coordinator {
         .db()?;
         sqlx::query(
             "UPDATE external_executions SET outcome = ?, failure_class = ?, detail = ?, task_status_after = ?, submissions_after = ?, \
-             num_turns = ?, duration_ms = ?, notional_cost_usd = ?, ended_at = ? WHERE id = ?",
+             num_turns = ?, duration_ms = ?, notional_cost_usd = ?, ended_at = ?, package_bytes = ?, delivery_status = ?, \
+             retrieval_status = ?, denied_calls = ?, sections_total = ?, sections_retrieved = ?, acknowledged_at = ? WHERE id = ?",
         )
         .bind(outcome)
         .bind(class.map(FailureClass::as_str))
@@ -1410,6 +1798,13 @@ impl Coordinator {
         .bind(report.and_then(|r| r.duration_ms))
         .bind(report.and_then(|r| r.notional_cost_usd))
         .bind(ts(now))
+        .bind(package_bytes.map(|b| i64::try_from(b).unwrap_or(i64::MAX)))
+        .bind(delivery.as_ref().map_or("not_requested", |d| d.status.as_str()))
+        .bind(delivery.as_ref().map(|d| d.retrieval()))
+        .bind(delivery.as_ref().map(|d| i64::try_from(d.denied_calls).unwrap_or(i64::MAX)))
+        .bind(delivery.as_ref().map(|d| i64::try_from(d.sections_total).unwrap_or(0)))
+        .bind(delivery.as_ref().map(|d| i64::try_from(d.sections_retrieved).unwrap_or(0)))
+        .bind(delivery.as_ref().and_then(|d| d.acknowledged_at.clone()))
         .bind(exec_id)
         .execute(tx.conn())
         .await
@@ -1434,12 +1829,26 @@ impl Coordinator {
                     "notional_cost_usd": report.and_then(|r| r.notional_cost_usd),
                     "auth_source": report.and_then(|r| r.auth_source.clone()),
                     "next_attempt_at": next,
+                    "package_bytes": package_bytes,
+                    "delivery_status": delivery.as_ref().map_or("not_requested", |d| d.status.as_str()),
+                    "retrieval": delivery.as_ref().map(|d| d.retrieval()),
+                    "context_failures": context_failures_after,
                 })),
             )
             .await?;
         tx.commit().await?;
+        // The attempt is over: its capability to read the task context ends with it.
+        let _ = self.h.agents.external_revoke_capability(exec_id, outcome).await;
         let line = match outcome {
             "succeeded" => format!("✔ {} accepted (task {}, attempt {attempt})", c.state, c.task),
+            "retry" if context_failed => format!(
+                "↻ {} could not read its task ({}): {detail}; delivery retry {}/{} at {} (no attempt used)",
+                c.state,
+                class.map(FailureClass::as_str).unwrap_or(""),
+                context_failures_after + 1,
+                self.cfg.max_context_attempts,
+                next.clone().unwrap_or_default()
+            ),
             "retry" => format!(
                 "↻ {} not accepted ({}): {detail}; retry {}/{} at {}",
                 c.state,

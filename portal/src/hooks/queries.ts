@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, request } from "@/lib/api";
 import { isActive } from "@/lib/status";
 import type {
   ActivityItem,
@@ -15,6 +15,19 @@ import type {
   WorkflowDefinition,
   WorkflowDetail,
   WorkflowView,
+  RestartPlan,
+  TaskSummary as TaskSummaryT,
+  TaskDetailView,
+  TaskQueueItem,
+  ProjectPlan,
+  ExecutionAttempt,
+  WorkerInfo,
+  ExternalHandoff,
+  Integrations,
+  DirListing,
+  Inspection,
+  RegisterInput,
+  RegisterResult,
 } from "@/lib/types";
 
 // Polling: frequent enough to follow live work, light enough for a local SQLite backend.
@@ -70,12 +83,12 @@ export function useProjectOverview(id: string) {
   });
 }
 
-export function useWorkflowQueue(status: "active" | "all", project: string) {
+export function useWorkflowQueue(status: "active" | "all", project: string, f: { definition?: string; stage?: string; since?: string } = {}) {
   return useQuery({
-    queryKey: qk.workflows(status, project),
+    queryKey: [...qk.workflows(status, project), f],
     queryFn: () =>
-      api.get<Page<{ project_id: string; project_name: string; workflow: WorkflowView }>>(
-        `/v1/workflow-queue${qs({ status, project_id: project === "all" ? undefined : project })}`,
+      api.get<Page<{ project_id: string; project_name: string; workflow: WorkflowView; pending_action?: import("@/lib/types").PendingAction; current_task?: TaskSummaryT | null }>>(
+        `/v1/workflow-queue${qs({ status, project_id: project === "all" ? undefined : project, definition: f.definition || undefined, stage: f.stage || undefined, since: f.since ? new Date(f.since).toISOString() : undefined })}`,
       ),
     refetchInterval: POLL.lists,
   });
@@ -180,5 +193,126 @@ export function useDecision() {
     },
   });
 }
+
+// ---------------------------------------------------------------- operations (operator)
+
+const enc = encodeURIComponent;
+
+/** Invalidate everything after a state change; the backend is the source of truth. */
+function useOp<I, O>(fn: (i: I) => Promise<O>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSettled: () => {
+      void qc.invalidateQueries();
+    },
+  });
+}
+
+export const useResume = () => useOp((id: string) => api.post<{ id: string }>(`/v1/workflows/${enc(id)}/resume`, {}));
+export const useCancel = () => useOp((id: string) => api.post<{ id: string; status: string }>(`/v1/workflows/${enc(id)}/cancel`, {}));
+
+/** Preview only: nothing is written. */
+export function useRestartPreview() {
+  return useMutation({
+    mutationFn: (i: { id: string; stage?: string; input?: unknown }) =>
+      api.post<RestartPlan>(`/v1/workflows/${enc(i.id)}/restart/preview`, { stage: i.stage, input: i.input }),
+  });
+}
+
+export const useRestart = () =>
+  useOp((i: { id: string; stage: string; fingerprint: string; reason: string; input?: unknown }) =>
+    api.post<{ id: string; source: string; stage: string; source_cancelled: boolean }>(`/v1/workflows/${enc(i.id)}/restart`, {
+      stage: i.stage,
+      fingerprint: i.fingerprint,
+      reason: i.reason,
+      input: i.input,
+    }),
+  );
+
+export const useTaskRetry = () => useOp((id: string) => api.post<{ task: string }>(`/v1/tasks/${enc(id)}/retry`, {}));
+
+export const useStartWorkflow = () =>
+  useOp((i: { definition: string; project_id: string; input: unknown }) => api.post<{ id: string; status: string }>("/v1/workflows", i));
+
+export const useEnsureWorker = () =>
+  useOp((project: string) => request<{ worker: string | null }>(`/portal/projects/${enc(project)}/worker`, { method: "POST", body: "{}" }));
+
+export function useTaskDetail(id: string) {
+  return useQuery({
+    queryKey: ["task", id],
+    queryFn: () => api.get<TaskDetailView>(`/v1/tasks/${enc(id)}`),
+    refetchInterval: (q) => (q.state.data && isActive(q.state.data.workflow.status) ? POLL.active : false),
+  });
+}
+
+export interface TaskFilters {
+  project?: string;
+  workflow?: string;
+  stage?: string;
+  status?: string;
+  since?: string;
+  cursor?: string;
+}
+
+export function useTaskQueue(f: TaskFilters, limit = 50) {
+  return useQuery({
+    queryKey: ["task-queue", f, limit],
+    queryFn: () =>
+      api.get<Page<TaskQueueItem> & { restricted_projects: string[] }>(
+        `/v1/task-queue${qs({ project_id: f.project === "all" ? undefined : f.project, workflow: f.workflow, stage: f.stage, status: f.status, since: f.since, cursor: f.cursor, limit: String(limit) })}`,
+      ),
+    refetchInterval: POLL.lists,
+  });
+}
+
+export function useProjectPlan(project: string, workflow: string) {
+  return useQuery({
+    queryKey: ["plan", project, workflow],
+    queryFn: () => api.get<ProjectPlan>(`/v1/projects/${enc(project)}/plan${qs({ workflow })}`),
+    enabled: !!project && !!workflow,
+    retry: false,
+  });
+}
+
+export function useExecutions(project: string) {
+  return useQuery({
+    queryKey: ["executions", project],
+    queryFn: () =>
+      api.get<{ items: ExecutionAttempt[]; workers: WorkerInfo[]; handoffs: ExternalHandoff[] }>(`/v1/executions${qs({ project_id: project, limit: "100" })}`),
+    enabled: !!project && project !== "all",
+    refetchInterval: POLL.lists,
+  });
+}
+
+export function useIntegrations(project: string) {
+  return useQuery({
+    queryKey: ["integrations", project],
+    queryFn: () => api.get<Integrations>(`/v1/integrations${qs({ project_id: project })}`),
+    enabled: !!project && project !== "all",
+    refetchInterval: POLL.lists,
+  });
+}
+
+export function useCatalogList<T>(path: string) {
+  return useQuery({ queryKey: ["catalog", path], queryFn: () => api.get<{ items: T[] }>(path), staleTime: 30_000 });
+}
+
+// ---------------------------------------------------------------- register existing project (admin)
+
+export function useBrowse(path: string | null) {
+  return useQuery({
+    queryKey: ["fs", path],
+    queryFn: () => request<DirListing>(`/portal/fs${qs({ path: path ?? undefined })}`),
+    retry: false,
+  });
+}
+
+export function useInspect() {
+  return useMutation({ mutationFn: (path: string) => request<Inspection>("/portal/projects/inspect", { method: "POST", body: JSON.stringify({ path }) }) });
+}
+
+export const useRegisterProject = () =>
+  useOp((i: RegisterInput) => request<RegisterResult>("/portal/projects/register", { method: "POST", body: JSON.stringify(i) }));
 
 export type { PortalSession };

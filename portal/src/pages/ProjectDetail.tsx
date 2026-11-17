@@ -6,6 +6,8 @@ import { ActivityList } from "@/components/ActivityList";
 import { CopyText } from "@/components/CopyText";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/States";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { approvalStatus, projectStatus, workflowStatus } from "@/lib/status";
@@ -134,6 +136,18 @@ export function ProjectDetailPage() {
         eyebrow={<Link className="hover:underline" to="/projects">Projects</Link>}
         title={d.project.name}
         description={d.manifest?.description || (d.project.domain ? `Knowledge domain: ${d.project.domain}` : undefined)}
+        actions={
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to={`/execution?project=${d.project.id}`}>Execution</Link>
+            </Button>
+            <Button asChild>
+              <Link to={`/projects/${d.project.id}/start`}>
+                <Play /> Start workflow
+              </Link>
+            </Button>
+          </div>
+        }
       />
       <ProjectInfo d={d} />
       <ReadinessCard r={d.readiness} />

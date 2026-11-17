@@ -73,13 +73,12 @@ pub const BILLING_ENV: [&str; 8] = [
     "ANTHROPIC_VERTEX_PROJECT_ID",
 ];
 
-/// The MCP tools the session may call (server name `eaeh`).
-pub const ALLOWED_MCP_TOOLS: [&str; 4] = [
-    "mcp__eaeh__eaeh_task_get",
-    "mcp__eaeh__eaeh_task_tool",
-    "mcp__eaeh__eaeh_task_validate",
-    "mcp__eaeh__eaeh_task_submit",
-];
+/// Permission rule given to the session: **every tool of the task-scoped `eaeh` MCP server**,
+/// and nothing else (`--strict-mcp-config` loads that one server; `--tools ""` removes the
+/// built-in tools). The server itself exposes only the task tools and refuses any other task,
+/// so the allow rule cannot drift from the server's tool list (a hand-kept list did: a worker
+/// older than its MCP server denied the new tools as "needing approval").
+pub const ALLOWED_MCP_TOOLS: &str = "mcp__eaeh";
 
 const MAX_STDERR: usize = 64 * 1024;
 
@@ -182,7 +181,7 @@ impl ClaudeCodeCli {
             "--tools".into(),
             String::new(),
             "--allowedTools".into(),
-            ALLOWED_MCP_TOOLS.join(","),
+            ALLOWED_MCP_TOOLS.to_string(),
             "--permission-prompts".into(),
             "none".into(),
             "--no-session-persistence".into(),
@@ -291,6 +290,10 @@ impl ExternalExecutor for ClaudeCodeCli {
 
     fn client_label(&self) -> &str {
         "claude-code"
+    }
+
+    fn needs_mcp_server(&self) -> bool {
+        true
     }
 
     async fn preflight(&self) -> Preflight {
@@ -455,6 +458,17 @@ impl ExternalExecutor for ClaudeCodeCli {
                                 report.num_turns = ev.get("num_turns").and_then(Value::as_i64);
                                 report.duration_ms = ev.get("duration_ms").and_then(Value::as_i64);
                                 report.notional_cost_usd = ev.get("total_cost_usd").and_then(Value::as_f64);
+                                report.permission_denials = ev
+                                    .get("permission_denials")
+                                    .and_then(Value::as_array)
+                                    .map(|a| {
+                                        a.iter()
+                                            .filter_map(|d| d.get("tool_name").and_then(Value::as_str))
+                                            .map(|n| n.chars().take(80).collect::<String>())
+                                            .take(50)
+                                            .collect()
+                                    })
+                                    .unwrap_or_default();
                                 let text = ev.get("result").and_then(Value::as_str).unwrap_or("").to_string();
                                 report.final_text = text.chars().take(4000).collect();
                                 let is_error = ev.get("is_error").and_then(Value::as_bool).unwrap_or(false)
@@ -594,7 +608,7 @@ mod tests {
         let a = c.session_args(&req);
         let pos = |f: &str| a.iter().position(|x| x == f).unwrap();
         assert_eq!(a[pos("--tools") + 1], "");
-        assert_eq!(a[pos("--allowedTools") + 1], ALLOWED_MCP_TOOLS.join(","));
+        assert_eq!(a[pos("--allowedTools") + 1], "mcp__eaeh");
         assert_eq!(a[pos("--permission-prompts") + 1], "none");
         assert!(a.contains(&"--strict-mcp-config".to_string()));
         assert!(!a.iter().any(|x| x == "--bare" || x.contains("dangerously")));
@@ -725,6 +739,19 @@ mod tests {
             assert_eq!(r.num_turns, Some(7));
             assert_eq!(r.auth_source.as_deref(), Some("none"));
             assert_eq!(r.notional_cost_usd, Some(0.5));
+        }
+
+        #[tokio::test]
+        async fn tool_permission_denials_of_the_session_are_reported() {
+            let d = tempfile::tempdir().unwrap();
+            let session = format!(
+                "{INIT_OK}\necho '{{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"result\":\"EAEH_RESULT not_accepted\",\"num_turns\":3,\"permission_denials\":[{{\"tool_name\":\"mcp__eaeh__eaeh_task_section\",\"tool_use_id\":\"a\",\"tool_input\":{{}}}},{{\"tool_name\":\"mcp__eaeh__eaeh_task_section\",\"tool_use_id\":\"b\",\"tool_input\":{{}}}}]}}'"
+            );
+            let r = cli(&fake(d.path(), SUB, &session))
+                .execute(&req(d.path(), 30), CancellationToken::new())
+                .await
+                .unwrap();
+            assert_eq!(r.permission_denials, vec!["mcp__eaeh__eaeh_task_section"; 2]);
         }
 
         #[tokio::test]

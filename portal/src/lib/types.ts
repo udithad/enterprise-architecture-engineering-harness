@@ -28,6 +28,13 @@ export interface PortalSession {
   steward?: Acting | null;
   can_decide: boolean;
   can_register_skills?: boolean;
+  /** Identity for workflow operations (`eaeh portal --operator`). */
+  operator?: Acting | null;
+  /** Identity for registering existing projects (`eaeh portal --admin`). */
+  admin?: Acting | null;
+  can_operate?: boolean;
+  can_register_projects?: boolean;
+  workspace_roots?: string[];
   execution_mode: string;
   api_version: string;
   local_only: boolean;
@@ -174,7 +181,7 @@ export interface Dashboard {
     failed_or_blocked: number;
   };
   projects: DashboardProject[];
-  active: { project_id: string; project_name: string; workflow: WorkflowView; tasks: TaskSummary[] }[];
+  active: { project_id: string; project_name: string; workflow: WorkflowView; tasks: TaskSummary[]; pending_action?: PendingAction }[];
   pending_approvals: ApprovalView[];
   activity: ActivityItem[];
 }
@@ -255,6 +262,248 @@ export interface WorkflowDetail {
   artifact_provenance: Record<string, Generation>;
   documents?: GateDocument[];
   workspace?: WorkspaceRegistration | null;
+  lineage?: Lineage;
+  operations?: WorkflowOperations;
+}
+
+export interface LineageLink {
+  instance: string;
+  source: string;
+  stage: string;
+  reason: string;
+  input_changed: boolean;
+  actor: string;
+  at: string;
+}
+
+export interface Lineage {
+  derived_from: LineageLink | null;
+  derived_runs: LineageLink[];
+}
+
+/** What the engine supports for a run in its current status; the backend authorizes each call. */
+export interface WorkflowOperations {
+  resume: boolean;
+  cancel: boolean;
+  restart: boolean;
+  may_operate?: boolean;
+}
+
+export interface PendingAction {
+  kind: "approval" | "external_ai" | "blocked" | "running" | "failed" | "none";
+  text: string;
+}
+
+export interface StagePlan {
+  name: string;
+  kind: string;
+  disposition: "carried" | "restart_point" | "rerun" | "pending";
+  artifact: ArtifactRef | null;
+  approval: "carried" | "repeat" | "required" | null;
+  approval_id: string | null;
+  allowed: boolean;
+  reason: string | null;
+}
+
+/** Restart preview from the engine (nothing is written until it is confirmed). */
+export interface RestartPlan {
+  source: string;
+  source_status: WorkflowStatus;
+  source_state: string;
+  definition_id: string;
+  definition_version: string;
+  stage: string;
+  stages: StagePlan[];
+  allowed_stages: string[];
+  carried_states: string[];
+  carried_approvals: string[];
+  repeat_approvals: string[];
+  input_changed: boolean;
+  source_will_be_cancelled: boolean;
+  workspace_effect: string;
+  fingerprint: string;
+}
+
+export interface ExternalHandoff {
+  task_id: string;
+  workflow_instance: string;
+  workflow_status: string;
+  state: string;
+  task_kind: string;
+  agent: string;
+  status: string;
+  submissions: number;
+  feedback: string[];
+  submitted_by?: string | null;
+  client?: string | null;
+  created_at: string;
+  updated_at: string;
+  dispatch_state: string;
+  lease_owner?: string;
+  dispatch_attempts: number;
+  last_failure?: string;
+}
+
+export interface ExecutionAttempt {
+  id: string;
+  task_id: string;
+  workflow_instance: string;
+  stage: string;
+  agent: string;
+  worker: string | null;
+  provider: string;
+  client_version: string | null;
+  execution_mode: string;
+  auth_status: string | null;
+  attempt: number;
+  outcome: string;
+  failure_class: string | null;
+  detail: string | null;
+  task_status_after: string | null;
+  num_turns: number | null;
+  duration_ms: number | null;
+  notional_cost_usd: number | null;
+  /** Task context delivery: package size, state, what was retrieved, acknowledgement, denials. */
+  package_bytes?: number | null;
+  delivery_status?: string | null;
+  retrieval_status?: string | null;
+  sections_total?: number | null;
+  sections_retrieved?: number | null;
+  acknowledged_at?: string | null;
+  denied_calls?: number | null;
+  /** What to do about the failure. */
+  remedy?: string | null;
+  started_at: string;
+  ended_at: string | null;
+}
+
+export interface WorkerInfo {
+  id: string;
+  principal: string;
+  provider: string;
+  pid: number;
+  host: string;
+  status: string;
+  live: boolean;
+  detail: string | null;
+  started_at: string;
+  heartbeat_at: string;
+  stopped_at: string | null;
+}
+
+export interface TaskDetailView {
+  task: TaskSummary;
+  input: unknown;
+  output: unknown;
+  stage: Record<string, unknown> | null;
+  depends_on: string[];
+  requires_approval_of: string[];
+  artifact: { id: string; name: string; version: number; hash: string; media_type?: string; created_at?: string; provenance?: { agent_definition?: string | null; models?: string[]; produced_by?: string; skills?: string[] } } | null;
+  quality: unknown;
+  attempts: TaskSummary[];
+  workflow: { id: string; definition: string; status: WorkflowStatus; state: string };
+  project: string;
+  agent_definition: { reference: string; status: string; skills: string[]; purpose: string; capabilities: string[]; allowed_tools: string[]; autonomy: string } | null;
+  handoff: ExternalHandoff | null;
+  executions: ExecutionAttempt[];
+  operations: { retry_handoff: boolean; reexecute_stage: string };
+}
+
+export interface TaskQueueItem {
+  project_id: string;
+  project_name: string;
+  task: TaskSummary;
+}
+
+export interface ActivityPlanStage {
+  state: string;
+  kind: string;
+  agent: string | null;
+  skills: string[];
+  detail: string | null;
+}
+
+export interface ProjectPlan {
+  project: string;
+  workspace: string;
+  configured_workflows: string[];
+  plan: {
+    activity: string;
+    description: string;
+    workflow: string;
+    input: Record<string, unknown> | null;
+    stages: ActivityPlanStage[];
+    approvals: string[];
+    readiness: Readiness;
+  };
+}
+
+export interface DirListing {
+  path: string;
+  parent: string | null;
+  roots: string[];
+  entries: { name: string; path: string; project_hint: boolean }[];
+  truncated: boolean;
+}
+
+export interface Detection {
+  path: string;
+  suggested_name: string;
+  description: string;
+  language: string;
+  framework: string;
+  build_tool: string;
+  build_files: string[];
+  source_dirs: string[];
+  git: { present: boolean; remote: string | null; head: string | null };
+  documents: { brd_candidates: string[]; readme: string | null; architecture: string[]; adrs: string[]; standards: string[]; knowledge: string[] };
+  manifest: { project_id: string; name: string } | null;
+  manifest_issue: string | null;
+  warnings: string[];
+  recognised: boolean;
+}
+
+export interface Inspection {
+  detection: Detection;
+  registration: { state: "new" | "registered" | "foreign" | "name_taken"; project_id?: string; name?: string };
+}
+
+export interface RegisterInput {
+  path: string;
+  name: string;
+  description: string;
+  language: string;
+  framework: string;
+  build_tool: string;
+  constraints: string[];
+  brd: string | null;
+  knowledge: string[];
+  standards: string[];
+  developer: string;
+  steward: string;
+  approvers: string[];
+  update: boolean;
+}
+
+export interface RegisterResult {
+  project: string;
+  name: string;
+  workspace: string;
+  actions: string[];
+  handover: string[];
+  readiness: Readiness;
+}
+
+export interface Integrations {
+  installation_execution_mode: string;
+  billing: string;
+  project_execution: { mode: string; clients: string[] } | null;
+  workspace: string | null;
+  client_files: { file: string; present: boolean }[] | null;
+  workers: WorkerInfo[];
+  live_worker: boolean;
+  issue: string | null;
+  direct_model_calls: boolean;
 }
 
 export interface WorkspaceRegistration {
@@ -432,7 +681,7 @@ export interface ProjectRef {
 
 export interface ReadinessCheck {
   area: string;
-  status: "ok" | "warn" | "block" | string;
+  status: "ok" | "warning" | "blocking" | string;
   message: string;
   fix: string | null;
 }

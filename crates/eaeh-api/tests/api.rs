@@ -416,7 +416,7 @@ async fn metrics_and_health_details_require_permission() {
     assert!(v.as_str().unwrap().contains("eaeh_outbox_pending"));
     let (s, v) = call(&f.app, "GET", "/v1/health/details", Some(&f.admin), None).await;
     assert_eq!(s, StatusCode::OK);
-    assert_eq!(v["migrations"], json!([1, 2, 3, 4, 5, 6]));
+    assert_eq!(v["migrations"], json!([1, 2, 3, 4, 5, 6, 7, 8, 9]));
 }
 
 #[tokio::test]

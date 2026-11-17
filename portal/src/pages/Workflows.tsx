@@ -19,7 +19,8 @@ export function WorkflowsPage() {
   const status = params.get("status") === "all" ? "all" : "active";
   const project = params.get("project") ?? "all";
   const [search, setSearch] = useState("");
-  const q = useWorkflowQueue(status, project);
+  const filters = { definition: params.get("definition") ?? "", stage: params.get("stage") ?? "", since: params.get("since") ?? "" };
+  const q = useWorkflowQueue(status, project, filters);
   const defs = useDefinitions();
   const navigate = useNavigate();
 
@@ -33,9 +34,12 @@ export function WorkflowsPage() {
 
   const set = (k: string, v: string) => {
     const n = new URLSearchParams(params);
-    n.set(k, v);
+    if (v) n.set(k, v);
+    else n.delete(k);
     setParams(n, { replace: true });
   };
+  const defIds = [...new Set((defs.data?.items ?? []).map((d) => d.id))];
+  const stageNames = [...new Set((defs.data?.items ?? []).filter((d) => !filters.definition || d.id === filters.definition).flatMap((d) => d.states.map((x) => x.name)))].sort();
 
   return (
     <>
@@ -48,6 +52,23 @@ export function WorkflowsPage() {
           </TabsList>
         </Tabs>
         <ProjectFilter value={project} onChange={(v) => set("project", v)} />
+        <select aria-label="Filter by workflow" className="h-9 rounded-md border bg-background px-2 text-sm" value={filters.definition} onChange={(e) => set("definition", e.target.value)}>
+          <option value="">All workflows</option>
+          {defIds.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Filter by stage" className="h-9 rounded-md border bg-background px-2 text-sm" value={filters.stage} onChange={(e) => set("stage", e.target.value)}>
+          <option value="">All stages</option>
+          {stageNames.map((x) => (
+            <option key={x} value={x}>
+              {humanize(x)}
+            </option>
+          ))}
+        </select>
+        <input aria-label="Updated since" type="date" className="h-9 rounded-md border bg-background px-2 text-sm" value={filters.since} onChange={(e) => set("since", e.target.value)} />
         <div className="relative ml-auto w-full sm:w-72">
           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" aria-hidden />
           <Input className="pl-8" placeholder="Search id, workflow, stage, project…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search workflows" />
@@ -69,6 +90,7 @@ export function WorkflowsPage() {
                 <TableHead>Project</TableHead>
                 <TableHead>Stage</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Pending action</TableHead>
                 <TableHead>Started by</TableHead>
                 <TableHead>Started</TableHead>
                 <TableHead>Updated</TableHead>
@@ -76,7 +98,7 @@ export function WorkflowsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map(({ workflow: w, project_name }) => {
+              {items.map(({ workflow: w, project_name, pending_action }) => {
                 const def = defs.data?.items.find((d) => d.id === w.definition_id && d.version === w.definition_version);
                 const p = progress(def, w);
                 const terminal = !["running", "waiting_approval", "waiting_external"].includes(w.status);
@@ -100,6 +122,7 @@ export function WorkflowsPage() {
                     <TableCell>
                       <StatusBadge info={workflowStatus(w.status, w.blocked)} />
                     </TableCell>
+                    <TableCell className="text-xs">{pending_action?.text ?? "—"}</TableCell>
                     <TableCell className="text-xs">{w.started_by}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{formatDateTime(w.created_at)}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{formatRelative(w.updated_at)}</TableCell>

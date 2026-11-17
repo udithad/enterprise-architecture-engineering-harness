@@ -53,6 +53,14 @@ pub struct PortalState {
     pub approver: Option<Acting>,
     /// Identity used only to register skill files (`--steward`, `skill.manage`).
     pub steward: Option<Acting>,
+    /// Identity for workflow operations: start, cancel, resume, restart, retry (`--operator`).
+    pub operator: Option<Acting>,
+    /// Identity for registering existing projects (`--admin`, `principal.manage`).
+    pub admin: Option<Acting>,
+    /// Canonical folders under which *Register existing project* may browse (`--workspace-root`).
+    pub workspace_roots: Vec<PathBuf>,
+    /// The CLI-side services the portal process calls (project registration, workers).
+    pub host: Option<Arc<dyn PortalHost>>,
     secret: String,
     allowed_hosts: Vec<String>,
     allowed_origins: Vec<String>,
@@ -65,6 +73,23 @@ impl PortalState {
     pub fn with_steward(self: Arc<Self>, steward: Option<Acting>) -> Arc<Self> {
         let mut s = Arc::try_unwrap(self).unwrap_or_else(|a| (*a).clone());
         s.steward = steward;
+        Arc::new(s)
+    }
+
+    /// Same state with the operation identities, workspace roots and host services
+    /// (PORTAL-OPERATIONS-PLAN W2–W4).
+    pub fn with_operations(
+        self: Arc<Self>,
+        operator: Option<Acting>,
+        admin: Option<Acting>,
+        workspace_roots: Vec<PathBuf>,
+        host: Option<Arc<dyn PortalHost>>,
+    ) -> Arc<Self> {
+        let mut s = Arc::try_unwrap(self).unwrap_or_else(|a| (*a).clone());
+        s.operator = operator;
+        s.admin = admin;
+        s.workspace_roots = eaeh_runtime::onboarding::canonical_roots(&workspace_roots);
+        s.host = host;
         Arc::new(s)
     }
 
@@ -93,6 +118,10 @@ impl PortalState {
             viewer,
             approver,
             steward: None,
+            operator: None,
+            admin: None,
+            workspace_roots: vec![],
+            host: None,
             secret,
             allowed_hosts: hosts,
             allowed_origins: origins,
@@ -110,6 +139,60 @@ impl Acting {
             principal,
         }
     }
+}
+
+/// A boxed future (the host trait is object-safe).
+pub type HostFuture<'a, T> =
+    std::pin::Pin<Box<dyn std::future::Future<Output = eaeh_core::Result<T>> + Send + 'a>>;
+
+/// Services of the `eaeh` CLI that the portal process calls, so the portal and the CLI run
+/// the same code (W4): registering a project in place (`eaeh project init`) and starting the
+/// project's worker for external AI execution (`eaeh workflow run`).
+pub trait PortalHost: Send + Sync {
+    /// Register the confined, canonical `root` as a project, acting as `admin`.
+    fn register<'a>(
+        &'a self,
+        h: &'a Harness,
+        admin: &'a Principal,
+        root: PathBuf,
+        req: RegisterRequest,
+    ) -> HostFuture<'a, Value>;
+    /// Start the project's worker when external AI work waits and none runs.
+    fn ensure_worker<'a>(
+        &'a self,
+        h: &'a Harness,
+        operator: &'a Principal,
+        project: eaeh_core::ProjectId,
+    ) -> HostFuture<'a, Option<String>>;
+}
+
+/// What the user confirmed in *Register existing project*. Document paths are relative to
+/// the project folder and are confined to it.
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
+pub struct RegisterRequest {
+    pub path: String,
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub language: String,
+    #[serde(default)]
+    pub framework: String,
+    #[serde(default)]
+    pub build_tool: String,
+    #[serde(default)]
+    pub constraints: Vec<String>,
+    pub brd: Option<String>,
+    #[serde(default)]
+    pub knowledge: Vec<String>,
+    #[serde(default)]
+    pub standards: Vec<String>,
+    pub developer: String,
+    pub steward: String,
+    pub approvers: Vec<String>,
+    /// Re-register a folder that already carries this installation's manifest.
+    #[serde(default)]
+    pub update: bool,
 }
 
 /// The portal application (also used by tests).
@@ -139,13 +222,18 @@ fn installation(h: &Harness) -> Installation {
 
 pub fn app(h: Arc<Harness>, state: Arc<PortalState>) -> Router {
     let inst = installation(&h);
+    let h_for_portal = h.clone();
     let api = crate::router(crate::AppState::new(h.clone())).layer(middleware::from_fn_with_state(
         (state.clone(), h),
         inject_identity,
     ));
     Router::new()
         .route("/portal/session", post(open_session).get(session_info))
-        .with_state(state.clone())
+        .route("/portal/fs", axum::routing::get(browse))
+        .route("/portal/projects/inspect", post(inspect))
+        .route("/portal/projects/register", post(register))
+        .route("/portal/projects/{id}/worker", post(ensure_worker))
+        .with_state((state.clone(), h_for_portal))
         .nest("/api", api)
         .fallback(static_file)
         .layer(middleware::from_fn_with_state(state.clone(), local_guard))
@@ -206,7 +294,9 @@ async fn local_guard(State(st): State<Arc<PortalState>>, req: Request, next: Nex
         }
     }
     let path = req.uri().path().to_string();
-    let needs_session = path.starts_with("/api/") || (path == "/portal/session" && !unsafe_method);
+    let needs_session = path.starts_with("/api/")
+        || (path.starts_with("/portal/") && path != "/portal/session")
+        || (path == "/portal/session" && !unsafe_method);
     if needs_session && !has_session(&st, req.headers()) {
         return err(
             StatusCode::UNAUTHORIZED,
@@ -236,7 +326,10 @@ struct OpenSession {
     launch: String,
 }
 
-async fn open_session(State(st): State<Arc<PortalState>>, Json(b): Json<OpenSession>) -> Response {
+async fn open_session(
+    State((st, _)): State<(Arc<PortalState>, Arc<Harness>)>,
+    Json(b): Json<OpenSession>,
+) -> Response {
     if !ct_eq(b.launch.trim(), &st.secret) {
         return err(
             StatusCode::UNAUTHORIZED,
@@ -259,7 +352,7 @@ fn acting_json(a: &Acting) -> Value {
 }
 
 async fn session_info(
-    State(st): State<Arc<PortalState>>,
+    State((st, _)): State<(Arc<PortalState>, Arc<Harness>)>,
     Extension(inst): Extension<Installation>,
 ) -> Json<Value> {
     Json(json!({
@@ -269,6 +362,11 @@ async fn session_info(
         "steward": st.steward.as_ref().map(acting_json),
         "can_decide": st.approver.is_some(),
         "can_register_skills": st.steward.is_some(),
+        "operator": st.operator.as_ref().map(acting_json),
+        "admin": st.admin.as_ref().map(acting_json),
+        "can_operate": st.operator.is_some(),
+        "can_register_projects": st.admin.is_some() && st.host.is_some() && !st.workspace_roots.is_empty(),
+        "workspace_roots": st.workspace_roots.iter().map(|r| r.display().to_string()).collect::<Vec<_>>(),
         "execution_mode": st.execution_mode,
         "api_version": "v1",
         "local_only": true,
@@ -276,14 +374,41 @@ async fn session_info(
     }))
 }
 
-/// What the portal may call. Everything else (token, principal, plugin, knowledge and skill
-/// management, workflow start/cancel) stays with the CLI and the authenticated API.
-fn allowed_api(method: &Method, path: &str) -> bool {
+/// Which identity a portal request is sent as.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Class {
+    /// Reads, as the viewer.
+    Read,
+    /// Reads that depend on the operator's permissions (execution plan and readiness):
+    /// the operator when configured, else the viewer.
+    OperatorRead,
+    /// Approval decisions (`--approver`).
+    Decision,
+    /// Skill file registration (`--steward`).
+    SkillRegister,
+    /// Skill directory scan (registers as `system:skill-discovery`): the viewer.
+    SkillScan,
+    /// Workflow and task operations (`--operator`).
+    Operate,
+}
+
+/// What the portal may call, and as whom. Everything else (tokens, principals, plugins,
+/// knowledge ingestion and deletion, standards decisions) stays with the CLI and the
+/// authenticated API.
+fn classify(method: &Method, path: &str) -> Option<Class> {
     let segs: Vec<&str> = path.trim_start_matches('/').split('/').collect();
     match (method.clone(), segs.as_slice()) {
-        (Method::POST, ["v1", "approvals", _, "decision"]) => true,
-        (Method::POST, ["v1", "skills", "sync"]) => true,
-        (Method::POST, ["v1", "skills", "discover"]) => true,
+        (Method::POST, ["v1", "approvals", _, "decision"]) => Some(Class::Decision),
+        (Method::POST, ["v1", "skills", "sync"]) => Some(Class::SkillRegister),
+        (Method::POST, ["v1", "skills", "discover"]) => Some(Class::SkillScan),
+        (
+            Method::POST,
+            ["v1", "workflows"]
+            | ["v1", "workflows", _, "cancel" | "resume" | "restart"]
+            | ["v1", "workflows", _, "restart", "preview"]
+            | ["v1", "tasks", _, "retry"],
+        ) => Some(Class::Operate),
+        (Method::GET | Method::HEAD, ["v1", "projects", _, "plan"]) => Some(Class::OperatorRead),
         (Method::GET | Method::HEAD, s) => matches!(
             s,
             ["v1", "health"]
@@ -293,10 +418,15 @@ fn allowed_api(method: &Method, path: &str) -> bool {
                 | ["v1", "activity"]
                 | ["v1", "approval-queue"]
                 | ["v1", "workflow-queue"]
+                | ["v1", "task-queue"]
                 | ["v1", "workflows"]
                 | ["v1", "workflows", _]
                 | ["v1", "workflows", _, "detail"]
+                | ["v1", "workflows", _, "lineage"]
                 | ["v1", "workflow-definitions"]
+                | ["v1", "tasks", _]
+                | ["v1", "executions"]
+                | ["v1", "integrations"]
                 | ["v1", "approvals"]
                 | ["v1", "approvals", _]
                 | ["v1", "approvals", _, "document"]
@@ -307,11 +437,22 @@ fn allowed_api(method: &Method, path: &str) -> bool {
                 | ["v1", "audit", "verify"]
                 | ["v1", "traceability"]
                 | ["v1", "agents"]
+                | ["v1", "tools"]
+                | ["v1", "knowledge", "sources"]
+                | ["v1", "knowledge", "documents"]
+                | ["v1", "knowledge", "documents", _]
+                | ["v1", "knowledge", "conflicts"]
+                | ["v1", "skills"]
                 | ["v1", "skills", "catalog"]
                 | ["v1", "skills", _, _, "files"]
-        ),
-        _ => false,
+        )
+        .then_some(Class::Read),
+        _ => None,
     }
+}
+
+fn missing(code: &str, message: &str) -> Response {
+    err(StatusCode::FORBIDDEN, code, message)
 }
 
 async fn inject_identity(
@@ -321,48 +462,50 @@ async fn inject_identity(
 ) -> Response {
     let path = req.uri().path().to_string();
     let path = path.strip_prefix("/api").unwrap_or(&path).to_string();
-    if !allowed_api(req.method(), &path) {
+    let Some(class) = classify(req.method(), &path) else {
         return err(
             StatusCode::FORBIDDEN,
             "not_available_in_portal",
-            "this operation is not available through the portal; use the eaeh CLI",
+            "this operation is not available through the portal; use the eaeh CLI (see docs/implementation/EAEH-PORTAL-CLI-PARITY.md)",
         );
-    }
-    let register = req.method() == Method::POST && path == "/v1/skills/sync";
-    // "Scan now" registers nothing in a person's name (system:skill-discovery): viewer token.
-    let scan = req.method() == Method::POST && path == "/v1/skills/discover";
-    let decision = req.method() == Method::POST && !register && !scan;
-    let acting = if register {
+    };
+    let acting = match class {
+        Class::Read | Class::SkillScan => &st.viewer,
+        Class::OperatorRead => st.operator.as_ref().unwrap_or(&st.viewer),
         // Skill registration is the steward's (skill.manage), never the approver's: the
         // registrant of a skill can never approve it (separation of duties).
-        match &st.steward {
+        Class::SkillRegister => match &st.steward {
             Some(s) => s,
             None => {
-                return err(
-                    StatusCode::FORBIDDEN,
+                return missing(
                     "steward_not_configured",
                     "registering skills needs a steward identity: restart the portal with `--steward <profile>`",
                 );
             }
-        }
-    } else if decision {
-        match &st.approver {
+        },
+        Class::Decision => match &st.approver {
             Some(a) => a,
             None => {
-                return err(
-                    StatusCode::FORBIDDEN,
+                return missing(
                     "approver_not_configured",
                     "this portal is read-only: restart it with `--approver <profile>` to record decisions",
                 );
             }
-        }
-    } else {
-        &st.viewer
+        },
+        Class::Operate => match &st.operator {
+            Some(o) => o,
+            None => {
+                return missing(
+                    "operator_not_configured",
+                    "workflow operations need an operator identity: restart the portal with `--operator <profile>` (a developer/operator profile)",
+                );
+            }
+        },
     };
     // Portal decisions: workflow document gates and skills (ADR-0028, amending ADR-0026 §4;
     // the review page shows a skill's full definition and digest). Mandatory standards are
     // still reviewed with `eaeh approval review`.
-    if decision {
+    if class == Class::Decision {
         let id = path
             .split('/')
             .nth(3)
@@ -393,13 +536,221 @@ async fn inject_identity(
             );
         }
     }
-    if decision {
-        tracing::info!(path = %path, approver = %acting.principal.id, "portal approval decision submitted");
-    }
-    if register {
-        tracing::info!(steward = %acting.principal.id, "portal skill registration submitted");
+    match class {
+        Class::Decision => {
+            tracing::info!(path = %path, approver = %acting.principal.id, "portal approval decision submitted")
+        }
+        Class::SkillRegister => {
+            tracing::info!(steward = %acting.principal.id, "portal skill registration submitted")
+        }
+        Class::Operate => {
+            tracing::info!(path = %path, operator = %acting.principal.id, "portal workflow operation submitted")
+        }
+        _ => {}
     }
     next.run(req).await
+}
+
+// ------------------------------------------------- register an existing project (W3, W4)
+
+type PState = State<(Arc<PortalState>, Arc<Harness>)>;
+
+fn harness_err(e: eaeh_core::HarnessError) -> Response {
+    crate::ApiError::from(e).into_response()
+}
+
+#[derive(Deserialize)]
+struct BrowseQuery {
+    path: Option<String>,
+}
+
+/// Sub-folders of a folder under the allowed workspace roots (no files, no hidden entries).
+async fn browse(
+    State((st, _)): PState,
+    axum::extract::Query(q): axum::extract::Query<BrowseQuery>,
+) -> Response {
+    match eaeh_runtime::onboarding::list_dir(&st.workspace_roots, q.path.as_deref()) {
+        Ok(l) => Json(l).into_response(),
+        Err(e) => harness_err(e),
+    }
+}
+
+#[derive(Deserialize)]
+struct InspectBody {
+    path: String,
+}
+
+/// Read-only detection of a folder, and whether it is already registered here.
+async fn inspect(State((st, h)): PState, Json(b): Json<InspectBody>) -> Response {
+    let root = match eaeh_runtime::onboarding::confine(&st.workspace_roots, &b.path) {
+        Ok(r) => r,
+        Err(e) => return harness_err(e),
+    };
+    let d = eaeh_runtime::onboarding::detect(&root);
+    let reg = registration_state(&st, &h, &d).await;
+    Json(json!({"detection": d, "registration": reg})).into_response()
+}
+
+/// `registered` (the folder's manifest names a project of this installation), `foreign`
+/// (a manifest of another installation), `name_taken` (another project has this name), or
+/// `new`.
+async fn registration_state(st: &PortalState, h: &Harness, d: &eaeh_runtime::onboarding::Detection) -> Value {
+    let tenant = st.viewer.principal.tenant;
+    let projects = h.identity.projects(tenant).await.unwrap_or_default();
+    if let Some(m) = &d.manifest {
+        if let Some((id, name)) = projects.iter().find(|(id, _)| id.to_string() == m.project_id) {
+            return json!({"state": "registered", "project_id": id, "name": name});
+        }
+        return json!({"state": "foreign", "project_id": m.project_id, "name": m.name});
+    }
+    if let Some((id, _)) = projects.iter().find(|(_, n)| *n == d.suggested_name) {
+        return json!({"state": "name_taken", "project_id": id, "name": d.suggested_name});
+    }
+    json!({"state": "new"})
+}
+
+/// A document path relative to the project folder that stays inside it.
+fn confine_doc(root: &Path, f: &str) -> eaeh_core::Result<String> {
+    let rel = Path::new(f.trim());
+    if f.trim().is_empty()
+        || rel.is_absolute()
+        || rel
+            .components()
+            .any(|c| !matches!(c, Component::Normal(_) | Component::CurDir))
+    {
+        return Err(eaeh_core::HarnessError::invalid_input(format!(
+            "'{f}': document paths are relative to the project folder and stay inside it"
+        )));
+    }
+    let c = std::fs::canonicalize(root.join(rel)).map_err(|_| {
+        eaeh_core::HarnessError::invalid_input(format!("document not found in the project folder: {f}"))
+    })?;
+    if !c.starts_with(root) || !c.is_file() {
+        return Err(eaeh_core::HarnessError::invalid_input(format!(
+            "'{f}' is not a file inside the project folder"
+        )));
+    }
+    Ok(rel.display().to_string())
+}
+
+/// Register the confirmed folder through the shared `project init` service, as `--admin`.
+async fn register(State((st, h)): PState, Json(mut b): Json<RegisterRequest>) -> Response {
+    let Some(admin) = &st.admin else {
+        return missing(
+            "admin_not_configured",
+            "registering projects needs an administrator identity: restart the portal with `--admin <profile>`",
+        );
+    };
+    let Some(host) = &st.host else {
+        return missing(
+            "not_available_in_portal",
+            "project registration is not available in this portal process",
+        );
+    };
+    let root = match eaeh_runtime::onboarding::confine(&st.workspace_roots, &b.path) {
+        Ok(r) => r,
+        Err(e) => return harness_err(e),
+    };
+    let d = eaeh_runtime::onboarding::detect(&root);
+    if !d.recognised {
+        return harness_err(eaeh_core::HarnessError::invalid_input(format!(
+            "{} is not a project folder: {}",
+            root.display(),
+            d.warnings.join("; ")
+        )));
+    }
+    if let Some(i) = &d.manifest_issue {
+        return harness_err(eaeh_core::HarnessError::invalid_input(i.clone()));
+    }
+    let name = b.name.trim().to_string();
+    if name.is_empty() || name.len() > 100 {
+        return harness_err(eaeh_core::HarnessError::invalid_input(
+            "a project name (1–100 characters) is required",
+        ));
+    }
+    b.name = name;
+    let reg = registration_state(
+        &st,
+        &h,
+        &eaeh_runtime::onboarding::Detection {
+            suggested_name: b.name.clone(),
+            ..d.clone()
+        },
+    )
+    .await;
+    match reg["state"].as_str() {
+        Some("registered") if !b.update => {
+            return harness_err(eaeh_core::HarnessError::conflict(format!(
+                "this folder is already registered as project '{}' ({}); open it, or confirm an update of its registration",
+                reg["name"].as_str().unwrap_or_default(),
+                reg["project_id"].as_str().unwrap_or_default()
+            )));
+        }
+        Some("foreign") => {
+            return harness_err(eaeh_core::HarnessError::conflict(format!(
+                "this folder carries the manifest of project {} from another EAEH installation; register it there, or remove .eaeh/project.toml first",
+                reg["project_id"].as_str().unwrap_or_default()
+            )));
+        }
+        Some("name_taken") => {
+            return harness_err(eaeh_core::HarnessError::conflict(format!(
+                "a project named '{}' already exists in this installation; choose another name",
+                b.name
+            )));
+        }
+        _ => {}
+    }
+    for f in b
+        .brd
+        .iter_mut()
+        .chain(b.knowledge.iter_mut())
+        .chain(b.standards.iter_mut())
+    {
+        match confine_doc(&root, f) {
+            Ok(r) => *f = r,
+            Err(e) => return harness_err(e),
+        }
+    }
+    tracing::info!(admin = %admin.principal.id, root = %root.display(), "portal project registration submitted");
+    match host.register(&h, &admin.principal, root, b).await {
+        Ok(v) => (StatusCode::CREATED, Json(v)).into_response(),
+        Err(e) => harness_err(e),
+    }
+}
+
+/// Start the project's worker when external AI work waits (as `eaeh workflow run` does).
+async fn ensure_worker(
+    State((st, h)): PState,
+    axum::extract::Path(id): axum::extract::Path<eaeh_core::ProjectId>,
+) -> Response {
+    let Some(op) = &st.operator else {
+        return missing(
+            "operator_not_configured",
+            "workflow operations need an operator identity: restart the portal with `--operator <profile>`",
+        );
+    };
+    let Some(host) = &st.host else {
+        return missing(
+            "not_available_in_portal",
+            "workers cannot be started from this portal process",
+        );
+    };
+    let scope = eaeh_core::Scope::new(op.principal.tenant, id);
+    if !op.principal.can_access(&scope)
+        || h.authz
+            .authorize(
+                &op.principal,
+                eaeh_governance::authz::Action::WorkflowStart,
+                eaeh_governance::authz::Target::Scope(scope),
+            )
+            .is_err()
+    {
+        return harness_err(eaeh_core::HarnessError::not_found("project not found"));
+    }
+    match host.ensure_worker(&h, &op.principal, id).await {
+        Ok(msg) => Json(json!({"project": id, "worker": msg})).into_response(),
+        Err(e) => harness_err(e),
+    }
 }
 
 fn content_type(p: &Path) -> &'static str {

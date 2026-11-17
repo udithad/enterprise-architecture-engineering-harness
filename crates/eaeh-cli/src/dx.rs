@@ -277,7 +277,7 @@ pub async fn auth_logout(cfg: &HarnessConfig, profile: &str, revoke: bool) -> Re
 }
 
 /// Store a freshly issued token as a profile without displaying it.
-fn store_issued(
+pub(crate) fn store_issued(
     h: &Harness,
     profile: &str,
     p: &Principal,
@@ -608,7 +608,43 @@ async fn ensure_principal(
     }
 }
 
-pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> {
+/// Result of registering a project ([`register_project`]).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct InitOutcome {
+    pub project: eaeh_core::ProjectId,
+    pub scope: Scope,
+    pub name: String,
+    pub workspace: String,
+    pub actions: Vec<String>,
+    pub handover: Vec<String>,
+    pub readiness: proj::Readiness,
+}
+
+pub async fn project_init(cfg: &HarnessConfig, a: InitArgs) -> Result<bool> {
+    let h = harness(cfg).await?;
+    let admin = caller_need(&h, Need::Action(Action::PrincipalManage, None)).await?;
+    let o = register_project(&h, &admin, a).await?;
+    let mut text = format!("EAEH project bootstrap – {}\n", o.name);
+    for l in &o.actions {
+        text.push_str(&format!("  • {l}\n"));
+    }
+    for l in &o.handover {
+        text.push_str(&format!("  ⚑ {l}\n"));
+    }
+    text.push('\n');
+    text.push_str(&render_readiness(&o.readiness));
+    out(
+        &json!({"project": o.project, "scope": o.scope, "actions": o.actions, "handover": o.handover, "readiness": o.readiness}),
+        text.trim_end(),
+    );
+    Ok(o.readiness.ready)
+}
+
+/// Register (or re-register) an existing project folder in place: the one service behind
+/// `eaeh project init` and the portal's *Register existing project* (W4). It never copies or
+/// moves source code; it writes `.eaeh/project.toml`, the AI-client files and the knowledge,
+/// and creates or grants the people. `admin` must hold `principal.manage`. No printing.
+pub async fn register_project(h: &Harness, admin: &Principal, mut a: InitArgs) -> Result<InitOutcome> {
     // Repeat runs keep what was recorded unless a flag overrides it.
     if let Some(prev) = std::fs::canonicalize(&a.workspace)
         .ok()
@@ -741,8 +777,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     }
     let root = std::fs::canonicalize(&a.workspace)
         .map_err(|e| HarnessError::invalid_input(format!("workspace {}: {e}", a.workspace.display())))?;
-    let h = harness(cfg).await?;
-    let admin = caller_need(&h, Need::Action(Action::PrincipalManage, None)).await?;
+    let admin = admin.clone();
     let mut log: Vec<String> = vec![];
     let previous = ProjectManifest::load(&root).ok();
 
@@ -797,13 +832,13 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     }
     let mut handover = vec![];
     for (id, role, profile) in &people {
-        let (p, what) = ensure_principal(&h, &admin, id, *role, project).await?;
+        let (p, what) = ensure_principal(h, &admin, id, *role, project).await?;
         log.push(format!("{} '{id}': {what}", role.as_str()));
         let store = Store::load()?;
         // A stored profile counts only if its token still authenticates as this person
         // (a reset data directory or a revoked token leaves unexpired but useless profiles).
         let mut has_profile = false;
-        for (_, s) in store.for_data_dir(&data_dir(&h)) {
+        for (_, s) in store.for_data_dir(&data_dir(h)) {
             if s.principal == *id
                 && !s.expired()
                 && h.identity
@@ -824,7 +859,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
                     .issue_token(&admin, &p.id, &format!("{profile} (project init)"), a.ttl_days)
                     .await?;
                 let (pp, tid, exp) = h.identity.authenticate_detailed(t.token.expose()).await?;
-                store_issued(&h, profile, &pp, t.token.expose(), &tid, &exp)?;
+                store_issued(h, profile, &pp, t.token.expose(), &tid, &exp)?;
                 log.push(format!(
                     "  token issued and stored as profile '{profile}' (not displayed)"
                 ));
@@ -862,7 +897,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     let s = slug(&a.name);
     let docs_src = format!("{s}-docs");
     ensure_source(
-        &h,
+        h,
         &admin,
         &docs_src,
         SourceKind::Reference,
@@ -894,7 +929,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
         git_remote.clone().unwrap_or_else(|| "(none)".into())
     );
     let (c, st) = ingest_once(
-        &h,
+        h,
         &admin,
         &docs_src,
         "project-profile",
@@ -914,7 +949,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
         let content = std::fs::read_to_string(root.join(f)).or_else(|_| std::fs::read_to_string(f))?;
         let subject = slug(f.file_stem().and_then(|x| x.to_str()).unwrap_or("document"));
         let (c, st) = ingest_once(
-            &h,
+            h,
             &admin,
             &docs_src,
             &subject,
@@ -937,7 +972,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     if !a.standards.is_empty() {
         let std_src = format!("{s}-standards");
         ensure_source(
-            &h,
+            h,
             &admin,
             &std_src,
             SourceKind::Standard,
@@ -948,7 +983,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
             let content = std::fs::read_to_string(root.join(f)).or_else(|_| std::fs::read_to_string(f))?;
             let subject = slug(f.file_stem().and_then(|x| x.to_str()).unwrap_or("standard"));
             let (c, st) = ingest_once(
-                &h,
+                h,
                 &admin,
                 &std_src,
                 &subject,
@@ -980,7 +1015,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
             let content = std::fs::read_to_string(&path)?;
             let brd_src = format!("{s}-brd");
             ensure_source(
-                &h,
+                h,
                 &admin,
                 &brd_src,
                 SourceKind::Reference,
@@ -989,7 +1024,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
             .await?;
             let subject = slug(path.file_stem().and_then(|x| x.to_str()).unwrap_or("brd"));
             let (c, st) = ingest_once(
-                &h,
+                h,
                 &admin,
                 &brd_src,
                 &subject,
@@ -1017,13 +1052,13 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
 
     // 4. Workflows and skills.
     for w in &a.workflows {
-        proj::workflow_definition(&h, w).await?;
+        proj::workflow_definition(h, w).await?;
     }
-    for o in proj::discover_skills(&h, Some(project)).await? {
+    for o in proj::discover_skills(h, Some(project)).await? {
         log.push(format!("skill directory {}: {} – {}", o.dir, o.action, o.detail));
     }
-    let required = proj::project_skill_references(&h, &a.workflows).await?;
-    for o in proj::sync_skills(&h, &admin, project, &required).await? {
+    let required = proj::project_skill_references(h, &a.workflows).await?;
+    for o in proj::sync_skills(h, &admin, project, &required).await? {
         log.push(format!("skill {}: {} – {}", o.reference, o.action, o.detail));
     }
 
@@ -1070,7 +1105,7 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     };
     let mp = m.save(&root)?;
     log.push(format!("manifest written: {}", mp.display()));
-    let reg = register_workspace(&h, &m, &root, admin.id.as_str()).await?;
+    let reg = register_workspace(h, &m, &root, admin.id.as_str()).await?;
     log.push(format!(
         "application workspace registered: {} (approved documents are written to docs/architecture/)",
         reg.root
@@ -1081,21 +1116,16 @@ pub async fn project_init(cfg: &HarnessConfig, mut a: InitArgs) -> Result<bool> 
     log.push(format!("execution mode: {mode} – {}", mode.billing()));
 
     // 6. Readiness.
-    let r = proj::readiness(&h, &admin, &m, &root, None).await?;
-    let mut text = format!("EAEH project bootstrap – {}\n", a.name);
-    for l in &log {
-        text.push_str(&format!("  • {l}\n"));
-    }
-    for l in &handover {
-        text.push_str(&format!("  ⚑ {l}\n"));
-    }
-    text.push('\n');
-    text.push_str(&render_readiness(&r));
-    out(
-        &json!({"project": project, "scope": scope, "actions": log, "handover": handover, "readiness": r}),
-        text.trim_end(),
-    );
-    Ok(r.ready)
+    let r = proj::readiness(h, &admin, &m, &root, None).await?;
+    Ok(InitOutcome {
+        project,
+        scope,
+        name: a.name.clone(),
+        workspace: root.display().to_string(),
+        actions: log,
+        handover,
+        readiness: r,
+    })
 }
 
 const CLAUDE_BEGIN: &str =
@@ -1781,13 +1811,129 @@ pub async fn workflow_resume(cfg: &HarnessConfig, id: &str) -> Result<()> {
     let inst = h.engine.get_for(&p, id).await?;
     if inst.status.is_terminal() {
         return Err(HarnessError::conflict(format!(
-            "workflow {id} is {} and cannot be resumed; start a new run with `eaeh workflow run <activity> --yes`",
+            "workflow {id} is {} and cannot be resumed; preview a restart with `eaeh workflow restart {id}`",
             inst.status.as_str()
         )));
     }
+    // Same authorization and audit as the portal's Resume (Harness::authorize_resume).
+    h.authorize_resume(&p, id).await?;
     h.engine.drive(id).await?;
     let (v, t) = status_report(&h, &p, id, None).await?;
     out(&v, &t);
+    Ok(())
+}
+
+/// Human-readable restart preview (the same plan the portal shows).
+pub fn render_restart_plan(plan: &eaeh_workflow::RestartPlan) -> String {
+    let mut t = format!(
+        "Restart preview – run {} ({} @ {}, {} at {})\n  restart point : {}\n",
+        plan.source,
+        plan.definition_id,
+        plan.definition_version,
+        plan.source_status.as_str(),
+        plan.source_state,
+        plan.stage
+    );
+    for s in &plan.stages {
+        let what = match s.disposition.as_str() {
+            "carried" => "carried (reused as is)",
+            "restart_point" => "RESTART POINT (re-executed)",
+            "rerun" => "re-executed (new version)",
+            _ => "not reached yet",
+        };
+        let art = s
+            .artifact
+            .as_ref()
+            .map(|a| format!(" – current artifact v{}", a.version))
+            .unwrap_or_default();
+        let ap = match s.approval.as_deref() {
+            Some("carried") => " – approval stays valid",
+            Some("repeat") => " – approval must be repeated",
+            Some("required") => " – approval required",
+            _ => "",
+        };
+        t.push_str(&format!("  {:<22} {what}{art}{ap}\n", s.name));
+    }
+    t.push_str(&format!(
+        "  approvals kept: {}\n  approvals to repeat: {}\n",
+        if plan.carried_approvals.is_empty() {
+            "none".into()
+        } else {
+            plan.carried_approvals.join(", ")
+        },
+        if plan.repeat_approvals.is_empty() {
+            "none".into()
+        } else {
+            plan.repeat_approvals.join(", ")
+        }
+    ));
+    if plan.input_changed {
+        t.push_str("  input: replaced (all stages run again)\n");
+    }
+    if plan.source_will_be_cancelled {
+        t.push_str(
+            "  the source run is still active: it will be cancelled as superseded (its history is kept)\n",
+        );
+    }
+    t.push_str(&format!("  workspace: {}\n", plan.workspace_effect));
+    t.push_str(&format!(
+        "  allowed restart points: {}\n",
+        plan.allowed_stages.join(", ")
+    ));
+    t
+}
+
+/// `eaeh workflow restart`: preview, and with `--yes --reason` create the derived run
+/// (PORTAL-OPERATIONS-PLAN W1, same engine functions as the portal).
+pub async fn workflow_restart(
+    cfg: &HarnessConfig,
+    id: &str,
+    from: Option<&str>,
+    input: Option<&str>,
+    reason: Option<&str>,
+    yes: bool,
+) -> Result<()> {
+    let h = harness(cfg).await?;
+    let p = caller_need(&h, Need::Action(Action::WorkflowStart, None)).await?;
+    let id: WorkflowInstanceId = parse(id)?;
+    let input: Option<Value> = match input {
+        Some(s) => Some(read_json_arg(s)?),
+        None => None,
+    };
+    let plan = h.engine.restart_plan(&p, id, from, input.as_ref()).await?;
+    let text = render_restart_plan(&plan);
+    if !yes {
+        out(
+            &json!({"preview": plan, "confirmed": false}),
+            &format!(
+                "{text}\nNothing was changed. To restart, run:\n  eaeh workflow restart {id} --from {} --yes --reason \"<why>\"",
+                plan.stage
+            ),
+        );
+        return Ok(());
+    }
+    let reason = reason
+        .map(str::trim)
+        .filter(|r| !r.is_empty())
+        .ok_or_else(|| HarnessError::invalid_input("--reason \"<why>\" is required with --yes"))?;
+    let (new, plan) = h
+        .engine
+        .restart(
+            &p,
+            id,
+            &plan.stage,
+            input,
+            &plan.fingerprint,
+            reason,
+            TraceContext::new_root(),
+        )
+        .await?;
+    h.engine.drive(new).await?;
+    let (v, t) = status_report(&h, &p, new, None).await?;
+    out(
+        &json!({"restarted": new, "source": id, "stage": plan.stage, "status": v}),
+        &format!("{text}\nRestarted as run {new} (from {}).\n\n{t}", plan.stage),
+    );
     Ok(())
 }
 

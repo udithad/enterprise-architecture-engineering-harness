@@ -688,6 +688,7 @@ dependencies = [
  "eaeh-knowledge",
  "eaeh-runtime",
  "eaeh-skills",
+ "eaeh-store",
  "eaeh-workflow",
  "semver",
  "serde",

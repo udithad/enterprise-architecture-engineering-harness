@@ -27,6 +27,7 @@ serde_json.workspace = true
 semver.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+chrono.workspace = true
 
 [dev-dependencies]
 semver.workspace = true
@@ -34,4 +35,3 @@ tempfile.workspace = true
 eaeh-testkit.workspace = true
 eaeh-isolation.workspace = true
 async-trait.workspace = true
-chrono.workspace = true

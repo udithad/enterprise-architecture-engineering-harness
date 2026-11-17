@@ -1,5 +1,7 @@
 # EAEH Governance Portal (supplementary UI enhancement)
 
+> **Amended by ADR-0031 (2026-11-17).** The portal can also operate workflows as `--operator` (start, cancel, resume, restart, retry) and register existing projects as `--admin`, within confined `--workspace-root` folders. See `EAEH-PORTAL-OPERATIONS.md` and the parity inventory `EAEH-PORTAL-CLI-PARITY.md`.
+
 > **Supplementary document.** This adds a web UI to the existing roadmap. It does **not** change any phase definition, dependency, acceptance criterion or next step in `claude-instructions.md` or `docs/implementation/ROADMAP.md`. Scope: visibility and approval interaction for Phases 1–3 only.
 >
 > Source request: `Approval-Portal.md`. Plan and approved decisions: `docs/implementation/stages/GOVERNANCE-PORTAL-PLAN.md`. Architecture decision: [ADR-0026](../architecture/adr/ADR-0026-governance-portal-local-access-model.md).

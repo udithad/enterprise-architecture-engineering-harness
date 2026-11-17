@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { AlertOctagon, ArrowRight, CheckCircle2, CheckSquare, Cpu, FolderKanban, GitBranch, RefreshCw } from "lucide-react";
-import { useDashboard, useDefinitions } from "@/hooks/queries";
+import { useDashboard, useDefinitions, useTaskQueue } from "@/hooks/queries";
 import { PageHeader } from "@/components/PageHeader";
 import { InstallationPanel } from "@/components/InstallationPanel";
 import { StatCard } from "@/components/StatCard";
@@ -30,7 +30,7 @@ function InProgress({ data }: { data: DashboardData }) {
   if (!data.active.length) {
     return (
       <EmptyState title="No engineering work in progress">
-        Start a workflow with <code className="font-mono">eaeh workflow run requirements|design --yes</code>; it appears here while it runs.
+        Start a workflow from a project page (<b>Start workflow</b>) or with <code className="font-mono">eaeh workflow run requirements|design --yes</code>; it appears here while it runs.
       </EmptyState>
     );
   }
@@ -43,14 +43,14 @@ function InProgress({ data }: { data: DashboardData }) {
           <TableHead>Lifecycle stage</TableHead>
           <TableHead>Task / agent</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Waiting on</TableHead>
+          <TableHead>Pending action</TableHead>
           <TableHead>Started</TableHead>
           <TableHead>Updated</TableHead>
           <TableHead className="text-right">Duration</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.active.map(({ project_name, workflow: w, tasks }) => {
+        {data.active.map(({ project_name, project_id, workflow: w, tasks, pending_action }) => {
           const st = workflowStatus(w.status, w.blocked);
           const task = tasks.find((t) => t.state === w.state) ?? tasks[0];
           return (
@@ -64,7 +64,11 @@ function InProgress({ data }: { data: DashboardData }) {
               }}
               aria-label={`Open workflow ${w.definition_id} ${w.id}`}
             >
-              <TableCell className="font-medium">{project_name}</TableCell>
+              <TableCell className="font-medium">
+                <Link className="hover:underline" to={`/projects/${project_id}`} onClick={(e) => e.stopPropagation()}>
+                  {project_name}
+                </Link>
+              </TableCell>
               <TableCell>
                 <div className="font-medium">{w.definition_id}</div>
                 <div className="font-mono text-xs text-muted-foreground">…{shortId(w.id)}</div>
@@ -77,7 +81,9 @@ function InProgress({ data }: { data: DashboardData }) {
                 {task ? (
                   <>
                     <div className="flex items-center gap-1.5">
-                      {humanize(task.name)}
+                      <Link className="hover:underline" to={`/tasks/${task.id}`} onClick={(e) => e.stopPropagation()}>
+                        {humanize(task.name)}
+                      </Link>
                       <StatusBadge info={taskStatus(task.status)} className="scale-90" />
                     </div>
                     <div className="text-xs text-muted-foreground">{task.agent ?? (task.kind === "tool" ? "platform tool" : "—")}</div>
@@ -89,7 +95,7 @@ function InProgress({ data }: { data: DashboardData }) {
               <TableCell>
                 <StatusBadge info={st} />
               </TableCell>
-              <TableCell className="text-xs">{st.waitingOn ?? "—"}</TableCell>
+              <TableCell className="text-xs" data-testid="pending-action">{pending_action?.text || st.waitingOn || "—"}</TableCell>
               <TableCell className="text-xs whitespace-nowrap">{formatDateTime(w.created_at)}</TableCell>
               <TableCell className="text-xs whitespace-nowrap" title={formatDateTime(w.updated_at)}>
                 {formatRelative(w.updated_at)}
@@ -98,6 +104,44 @@ function InProgress({ data }: { data: DashboardData }) {
             </TableRow>
           );
         })}
+      </TableBody>
+    </Table>
+  );
+}
+
+function RecentTasks() {
+  const q = useTaskQueue({}, 10);
+  if (q.isPending) return <LoadingRows rows={3} />;
+  if (q.isError) return <ErrorState error={q.error} />;
+  if (!q.data.items.length) return <EmptyState title="No tasks executed yet" />;
+  return (
+    <Table aria-label="Recently executed tasks">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Task</TableHead>
+          <TableHead>Project</TableHead>
+          <TableHead>Agent</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Updated</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {q.data.items.map(({ task: t, project_name }) => (
+          <TableRow key={t.id}>
+            <TableCell>
+              <Link className="hover:underline" to={`/tasks/${t.id}`}>
+                {humanize(t.name)}
+              </Link>
+              <div className="text-xs text-muted-foreground">{humanize(t.state)}</div>
+            </TableCell>
+            <TableCell className="text-xs">{project_name}</TableCell>
+            <TableCell className="text-xs">{t.agent ?? (t.kind === "tool" ? "platform tool" : "—")}</TableCell>
+            <TableCell>
+              <StatusBadge info={taskStatus(t.status)} />
+            </TableCell>
+            <TableCell className="text-xs whitespace-nowrap">{formatRelative(t.updated_at)}</TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );
@@ -244,6 +288,20 @@ export function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recently executed tasks</CardTitle>
+                <CardDescription>From the engine's task records; filter by project, workflow, stage, status and date on the Tasks page.</CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/tasks">All tasks</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="px-0 pb-1">
+              <RecentTasks />
+            </CardContent>
+          </Card>
           {d.projects.some((p) => p.restricted) && (
             <p className="text-xs text-muted-foreground">
               Some projects are hidden from these figures because the viewing identity lacks <code>workflow.read</code> / <code>approval.read</code> there.

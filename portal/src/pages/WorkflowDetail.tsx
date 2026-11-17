@@ -16,7 +16,43 @@ import { cn } from "@/lib/utils";
 import { CompletionSeal, GovernanceCard } from "@/components/GovernanceCard";
 import { WorkspaceDocuments } from "@/components/WorkspaceDocuments";
 import { GenerationBadge, ReplayNotice } from "@/components/Generation";
-import type { Generation } from "@/lib/types";
+import { WorkflowOperations } from "@/components/WorkflowOperations";
+import type { Generation, Lineage } from "@/lib/types";
+
+function LineageCard({ lineage }: { lineage?: Lineage }) {
+  if (!lineage || (!lineage.derived_from && !lineage.derived_runs.length)) return null;
+  return (
+    <Card data-testid="lineage">
+      <CardHeader>
+        <CardTitle>Lineage</CardTitle>
+        <CardDescription>Restarts create new runs; the original runs, their artifacts and approvals are kept.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2 text-sm">
+        {lineage.derived_from && (
+          <div>
+            Restarted from{" "}
+            <Link className="font-mono underline" to={`/workflows/${lineage.derived_from.source}`}>
+              {lineage.derived_from.source}
+            </Link>{" "}
+            at <b>{humanize(lineage.derived_from.stage)}</b> by {lineage.derived_from.actor} · {formatDateTime(lineage.derived_from.at)}
+            {lineage.derived_from.input_changed && " · new input"}
+            <div className="text-xs text-muted-foreground">Reason: {lineage.derived_from.reason}</div>
+          </div>
+        )}
+        {lineage.derived_runs.map((r) => (
+          <div key={r.instance}>
+            Superseded by{" "}
+            <Link className="font-mono underline" to={`/workflows/${r.instance}`}>
+              {r.instance}
+            </Link>{" "}
+            (restart at <b>{humanize(r.stage)}</b> by {r.actor} · {formatDateTime(r.at)})
+            <div className="text-xs text-muted-foreground">Reason: {r.reason}</div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
 
 const stageStyle: Record<StageStatus, { ring: string; icon: React.ReactNode }> = {
   completed: { ring: "border-emerald-300 bg-emerald-50 text-emerald-700", icon: <CheckCircle2 className="size-4" /> },
@@ -134,7 +170,9 @@ function StageDetail({ stage, workflowId, projectId, generation }: { stage: Stag
               {stage.tasks.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell>
-                    {humanize(t.name)}
+                    <Link className="hover:underline" to={`/tasks/${t.id}`}>
+                      {humanize(t.name)}
+                    </Link>
                     <div className="font-mono text-[11px] text-muted-foreground">{t.id}</div>
                     {t.error && <div className="mt-1 text-xs text-red-700">{t.error}</div>}
                   </TableCell>
@@ -232,7 +270,7 @@ export function WorkflowDetailPage() {
         <ReplayNotice provenance={d.artifact_provenance} />
         {w.status === "waiting_external" && (
           <div className="rounded-md border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-            <b>{humanize(w.awaiting_external ?? w.state)}</b> is handed off to your connected AI client (execution mode <code>{d.execution_mode}</code>). It continues when the client submits a result that passes validation (`eaeh task list` shows the hand-off).
+            <b>{humanize(w.awaiting_external ?? w.state)}</b> is handed off to your connected AI client (execution mode <code>{d.execution_mode}</code>). It continues when the client or the background worker submits a result that passes validation. Open the task (stage below) for its hand-off status, attempts and Retry.
           </div>
         )}
         {w.blocked && (
@@ -244,8 +282,11 @@ export function WorkflowDetailPage() {
         {w.failure && (
           <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
             <b>Failure:</b> {w.failure}
+            <div className="mt-1 text-xs">Recovery: use <b>Retry failed stage</b> above. It previews a new linked run that re-executes the failed stage and reuses the completed ones; this run stays as it is.</div>
           </div>
         )}
+        <WorkflowOperations w={w} ops={d.operations} />
+        <LineageCard lineage={d.lineage} />
         <Card>
           <CardHeader>
             <CardTitle>Lifecycle</CardTitle>

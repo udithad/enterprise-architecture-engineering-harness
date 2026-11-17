@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router";
-import { Activity, CheckSquare, FolderKanban, GitBranch, LayoutDashboard, Menu, Settings, ShieldAlert, X, BookOpen } from "lucide-react";
+import { Activity, CheckSquare, FolderKanban, GitBranch, LayoutDashboard, Menu, Settings, ShieldAlert, X, BookOpen, ListChecks, Library, Cpu } from "lucide-react";
 import { useDashboard, useSession } from "@/hooks/queries";
 import { cn } from "@/lib/utils";
 
@@ -8,8 +8,11 @@ const nav: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: <LayoutDashboard />, end: true },
   { to: "/projects", label: "Projects", icon: <FolderKanban /> },
   { to: "/workflows", label: "Workflows", icon: <GitBranch /> },
+  { to: "/tasks", label: "Tasks", icon: <ListChecks /> },
   { to: "/approvals", label: "Approvals", icon: <CheckSquare /> },
   { to: "/skills", label: "Skills", icon: <BookOpen /> },
+  { to: "/catalog", label: "Knowledge & agents", icon: <Library /> },
+  { to: "/execution", label: "Execution", icon: <Cpu /> },
   { to: "/activity", label: "Activity / Audit", icon: <Activity /> },
   { to: "/settings", label: "Settings", icon: <Settings /> },
 ];

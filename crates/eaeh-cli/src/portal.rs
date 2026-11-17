@@ -3,8 +3,8 @@
 
 use crate::credentials::{Need, Store, select};
 use crate::{dx, harness};
-use eaeh_api::portal::{Acting, PortalState, app};
-use eaeh_core::{HarnessError, Principal, Result, Role};
+use eaeh_api::portal::{Acting, HostFuture, PortalHost, PortalState, RegisterRequest, app};
+use eaeh_core::{HarnessError, Principal, ProjectId, Result, Role};
 use eaeh_runtime::{Harness, HarnessConfig};
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -13,6 +13,10 @@ pub struct PortalArgs {
     pub bind: String,
     pub approver: Option<String>,
     pub steward: Option<String>,
+    pub operator: Option<String>,
+    pub admin: Option<String>,
+    pub workspace_roots: Vec<PathBuf>,
+    pub config_path: PathBuf,
     pub static_dir: PathBuf,
     pub dev_origins: Vec<String>,
     pub open: bool,
@@ -92,6 +96,133 @@ async fn resolve_steward(h: &Harness, name: &str) -> Result<Acting> {
     Ok(a)
 }
 
+/// The operator must be named explicitly and may start workflows (`workflow.start`).
+async fn resolve_operator(h: &Harness, name: &str) -> Result<Acting> {
+    let a = resolve_profile(
+        h,
+        Some(name),
+        Need::Action(eaeh_governance::authz::Action::WorkflowStart, None),
+    )
+    .await?;
+    let ok = a.principal.roles().iter().any(|r| {
+        eaeh_governance::authz::RbacAuthorizer::role_permits(
+            *r,
+            eaeh_governance::authz::Action::WorkflowStart,
+        )
+    });
+    if !ok {
+        return Err(HarnessError::forbidden(format!(
+            "profile '{name}' ({}) cannot start workflows; choose the developer/operator profile (`eaeh auth status`)",
+            a.principal.id
+        )));
+    }
+    Ok(a)
+}
+
+/// The administrator must be named explicitly and hold `principal.manage` (registering a
+/// project creates it and grants or creates people).
+async fn resolve_admin(h: &Harness, name: &str) -> Result<Acting> {
+    let a = resolve_profile(
+        h,
+        Some(name),
+        Need::Action(eaeh_governance::authz::Action::PrincipalManage, None),
+    )
+    .await?;
+    if h.authz
+        .authorize(
+            &a.principal,
+            eaeh_governance::authz::Action::PrincipalManage,
+            eaeh_governance::authz::Target::Tenant(a.principal.tenant),
+        )
+        .is_err()
+    {
+        return Err(HarnessError::forbidden(format!(
+            "profile '{name}' ({}) cannot manage principals; choose the administrator profile (`eaeh auth status`)",
+            a.principal.id
+        )));
+    }
+    Ok(a)
+}
+
+/// The CLI services the portal process calls (W4): the same code as `eaeh project init`
+/// and the worker start of `eaeh workflow run`.
+struct CliHost {
+    cfg: HarnessConfig,
+    config_path: PathBuf,
+}
+
+impl PortalHost for CliHost {
+    fn register<'a>(
+        &'a self,
+        h: &'a Harness,
+        admin: &'a Principal,
+        root: PathBuf,
+        r: RegisterRequest,
+    ) -> HostFuture<'a, serde_json::Value> {
+        Box::pin(async move {
+            let a = dx::InitArgs {
+                name: r.name,
+                description: r.description,
+                language: r.language,
+                framework: r.framework,
+                build_tool: r.build_tool,
+                constraints: r.constraints,
+                brd: r.brd.map(PathBuf::from),
+                knowledge: r.knowledge.into_iter().map(PathBuf::from).collect(),
+                standards: r.standards.into_iter().map(PathBuf::from).collect(),
+                developer: r.developer,
+                steward: r.steward,
+                approvers: r.approvers,
+                mode: None,
+                provider: None,
+                clients: vec![],
+                build_verification: None,
+                build_program: None,
+                build_args: vec![],
+                workflows: vec![],
+                // New people's tokens go to the local credential store, never to the browser.
+                store_profiles: true,
+                handover_dir: None,
+                workspace: root,
+                ttl_days: 30,
+                config_path: self.config_path.clone(),
+            };
+            let o = dx::register_project(h, admin, a).await?;
+            Ok(serde_json::json!({
+                "project": o.project,
+                "name": o.name,
+                "workspace": o.workspace,
+                "actions": o.actions,
+                "handover": o.handover,
+                "readiness": o.readiness,
+            }))
+        })
+    }
+
+    fn ensure_worker<'a>(
+        &'a self,
+        h: &'a Harness,
+        operator: &'a Principal,
+        project: ProjectId,
+    ) -> HostFuture<'a, Option<String>> {
+        Box::pin(async move {
+            let scope = eaeh_core::Scope::new(operator.tenant, project);
+            let reg = h.engine.materializer().workspace(scope).await?.ok_or_else(|| {
+                HarnessError::conflict("the project has no registered workspace; register it first")
+            })?;
+            let root = PathBuf::from(&reg.root);
+            let m = eaeh_runtime::project::ProjectManifest::load(&root)?;
+            if m.project.id != project {
+                return Err(HarnessError::conflict(format!(
+                    "the manifest in {} belongs to another project",
+                    reg.root
+                )));
+            }
+            Ok(crate::worker::ensure_worker(&self.cfg, h, &root, &m).await)
+        })
+    }
+}
+
 fn random_secret() -> Result<String> {
     let b = eaeh_core::hash::random_bytes::<32>()?;
     Ok(b.iter().map(|x| format!("{x:02x}")).collect())
@@ -116,6 +247,26 @@ pub async fn serve(cfg: &HarnessConfig, args: PortalArgs) -> Result<()> {
     let steward = match &args.steward {
         Some(n) => Some(resolve_steward(&h, n).await?),
         None => None,
+    };
+    let operator = match &args.operator {
+        Some(n) => Some(resolve_operator(&h, n).await?),
+        None => None,
+    };
+    let admin = match &args.admin {
+        Some(n) => Some(resolve_admin(&h, n).await?),
+        None => None,
+    };
+    // Default browse root: the folder that contains the EAEH repository
+    // (`<parent>/<repo>/config/eaeh.toml`).
+    let roots = if args.workspace_roots.is_empty() {
+        cfg.base_dir
+            .parent()
+            .and_then(|repo| std::fs::canonicalize(repo).ok())
+            .and_then(|repo| repo.parent().map(std::path::Path::to_path_buf))
+            .into_iter()
+            .collect()
+    } else {
+        args.workspace_roots.clone()
     };
     // `--static-dir`, else the EAEH repository's `portal/dist` next to the configuration
     // (`<repo>/config/eaeh.toml` ⇒ `<repo>/portal/dist`), so it works from a project folder.
@@ -148,7 +299,16 @@ pub async fn serve(cfg: &HarnessConfig, args: PortalArgs) -> Result<()> {
         static_dir.clone(),
         h.execution_mode.to_string(),
     )
-    .with_steward(steward);
+    .with_steward(steward)
+    .with_operations(
+        operator,
+        admin,
+        roots,
+        Some(std::sync::Arc::new(CliHost {
+            cfg: cfg.clone(),
+            config_path: args.config_path.clone(),
+        })),
+    );
     let app = app(h.clone(), state.clone());
     // Skill directories copied into the skills folder appear without a restart (O3).
     let _discovery = eaeh_runtime::project::spawn_skill_discovery(
@@ -180,6 +340,27 @@ pub async fn serve(cfg: &HarnessConfig, args: PortalArgs) -> Result<()> {
         None => eprintln!(
             "  skills as : nobody – start with --steward <profile> to register skill files in the portal"
         ),
+    }
+    match &state.operator {
+        Some(o) => eprintln!(
+            "  operating as: {} ({}) – start, cancel, resume, restart, retry",
+            o.label, o.principal.id
+        ),
+        None => eprintln!("  operating as: nobody – start with --operator <profile> for workflow operations"),
+    }
+    match &state.admin {
+        Some(a) => eprintln!(
+            "  admin as   : {} ({}) – register existing projects under {}",
+            a.label,
+            a.principal.id,
+            state
+                .workspace_roots
+                .iter()
+                .map(|r| r.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        None => eprintln!("  admin as   : nobody – start with --admin <profile> to register projects"),
     }
     if static_dir.is_none() {
         eprintln!(

@@ -586,6 +586,72 @@ impl Harness {
         Ok(id)
     }
 
+    /// Resume a non-terminal run from its persisted state (`workflow.start` on its project):
+    /// re-drives the engine, which continues at the current stage, retries a blocked
+    /// materialization, or waits again for an approval or an external AI result.
+    pub async fn resume_workflow(self: &Arc<Self>, actor: &Principal, id: WorkflowInstanceId) -> Result<()> {
+        self.authorize_resume(actor, id).await?;
+        self.spawn_drive(id);
+        Ok(())
+    }
+
+    /// Authorization (`workflow.start`), the terminal-run check and the `workflow.resume`
+    /// audit record shared by the portal/API and `eaeh workflow resume`.
+    pub async fn authorize_resume(&self, actor: &Principal, id: WorkflowInstanceId) -> Result<()> {
+        let inst = self.engine.get_for(actor, id).await?;
+        self.authz.authorize(
+            actor,
+            eaeh_governance::authz::Action::WorkflowStart,
+            eaeh_governance::authz::Target::Scope(inst.scope),
+        )?;
+        if inst.status.is_terminal() {
+            return Err(HarnessError::conflict(format!(
+                "workflow {id} is {}; a finished run is restarted, not resumed (restart preview)",
+                inst.status.as_str()
+            )));
+        }
+        self.db
+            .audit(
+                eaeh_store::audit::AuditEntry::new(
+                    actor,
+                    "workflow.resume",
+                    "workflow_instance",
+                    id.to_string(),
+                    eaeh_store::audit::AuditOutcome::Requested,
+                )
+                .scope(inst.scope),
+            )
+            .await?;
+        Ok(())
+    }
+
+    /// Execute a previewed restart (PORTAL-OPERATIONS-PLAN W1) and drive the new run.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn restart_workflow(
+        self: &Arc<Self>,
+        actor: &Principal,
+        id: WorkflowInstanceId,
+        stage: &str,
+        input: Option<serde_json::Value>,
+        fingerprint: &str,
+        reason: &str,
+    ) -> Result<(WorkflowInstanceId, eaeh_workflow::RestartPlan)> {
+        let (new, plan) = self
+            .engine
+            .restart(
+                actor,
+                id,
+                stage,
+                input,
+                fingerprint,
+                reason,
+                TraceContext::new_root(),
+            )
+            .await?;
+        self.spawn_drive(new);
+        Ok((new, plan))
+    }
+
     /// Decide an approval; the workflow resumes asynchronously.
     pub async fn decide_approval(
         self: &Arc<Self>,

@@ -1279,10 +1279,47 @@ fn external_ai_bootstrap_cli_and_mcp_hand_offs_without_model_calls() {
     let t2 = list["tasks"][0]["task_id"].as_str().unwrap().to_string();
     assert_ne!(t1, t2);
     let pkg = tool(5, "eaeh_task_get", json!({"task_id": t2}));
-    assert_eq!(
-        pkg["package"]["agent"]["reference"],
-        "requirements-engineer@1.0.0"
+    // Read every mandatory section through the MCP tools only, in bounded chunks.
+    let mut overview = String::new();
+    let mut n = 100;
+    for sec in pkg["sections"].as_array().unwrap() {
+        if sec["class"] != "mandatory" {
+            continue;
+        }
+        let name = sec["section"].as_str().unwrap().to_string();
+        let mut offset = 0u64;
+        let mut text = String::new();
+        loop {
+            n += 1;
+            let c = tool(
+                n,
+                "eaeh_task_section",
+                json!({"task_id": t2, "section": name, "offset": offset}),
+            );
+            assert!(c["content"].as_str().unwrap().len() <= 16 * 1024 + 4);
+            text.push_str(c["content"].as_str().unwrap());
+            offset = c["next_offset"].as_u64().unwrap();
+            if c["done"] == true {
+                break;
+            }
+        }
+        assert_eq!(
+            text.len() as u64,
+            sec["bytes"].as_u64().unwrap(),
+            "{name} complete"
+        );
+        if name == "overview" {
+            overview = text;
+        }
+    }
+    let overview: Value = serde_json::from_str(&overview).unwrap();
+    assert_eq!(overview["agent"]["reference"], "requirements-engineer@1.0.0");
+    let ack = tool(
+        51,
+        "eaeh_task_ack",
+        json!({"task_id": t2, "package_hash": pkg["package_hash"]}),
     );
+    assert_eq!(ack["acknowledged"], true, "{ack}");
     let read = tool(
         6,
         "eaeh_task_tool",
@@ -1360,7 +1397,10 @@ fn task_scoped_mcp_server_and_worker_commands() {
     assert_eq!(
         names,
         vec![
+            "eaeh_task_ack",
+            "eaeh_task_blob",
             "eaeh_task_get",
+            "eaeh_task_section",
             "eaeh_task_submit",
             "eaeh_task_tool",
             "eaeh_task_validate"

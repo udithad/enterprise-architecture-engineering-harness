@@ -24,7 +24,7 @@ async function parse(res: Response): Promise<unknown> {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {
@@ -64,6 +64,10 @@ export function describeError(e: unknown): { title: string; detail: string; hint
       unauthenticated: "The stored identity is expired or revoked. Renew it with `eaeh auth renew --profile <name>` and restart the portal.",
       forbidden: "The identity the portal runs as does not hold the permission for this view. Check `eaeh auth status`.",
       approver_not_configured: "Restart the portal with `--approver <approver-profile>` to record decisions.",
+      operator_not_configured: "Restart the portal with `--operator <developer-profile>` to start, cancel, resume, restart or retry workflows.",
+      admin_not_configured: "Restart the portal with `--admin <admin-profile>` to register projects.",
+      not_available_in_portal: "This operation stays with the eaeh CLI; see the CLI-to-Portal parity inventory.",
+      conflict: "The state changed or the request conflicts with existing records; reload and review.",
       rate_limited: "Too many requests in the last minute; the view refreshes automatically.",
       network_error: "Start it again with `eaeh portal` and reopen the printed link.",
     };

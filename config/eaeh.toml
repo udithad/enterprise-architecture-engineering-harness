@@ -79,6 +79,7 @@ provider = "claude_code"     # the only automated provider (GitHub Copilot: inte
 # model = "sonnet"                        # default: your Claude Code setting
 task_timeout_secs = 1800     # one AI attempt; the session is stopped after this
 max_attempts = 3             # attempts per task (bounded; then the task stops as `exhausted`)
+max_context_attempts = 3     # failed task-package deliveries per task (no attempt used; then `blocked`)
 backoff_secs = 30            # first retry delay, doubled per attempt
 poll_interval_ms = 3000
 lease_secs = 120             # a worker silent this long is presumed dead; its task is recovered

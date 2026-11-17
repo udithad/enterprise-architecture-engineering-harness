@@ -102,6 +102,8 @@ pub async fn worker_run(cfg: &HarnessConfig, project_root: Option<PathBuf>, unti
             "mcp".into(),
             "--task".into(),
             "{task}".into(),
+            "--execution".into(),
+            "{execution}".into(),
             "--project-root".into(),
             root.display().to_string(),
         ],
@@ -442,19 +444,29 @@ pub async fn worker_status(cfg: &HarnessConfig, project_root: Option<PathBuf>) -
 }
 
 /// `eaeh worker retry <task>`.
-pub async fn worker_retry(cfg: &HarnessConfig, task: &str) -> Result<()> {
+pub async fn worker_retry(cfg: &HarnessConfig, task: &str, workflow: Option<&str>) -> Result<()> {
     let h = harness(cfg).await?;
     let p = dx::caller_need(&h, Need::Any).await?;
-    let scope = co::retry_task(&h, &p, task.parse()?).await?;
-    let mut msg = format!("Task {task} will be executed again.");
+    let r = co::retry_task_checked(&h, &p, task.parse()?, workflow).await?;
+    let mut msg = format!(
+        "Task {task} will be executed again.\n  workflow {} (now {} at '{}'), stage {}\n  package version {} (unchanged), {} submission(s) kept\n",
+        r.workflow, r.workflow_status, r.workflow_stage, r.stage, r.package_hash, r.submissions
+    );
+    if let Some(f) = &r.previous_failure {
+        msg.push_str(&format!("  previous failure: {f}\n"));
+    }
+    for (id, stage, status) in &r.predecessors {
+        msg.push_str(&format!(
+            "  other task of this workflow: {id} {stage} {status} (untouched)\n"
+        ));
+    }
     if let Ok((root, m)) = dx::manifest_required(None)
-        && m.scope() == scope
+        && m.scope() == r.scope
         && let Some(x) = ensure_worker(cfg, &h, &root, &m).await
     {
-        msg.push('\n');
         msg.push_str(&x);
     }
-    dx::out(&json!({"retry": task}), &msg);
+    dx::out(&json!({"retry": r}), msg.trim_end());
     Ok(())
 }
 
@@ -467,7 +479,7 @@ pub async fn worker_history(cfg: &HarnessConfig, task: Option<&str>, limit: i64)
     let mut t = String::new();
     for e in &list {
         t.push_str(&format!(
-            "{}  {:<26} attempt {} {:<11} {}{}{}\n",
+            "{}  {:<26} attempt {} {:<11} {}{}{}{}\n",
             e.started_at.get(..19).unwrap_or(&e.started_at),
             e.stage,
             e.attempt,
@@ -479,7 +491,26 @@ pub async fn worker_history(cfg: &HarnessConfig, task: Option<&str>, limit: i64)
             e.duration_ms
                 .map(|d| format!("{}s ", d / 1000))
                 .unwrap_or_default(),
-            e.auth_status
+            e.auth_status,
+            {
+                let mut x = match (&e.package_bytes, &e.delivery_status, &e.retrieval_status) {
+                    (Some(b), Some(d), Some(r)) => {
+                        format!("\n      context: package {b} bytes, delivery {d} ({r})")
+                    }
+                    (Some(b), Some(d), None) => format!("\n      context: package {b} bytes, delivery {d}"),
+                    _ => String::new(),
+                };
+                if e.denied_calls.unwrap_or(0) > 0 {
+                    x.push_str(&format!("; {} access denial(s)", e.denied_calls.unwrap_or(0)));
+                }
+                if e.acknowledged_at.is_some() {
+                    x.push_str("; acknowledged");
+                }
+                if let Some(r) = &e.remedy {
+                    x.push_str(&format!("\n      fix: {r}"));
+                }
+                x
+            }
         ));
     }
     if t.is_empty() {

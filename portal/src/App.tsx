@@ -17,6 +17,12 @@ const ApprovalReviewPage = page(() => import("@/pages/ApprovalReview"), "Approva
 const ActivityPage = page(() => import("@/pages/Activity"), "ActivityPage");
 const SkillsPage = page(() => import("@/pages/Skills"), "SkillsPage");
 const SkillViewerPage = page(() => import("@/pages/SkillViewer"), "SkillViewerPage");
+const TasksPage = page(() => import("@/pages/Tasks"), "TasksPage");
+const TaskDetailPage = page(() => import("@/pages/TaskDetail"), "TaskDetailPage");
+const RegisterProjectPage = page(() => import("@/pages/RegisterProject"), "RegisterProjectPage");
+const StartWorkflowPage = page(() => import("@/pages/StartWorkflow"), "StartWorkflowPage");
+const ExecutionPage = page(() => import("@/pages/Execution"), "ExecutionPage");
+const CatalogPage = page(() => import("@/pages/Catalog"), "CatalogPage");
 const SettingsPage = page(() => import("@/pages/Settings"), "SettingsPage");
 const NotFoundPage = page(() => import("@/pages/NotFound"), "NotFoundPage");
 
@@ -29,7 +35,13 @@ export const routes = [
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "projects", element: s(<ProjectsPage />) },
+      { path: "projects/register", element: s(<RegisterProjectPage />) },
       { path: "projects/:id", element: s(<ProjectDetailPage />) },
+      { path: "projects/:id/start", element: s(<StartWorkflowPage />) },
+      { path: "tasks", element: s(<TasksPage />) },
+      { path: "tasks/:id", element: s(<TaskDetailPage />) },
+      { path: "execution", element: s(<ExecutionPage />) },
+      { path: "catalog", element: s(<CatalogPage />) },
       { path: "workflows", element: s(<WorkflowsPage />) },
       { path: "workflows/:id", element: s(<WorkflowDetailPage />) },
       { path: "approvals", element: s(<ApprovalsPage />) },

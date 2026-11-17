@@ -25,6 +25,7 @@ mod credentials;
 mod dx;
 mod mcp;
 mod portal;
+mod setup;
 mod worker;
 
 use credentials::Need;
@@ -103,6 +104,52 @@ struct Cli {
 enum Cmd {
     /// Create the data directory, apply migrations and load definitions.
     Init,
+    /// One-command setup: initialise the database, bootstrap and verify the identities
+    /// (admin, developer, approver, steward), register skills (pending approval), run health
+    /// checks and start the Governance Portal. Idempotent; repeat runs repair safe problems.
+    /// Exit code 7 when anything mandatory is not ready.
+    Setup {
+        /// Diagnose only: change nothing, start nothing.
+        #[arg(long)]
+        check: bool,
+        /// Also repair credentials that map to the wrong principal or another installation
+        /// (the credential file is backed up first) and re-enable disabled standard principals.
+        #[arg(long)]
+        repair: bool,
+        /// Back up and reset the database, then configure from the beginning (needs confirmation).
+        #[arg(long)]
+        reset: bool,
+        /// Non-interactive confirmation of --reset / --restore: the exact phrase `RESET EAEH`.
+        #[arg(long = "confirm-reset")]
+        confirm_reset: Option<String>,
+        /// Restore the database from a backup directory written by setup (needs confirmation).
+        #[arg(long)]
+        restore: Option<PathBuf>,
+        /// Open the Portal in the default browser.
+        #[arg(long)]
+        open: bool,
+        /// Do not start the Governance Portal.
+        #[arg(long = "no-portal")]
+        no_portal: bool,
+        /// Stop the background Governance Portal of this installation and exit.
+        #[arg(long = "stop-portal")]
+        stop_portal: bool,
+        /// Loopback address of the Portal.
+        #[arg(long, default_value = "127.0.0.1:8090")]
+        bind: String,
+        /// Directory with the built web UI.
+        #[arg(long, default_value = "portal/dist", env = "EAEH_PORTAL_DIR")]
+        static_dir: PathBuf,
+        /// Tenant name for a first-time setup.
+        #[arg(long, default_value = "local")]
+        tenant: String,
+        /// Project name for a first-time setup.
+        #[arg(long, default_value = "default")]
+        project: String,
+        /// Lifetime of issued tokens in days.
+        #[arg(long, default_value_t = 30)]
+        ttl_days: i64,
+    },
     /// Local health report.
     Health,
     /// Run the HTTP API server with background dispatch and supervision.
@@ -122,6 +169,17 @@ enum Cmd {
         /// Skills page. Omit to disable registration in the portal.
         #[arg(long)]
         steward: Option<String>,
+        /// Stored operator profile (workflow.start) for Start / Cancel / Resume / Restart /
+        /// Retry. Omit for a portal without workflow operations.
+        #[arg(long)]
+        operator: Option<String>,
+        /// Stored administrator profile (principal.manage) for "Register existing project".
+        #[arg(long)]
+        admin: Option<String>,
+        /// Folder under which "Register existing project" may browse (repeatable; default:
+        /// the parent folder of the EAEH repository).
+        #[arg(long = "workspace-root")]
+        workspace_roots: Vec<PathBuf>,
         /// Directory with the built web UI (`npm --prefix portal run build`).
         #[arg(long, default_value = "portal/dist", env = "EAEH_PORTAL_DIR")]
         static_dir: PathBuf,
@@ -185,6 +243,13 @@ enum Cmd {
         /// `eaeh_task_submit`, only for this task id (used by the automated worker).
         #[arg(long)]
         task: Option<String>,
+        /// Execution attempt id (set by the worker) to which context deliveries are traced.
+        #[arg(long)]
+        execution: Option<String>,
+        /// Print the tool names a task-scoped server exposes (JSON) and exit. The worker uses
+        /// it to verify that it and the MCP server are the same build.
+        #[arg(long = "task-tools")]
+        task_tools: bool,
     },
     /// Automated execution of AI tasks through Claude Code on your subscription (ADR-0026):
     /// start/stop the background worker, show status, history and log, retry a stopped task.
@@ -241,8 +306,15 @@ enum WorkerCmd {
         #[arg(long)]
         until_idle: bool,
     },
-    /// Make a blocked or exhausted task eligible for automatic execution again.
-    Retry { task: String },
+    /// Make a blocked or exhausted task eligible for automatic execution again, after the
+    /// cause was fixed. Shows the chain (workflow, stage, package version, earlier results);
+    /// accepted results and submissions are never touched.
+    Retry {
+        task: String,
+        /// Refuse unless the task belongs to this workflow (guards against a wrong task id).
+        #[arg(long)]
+        workflow: Option<String>,
+    },
     /// Execution attempts (provider, auth, outcome, failure class, duration).
     History {
         #[arg(long)]
@@ -456,6 +528,23 @@ enum WorkflowCmd {
     /// Continue an interrupted (non-terminal) run.
     Resume {
         id: String,
+    },
+    /// Restart, retry or reinitiate a run from a stage as a new, linked run. Shows the
+    /// preview (carried / re-executed stages, artifact versions, approvals kept or repeated);
+    /// changes nothing without --yes.
+    Restart {
+        id: String,
+        /// Restart point (default: the failed or current stage).
+        #[arg(long)]
+        from: Option<String>,
+        /// New run input (JSON or @file), e.g. a new BRD version; only from the first stage.
+        #[arg(long)]
+        input: Option<String>,
+        /// Why the run is restarted (recorded in lineage and audit).
+        #[arg(long)]
+        reason: Option<String>,
+        #[arg(long)]
+        yes: bool,
     },
     Show {
         id: String,
@@ -875,6 +964,42 @@ async fn run(cli: Cli) -> Result<()> {
             let h = harness(&cfg).await?;
             print(&json!({"initialized": cfg.data_dir(), "health": h.health().await}));
         }
+        Cmd::Setup {
+            check,
+            repair,
+            reset,
+            confirm_reset,
+            restore,
+            open,
+            no_portal,
+            stop_portal,
+            bind,
+            static_dir,
+            tenant,
+            project,
+            ttl_days,
+        } => {
+            setup::run(
+                &cfg,
+                setup::SetupArgs {
+                    check,
+                    repair,
+                    reset,
+                    confirm_reset,
+                    restore,
+                    open,
+                    no_portal,
+                    stop_portal,
+                    bind,
+                    static_dir,
+                    tenant,
+                    project,
+                    ttl_days,
+                    config_path: cli.config.clone(),
+                },
+            )
+            .await?;
+        }
         Cmd::Health => {
             let h = harness(&cfg).await?;
             print(&serde_json::to_value(h.health().await)?);
@@ -906,6 +1031,9 @@ async fn run(cli: Cli) -> Result<()> {
             bind,
             approver,
             steward,
+            operator,
+            admin,
+            workspace_roots,
             static_dir,
             dev_origins,
             open,
@@ -916,6 +1044,10 @@ async fn run(cli: Cli) -> Result<()> {
                     bind,
                     approver,
                     steward,
+                    operator,
+                    admin,
+                    workspace_roots,
+                    config_path: cli.config.clone(),
                     static_dir,
                     dev_origins,
                     open,
@@ -995,7 +1127,9 @@ async fn run(cli: Cli) -> Result<()> {
                 project_root,
                 until_idle,
             } => worker::worker_run(&cfg, project_root, until_idle).await?,
-            WorkerCmd::Retry { task } => worker::worker_retry(&cfg, &task).await?,
+            WorkerCmd::Retry { task, workflow } => {
+                worker::worker_retry(&cfg, &task, workflow.as_deref()).await?
+            }
             WorkerCmd::History { task, limit } => {
                 worker::worker_history(&cfg, task.as_deref(), limit).await?
             }
@@ -1024,6 +1158,23 @@ async fn run(cli: Cli) -> Result<()> {
             dx::workflow_status(&cfg, id.as_deref(), project.as_deref()).await?;
         }
         Cmd::Workflow(WorkflowCmd::Resume { id }) => dx::workflow_resume(&cfg, &id).await?,
+        Cmd::Workflow(WorkflowCmd::Restart {
+            id,
+            from,
+            input,
+            reason,
+            yes,
+        }) => {
+            dx::workflow_restart(
+                &cfg,
+                &id,
+                from.as_deref(),
+                input.as_deref(),
+                reason.as_deref(),
+                yes,
+            )
+            .await?
+        }
         Cmd::Workflow(c) => {
             let h = harness(&cfg).await?;
             let need = match &c {
@@ -1038,6 +1189,7 @@ async fn run(cli: Cli) -> Result<()> {
                 WorkflowCmd::Run { .. }
                 | WorkflowCmd::Status { .. }
                 | WorkflowCmd::Resume { .. }
+                | WorkflowCmd::Restart { .. }
                 | WorkflowCmd::Watch { .. } => {
                     unreachable!("handled above")
                 }
@@ -1529,7 +1681,21 @@ async fn run(cli: Cli) -> Result<()> {
             AuthCmd::Renew { profile, ttl_days } => dx::auth_renew(&cfg, &profile, ttl_days).await?,
             AuthCmd::Logout { profile, revoke } => dx::auth_logout(&cfg, &profile, revoke).await?,
         },
-        Cmd::Mcp { project_root, task } => mcp::serve(&cfg, project_root, task).await?,
+        Cmd::Mcp {
+            project_root,
+            task,
+            execution,
+            task_tools,
+        } => {
+            if task_tools {
+                println!(
+                    "{}",
+                    serde_json::to_string(&eaeh_runtime::coordinator::TASK_MCP_TOOLS)?
+                );
+            } else {
+                mcp::serve(&cfg, project_root, task, execution).await?
+            }
+        }
         Cmd::Task(TaskCmd::List { project, all }) => dx::task_list(&cfg, project.as_deref(), all).await?,
         Cmd::Task(TaskCmd::Show { id, out }) => dx::task_show(&cfg, &id, out.as_deref()).await?,
         Cmd::Task(TaskCmd::Tool { id, tool, input }) => dx::task_tool(&cfg, &id, &tool, &input).await?,

@@ -65,7 +65,7 @@ async fn visible_projects(
 /// project registry; the workspace from its registration (ADR-0027); description, stack and
 /// workflows are read from that repository's `.eaeh/project.toml` only when it declares this
 /// project (no second registry, no copy).
-async fn project_profile(
+pub(crate) async fn project_profile(
     st: &AppState,
     scope: Scope,
 ) -> (
@@ -146,6 +146,35 @@ fn project_status(workflows: &[WorkflowInstance]) -> (&'static str, Option<&Work
 fn current_workflow_view(w: &WorkflowInstance) -> Value {
     json!({"id": w.id, "definition_id": w.definition_id, "status": w.status, "state": w.state,
            "blocked": w.data.blocked, "updated_at": w.updated_at, "created_at": w.created_at})
+}
+
+/// What a run waits for, from its persisted state: an approval decision, an external AI
+/// client, a blocked document write, a failure to recover, or nothing.
+fn pending_action(w: &WorkflowInstance) -> Value {
+    use eaeh_workflow::InstanceStatus as S;
+    let (kind, text) = match w.status {
+        _ if w.data.blocked.is_some() => (
+            "blocked",
+            format!(
+                "document write blocked at {}: resolve the conflict, then resume",
+                w.state
+            ),
+        ),
+        S::WaitingApproval => ("approval", format!("human decision at {}", w.state)),
+        S::WaitingExternal => (
+            "external_ai",
+            format!("an AI client or worker must execute {}", w.state),
+        ),
+        S::Running => ("running", format!("executing {}", w.state)),
+        S::Failed => (
+            "failed",
+            format!("failed at {}: retry the stage (restart preview)", w.state),
+        ),
+        S::Succeeded => ("none", "completed".to_string()),
+        S::Cancelled => ("none", "cancelled".to_string()),
+        _ => ("none", String::new()),
+    };
+    json!({"kind": kind, "text": text})
 }
 
 fn allowed(st: &AppState, p: &Principal, action: Action, scope: Scope) -> bool {
@@ -300,7 +329,7 @@ async fn dashboard(State(st): St, Extension(p): Extension<Principal>) -> ApiResu
                     .iter()
                     .filter(|t| t.workflow_instance_id == inst.id.to_string())
                     .collect();
-                active.push(json!({"project_id": pid, "project_name": name, "workflow": instance_view(&inst), "tasks": its}));
+                active.push(json!({"project_id": pid, "project_name": name, "workflow": instance_view(&inst), "tasks": its, "pending_action": pending_action(&inst)}));
             }
             for a in st.harness.engine.recent_activity(&p, scope, 25).await? {
                 let mut v = serde_json::to_value(a).map_err(HarnessError::from)?;
@@ -351,6 +380,11 @@ struct ListQuery {
     project_id: Option<ProjectId>,
     status: Option<String>,
     limit: Option<u32>,
+    /// Workflow queue only: definition id, current stage, run status and last update since.
+    definition: Option<String>,
+    stage: Option<String>,
+    run_status: Option<String>,
+    since: Option<String>,
 }
 
 async fn activity(
@@ -440,8 +474,31 @@ async fn workflow_queue(
         } else {
             st.harness.engine.list(&p, scope, None, limit).await?
         };
+        let tasks = st.harness.engine.active_tasks(&p, scope, 100).await?;
         for i in list {
-            items.push(json!({"project_id": pid, "project_name": name, "workflow": instance_view(&i)}));
+            let keep = q
+                .definition
+                .as_deref()
+                .is_none_or(|d| d.is_empty() || i.definition_id.as_str() == d)
+                && q.stage.as_deref().is_none_or(|d| d.is_empty() || i.state == d)
+                && q.run_status
+                    .as_deref()
+                    .is_none_or(|d| d.is_empty() || i.status.as_str() == d)
+                && q.since
+                    .as_deref()
+                    .is_none_or(|d| d.is_empty() || i.updated_at.as_str() >= d);
+            if !keep {
+                continue;
+            }
+            let current = tasks.iter().find(|t| t.workflow_instance_id == i.id.to_string());
+            items.push(json!({
+                "project_id": pid,
+                "project_name": name,
+                "workflow": instance_view(&i),
+                "current_task": current,
+                "pending_action": pending_action(&i),
+                "operations": {"resume": !i.status.is_terminal(), "cancel": !i.status.is_terminal(), "restart": true},
+            }));
         }
     }
     items.sort_by(|a, b| {
@@ -501,9 +558,21 @@ async fn workflow_detail(
             provenance.insert(state.clone(), generation(&m));
         }
     }
+    let lineage = st.harness.engine.lineage(&p, id).await?;
+    // What the engine supports for this run in its current status; the backend still
+    // authorizes each call (`workflow.start`).
+    let terminal = inst.status.is_terminal();
+    let operations = json!({
+        "resume": !terminal,
+        "cancel": !terminal,
+        "restart": true,
+        "may_operate": allowed(&st, &p, Action::WorkflowStart, inst.scope),
+    });
     Ok(Json(json!({
         "project": {"id": inst.scope.project, "name": name},
         "workflow": instance_view(&inst),
+        "lineage": lineage,
+        "operations": operations,
         "definition": definition,
         "history": history,
         "tasks": tasks,

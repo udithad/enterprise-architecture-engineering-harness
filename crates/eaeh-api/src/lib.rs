@@ -12,6 +12,7 @@
 //! * Per-principal rate limiting and request body size limits.
 
 mod error;
+mod ops;
 pub mod portal;
 mod routes;
 mod views;

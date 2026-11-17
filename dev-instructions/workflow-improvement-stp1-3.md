@@ -1,386 +1,137 @@
-# EAEH Workflow Management – Comprehensive Usability, Reliability and Developer Experience Enhancement
+# EAEH — Project Onboarding, Workflow Recovery and Complete Governance Portal Integration
 
-## 1. Objective
+Read `claude-instructions.md` and thoroughly inspect the existing EAEH implementation before making changes.
 
-Read the repository's `claude-instructions.md` completely before making any changes.
+Implement the following enhancements so that users can operate EAEH through the Governance Portal without depending on CLI commands for routine project and workflow operations.
 
-Improve EAEH workflow management to deliver a professional, reliable and intuitive developer experience.
+## 1. Project Onboarding Using an Existing Project Location
 
-The current workflow management experience is unnecessarily difficult. Developers encounter confusing authentication and authorization errors, worker startup problems, unclear workflow states, manual recovery steps, inconsistent command behaviour and difficulty understanding why workflows are waiting or blocked.
+Allow users to initiate a new EAEH project by providing an existing local project directory.
 
-The objective is to make EAEH workflow management straightforward:
+The portal should provide a **Register Existing Project** workflow.
 
-- Developers should be able to start a workflow without manually troubleshooting worker configuration.
-- EAEH should automatically identify the correct developer identity.
-- Workers should reliably execute eligible tasks.
-- Workflow progress should be visible and understandable.
-- Human approval should be straightforward.
-- Failed and interrupted workflows should be recoverable.
-- Errors should explain the actual cause and provide actionable remediation.
-- CLI and Governance Portal should provide a consistent experience.
+Required capabilities:
 
-This is an engineering improvement, not merely a documentation exercise.
+- Select or enter the existing project directory.
+- Validate that the directory exists and is accessible.
+- Detect the project structure, programming language, framework, build tool and Git repository where possible.
+- Identify existing project documentation, including BRD, architecture documents, README, coding standards and project knowledge.
+- Allow users to review and confirm detected project information before registration.
+- Allow users to provide or amend project name, description, constraints, technology stack, BRD, knowledge sources, developer, steward and approver assignments.
+- Associate the project with the correct EAEH workspace and tenant.
+- Register the project using existing EAEH project registration services.
+- Display the registered project immediately in the Portal.
+- Provide clear validation errors for inaccessible paths, invalid project structures and duplicate registrations.
 
-## 2. Mandatory scope restrictions
+Do not copy or move the user's existing source code unnecessarily. Register and associate the existing workspace safely.
 
-**Implementation must affect only functionality within Phases 1, 2 and 3.**
+Support local development first. Do not expose arbitrary server filesystem access through browser requests. Use a controlled backend directory-selection or workspace-registration mechanism with path restrictions and authorization.
 
-Do not implement Phase 4, 5, 6, 7 or 8 functionality.
+## 2. Start and Manage Workflows Through the Portal
 
-Do not change the existing eight-phase roadmap.
+Expose all currently implemented workflow activities and their supported operations in the Portal.
 
-### Strict protection of `claude-instructions.md`
+Users should be able to:
 
-Treat the existing master instructions as authoritative.
+- Select a project.
+- View workflows available for that project.
+- Start a workflow.
+- Select the appropriate workflow inputs and existing documents.
+- Review the execution plan before starting.
+- See the workflow progress and current stage.
+- View individual task execution details.
+- View agent assignments, dependencies and execution status.
+- Inspect generated artifacts and validation results.
+- Approve, reject or request changes wherever human approval is required.
+- Cancel or retry workflows where supported.
+- Resume workflows from their persisted state.
 
-Do not:
-- Modify existing phase definitions.
-- Change implementation sequencing or next steps.
-- Change phase dependencies.
-- Change acceptance criteria.
-- Reorder, remove or rename phases.
-- Reinterpret existing architectural decisions.
-- Introduce new future-phase implementation requirements.
-- Modify existing roadmap content to accommodate this enhancement.
+Do not hardcode workflow names or stages in the frontend. Retrieve supported workflow definitions and capabilities from EAEH backend services.
 
-If additional instructions are needed, create a supplementary implementation document.
+## 3. Resume or Reinitiate a Workflow From Any Supported Point
 
-All existing instructions and roadmap content must remain intact.
+This is a critical requirement.
 
-## 3. Begin with a complete assessment
+Provide a workflow recovery and restart capability.
 
-Before implementation, inspect the existing codebase.
+Users should be able to select an existing workflow and choose a supported stage or task from which execution should continue.
 
-Review:
+Support the following scenarios:
 
-- Workflow engine and workflow state machine.
-- Workflow definitions and configuration.
-- Workflow execution and orchestration.
-- Task creation and scheduling.
-- Worker lifecycle and worker registration.
-- Worker authentication and identity resolution.
-- Principal and role management.
-- Project-level authorization.
-- Token issuance and credential storage.
-- External AI execution integration.
-- Claude Code and GitHub Copilot integration.
-- MCP tools and interfaces.
-- Approval lifecycle and approval APIs.
-- Artifact generation and version management.
-- Workflow persistence and recovery.
-- CLI commands and command help.
-- Governance Portal frontend and backend APIs.
-- Existing audit and observability mechanisms.
-- Existing automated tests.
+- Resume a workflow waiting for approval.
+- Resume a workflow waiting for external AI execution.
+- Resume after a worker interruption or application restart.
+- Retry a failed task.
+- Re-execute a selected task.
+- Restart from a selected workflow stage.
+- Re-run a workflow from an earlier stage when requirements or architecture change.
+- Resume downstream execution after a human approval.
+- Reinitiate a completed workflow when a new version of its input documents is provided.
 
-Identify the actual root causes of workflow management problems.
+Before executing a restart or reinitiation:
 
-Do not implement workarounds without understanding the underlying architecture.
+1. Display the selected restart point.
+2. Show affected downstream tasks.
+3. Identify existing artifacts and their versions.
+4. Explain whether existing outputs will be reused, invalidated or regenerated.
+5. Identify approval decisions that remain valid and those that must be repeated.
+6. Require user confirmation.
 
-Produce a short findings document before implementation, identifying architectural weaknesses, functional gaps and proposed changes.
+Important governance rules:
 
-## 4. Authentication and authorization improvements
+- Never silently overwrite previously approved artifacts.
+- Preserve historical workflow executions and artifact versions.
+- Maintain complete traceability between original and restarted executions.
+- Revalidate downstream artifacts when upstream inputs change.
+- Prevent duplicate task execution through idempotency controls.
+- Respect dependencies, authorization, approval gates and execution policies.
+- Do not allow users to bypass mandatory approval stages by selecting a later restart point.
+- Do not allow arbitrary stage injection or execution outside registered workflow definitions.
 
-Authentication and authorization must be reliable and predictable.
+Implement this through the existing workflow engine and persistence model. Do not introduce a second workflow engine in the Portal.
 
-### 4.1 Developer identity management
+## 4. Complete CLI-to-Portal Feature Parity
 
-Inspect how named credential profiles map to principals and roles.
+Conduct a systematic inventory of all existing EAEH CLI commands and their corresponding backend services.
 
-Provide clear separation between:
+Every supported operational command should have an equivalent Portal capability wherever it is appropriate for a graphical interface.
 
-- Admin identity.
-- Developer/operator identity.
-- Approver identity.
-- Knowledge steward identity.
+Cover at least these functional areas:
 
-A profile name must not create the impression that it represents a particular role when its underlying principal has different permissions.
-
-The CLI should clearly display:
-
-- Profile name.
-- Principal ID.
-- Principal name.
-- Assigned roles.
-- Project access.
-- Credential validity.
-- Default profile.
-- Whether the profile can perform the requested operation.
-
-### 4.2 Identity resolution
-
-Establish a consistent identity-resolution mechanism across:
-
-- CLI commands.
-- Background workers.
-- Workflow execution.
-- MCP operations.
-- Approval operations.
-
-Avoid situations where the CLI reports that a developer has access, but the background worker cannot execute the same project's task.
-
-The identity used to initiate a workflow and the identity used by the worker must be handled consistently.
-
-If a worker operates under a separate service identity, make that explicit and enforce the required authorization model.
-
-Never silently substitute an administrator identity for a developer identity.
-
-### 4.3 Authorization diagnostics
-
-When authorization fails, provide useful information:
-
-- Which principal was resolved?
-- Which profile was used?
-- Which project is involved?
-- Which permission is required?
-- Which role is required?
-- Does the principal have project access?
-- Is the credential valid?
-- Is the failure due to identity resolution, project membership, role assignment or policy enforcement?
-
-Provide the exact remediation command only when it is supported by the actual CLI.
-
-Do not expose tokens, credentials or sensitive authentication information.
-
-### 4.4 Security
-
-Do not weaken authorization to make workflow execution easier.
-
-Do not grant administrator privileges automatically.
-
-Preserve tenant isolation, project isolation, role-based access control and auditability.
-
-## 5. Worker lifecycle management
-
-Worker management must become a first-class EAEH capability.
-
-Inspect and improve:
-
-- Worker discovery.
-- Worker registration.
-- Worker startup.
-- Worker shutdown.
-- Worker health.
-- Worker identity.
-- Worker availability.
-- Task claiming.
-- Task execution.
-- Task completion.
-- Worker recovery.
-- Worker lease expiration.
-- Stale worker detection.
-
-### Expected behaviour
-
-1. When a workflow is started, EAEH should determine whether a suitable worker is available.
-2. If the worker is not running, EAEH should provide a clear explanation and, where safe and supported, start it automatically.
-3. The worker should use the correct authorized identity.
-4. The worker should claim only eligible tasks.
-5. The worker should not execute tasks belonging to unauthorized projects.
-6. A worker should not execute the same task multiple times because of duplicate polling or recovery.
-7. Interrupted tasks should be recoverable using persistent execution state.
-8. Worker shutdown should not corrupt workflow state.
-9. Worker health and execution status should be observable.
-
-Avoid requiring developers to manually run multiple commands to start an ordinary workflow.
-
-Do not create unbounded background processes or automatic restart loops.
-
-Provide bounded retries, sensible timeouts, cancellation and explicit failure states.
-
-## 6. Workflow lifecycle management
-
-Establish one consistent and well-defined workflow lifecycle.
-
-Inspect existing states and transitions before introducing or changing anything.
-
-The lifecycle should clearly distinguish:
-
-- Created.
-- Queued.
-- Running.
-- Waiting for external AI.
-- Waiting for human approval.
-- Waiting for a worker.
-- Failed.
-- Blocked.
-- Cancelled.
-- Completed.
-
-Use existing state definitions where possible.
-
-Do not introduce duplicate or contradictory workflow states.
-
-### Workflow execution
-
-A developer should be able to:
-
-1. Select a project.
-2. Verify project readiness.
-3. Select a registered workflow.
-4. Start the workflow.
-5. Monitor execution.
-6. Review generated artifacts.
-7. Approve or request changes at approval gates.
-8. Resume execution automatically after approval.
-9. View the final outcome and execution history.
-
-The workflow engine should automatically manage eligible transitions.
-
-Do not require developers to manually trigger the next stage when the workflow engine can safely do this.
-
-### Workflow commands
-
-Review the existing CLI and provide a consistent command experience for:
-
-- Listing workflows.
-- Starting workflows.
-- Viewing workflow status.
-- Watching workflow execution.
-- Viewing workflow details.
-- Viewing pending tasks.
-- Viewing worker status.
-- Viewing pending approvals.
-- Cancelling workflows.
-- Resuming recoverable workflows.
-- Inspecting workflow execution history.
-
-Do not blindly introduce new commands if equivalent commands already exist.
-
-Improve command discoverability, help text, validation and error messages.
-
-Where appropriate, provide concise output by default and structured JSON output for automation.
-
-## 7. Workflow monitoring and diagnostics
-
-A developer must never have to guess what EAEH is doing.
-
-Provide clear visibility into:
-
-- Workflow ID.
-- Project.
-- Workflow definition and version.
-- Current stage.
-- Current task.
-- Assigned agent.
-- Worker identity.
-- Task execution status.
-- Task start time.
-- Last activity.
-- Duration.
-- Retry count.
-- Dependencies.
-- Approval requirements.
-- Blocking reason.
-- Next expected action.
-
-The monitoring experience must explain whether the workflow is:
-
-- Actively progressing.
-- Waiting for external AI.
-- Waiting for human approval.
-- Waiting for worker availability.
-- Blocked by missing authorization.
-- Blocked by missing configuration.
-- Failed due to execution error.
-
-Provide meaningful explanations rather than generic messages such as "task pending" or "worker unavailable".
-
-### Watching workflows
-
-Improve `eaeh workflow watch` so that:
-
-- It displays meaningful stage transitions.
-- It shows why execution is waiting.
-- It displays task-level progress.
-- It handles terminal states cleanly.
-- It reconnects safely after temporary interruptions.
-- It does not lose workflow state when the terminal closes.
-- It provides a clear indication of the next required action.
-
-Watching a workflow must remain optional; execution must continue independently.
-
-## 8. External AI execution integration
-
-EAEH uses external AI execution through Claude Code and GitHub Copilot.
-
-Preserve the external AI architecture.
-
-EAEH remains the deterministic governance and orchestration control plane.
-
-External AI clients perform model reasoning and generation using the user's existing subscription and supported authentication mechanisms.
-
-EAEH must not silently invoke a separately billed LLM API.
-
-Improve the handoff lifecycle:
-
-1. EAEH identifies an eligible AI task.
-2. EAEH prepares the task and project context.
-3. The authorized external AI client retrieves or receives the task.
-4. The external AI client performs the work.
-5. The generated result is submitted to EAEH.
-6. EAEH validates the result.
-7. EAEH persists the artifact and audit information.
-8. EAEH advances the workflow when all conditions are satisfied.
-
-Handle:
-
-- Missing external AI clients.
-- Invalid client authentication.
-- Missing MCP configuration.
-- External AI execution failures.
-- Task timeouts.
-- Duplicate submissions.
-- Invalid output.
-- Interrupted handoffs.
-- Worker restarts.
-- Expired task leases.
-
-Do not assume that EAEH can access a Claude Code or GitHub Copilot internal session unless an actual supported integration exists.
-
-Do not introduce direct Anthropic API calls, Agent SDK billing or API-key-based fallback into the subscription-based execution path.
-
-Verify the actual Claude Code CLI authentication behaviour in the supported environment. If subscription authentication cannot be verified, fail safely and explain the limitation.
-
-## 9. Approval management
-
-Human approval is a critical governance capability.
-
-Improve approval handling for the existing Phase 1–3 workflow gates, including requirements, HLD and LLD where applicable.
-
-The developer and approver should be able to:
-
-- See pending approvals.
-- Open the complete artifact.
-- Review artifact version and metadata.
-- Understand the current workflow stage.
-- See validation results.
-- Review traceability.
-- Approve.
-- Request changes.
-- Reject.
-- Provide comments.
-
-Ensure:
-
-- Approval decisions are enforced by the backend.
-- Approvals reference the correct artifact version and hash.
-- Stale approvals cannot approve modified artifacts.
-- Rejection and change requests are recorded.
-- Approved artifacts are immutable or versioned appropriately.
-- Workflow progression occurs automatically after successful approval.
-
-Do not bypass approval gates.
-
-## 10. Governance Portal enhancements
-
-Improve the existing Governance Portal to provide a professional workflow operations experience.
-
-The portal must use actual EAEH backend data.
-
-Do not introduce mock workflow statistics or simulated task execution.
-
-### Dashboard
+| Functional area | Portal capabilities |
+|---|---|
+| Projects | Create, register, list, inspect and manage projects |
+| Workspaces | Associate and inspect project workspaces |
+| Workflows | List, start, inspect, resume, restart and cancel |
+| Tasks | Inspect, retry and re-execute supported tasks |
+| Requirements | Generate, inspect, version and approve |
+| HLD | Generate, inspect, version and approve |
+| LLD | Generate, inspect, version and approve |
+| Skills | Discover, inspect, validate, approve and reject |
+| Knowledge | Inspect registered knowledge and sources |
+| Agents | Inspect registered agents and capabilities |
+| Approvals | List, review, approve, reject and request changes |
+| Artifacts | Browse, inspect, export and track versions |
+| Execution | Inspect workers, execution state, failures and logs |
+| Governance | View policy validation, audit history and decisions |
+| Integrations | Inspect configured external AI and MCP integration status |
+
+This table is a minimum coverage target. Derive the complete list from the actual CLI implementation.
+
+For every command, classify it as:
+
+- Portal-supported action.
+- Portal read-only capability.
+- CLI-only administrative or developer operation.
+- Not applicable to the Portal.
+
+Document why any command is intentionally excluded.
+
+Do not create fake or non-functional UI controls for commands that have no backend implementation.
+
+## 5. Unified Workflow and Task Dashboard
+
+Enhance the dashboard to show the actual operational state across all registered projects.
 
 Display:
 
@@ -389,321 +140,185 @@ Display:
 - Running tasks.
 - Tasks waiting for external AI.
 - Pending approvals.
-- Failed workflows.
-- Blocked workflows.
+- Failed or blocked workflows.
 - Completed workflows.
+- Recently executed tasks.
 
-Provide an active workflow table containing:
+Provide filters by project, workflow, stage, task status and date.
 
-- Project.
-- Workflow.
+For each workflow show:
+
+- Project name.
+- Workflow identifier.
+- Workflow type.
 - Current stage.
 - Current task.
 - Assigned agent.
-- Status.
-- Last activity.
-- Duration.
-- Required action.
+- Execution status.
+- Start and last-updated timestamps.
+- Pending action or blocker.
+- Available operations.
 
-Users should be able to open a workflow and understand exactly what is happening.
+Users must be able to navigate from dashboard → project → workflow → task → artifact.
 
-### Workflow details
+Use actual backend data, not hardcoded statistics or mock workflow states.
 
-Provide a detailed workflow view with:
+## 6. Workflow and Task Detail Experience
 
-- Workflow lifecycle.
-- Stage progression.
-- Task execution details.
-- Agent assignment.
-- Worker health.
-- External AI handoff status.
+Provide detailed views for individual workflows and tasks.
+
+Workflow view:
+
+- Complete stage lifecycle.
+- Stage dependencies.
+- Completed and pending stages.
+- Current execution state.
 - Approval history.
 - Generated artifacts.
-- Execution logs.
-- Error details.
-- Audit history.
+- Task execution history.
+- Failure details and recovery options.
 
-### Operational actions
+Task view:
 
-Expose only actions supported by the backend and authorized for the current identity.
+- Task description and input.
+- Assigned agent and skill versions.
+- Dependencies.
+- Execution attempts.
+- External AI handoff status where applicable.
+- Output and generated artifacts.
+- Validation results.
+- Error details and logs.
+- Retry and re-execution actions where supported.
 
-Examples:
+Ensure the Portal reflects the actual persisted workflow and task state.
 
-- Start workflow.
-- View status.
-- View execution details.
-- Resume eligible workflows.
-- Cancel eligible workflows.
-- Review approvals.
-- View worker health.
+## 7. Backend and API Integration
 
-Require confirmation for destructive or consequential operations.
+Inspect the existing Rust services, CLI command handlers, workflow engine, persistence layer and MCP integration.
 
-### Initial authentication scope
+Reuse existing business logic and domain services.
 
-Preserve the existing Phase 1–3 portal scope: no authentication UI in this initial local-development implementation.
+Where Portal APIs are missing:
 
-Do not add login, registration, OIDC or a new user-management system as part of this enhancement.
+- Expose appropriate APIs through the existing backend architecture.
+- Avoid duplicating CLI business logic in API handlers.
+- Ensure CLI and Portal invoke the same underlying services.
+- Apply consistent validation, authorization and governance checks.
+- Ensure state changes are persisted and auditable.
+- Provide consistent error responses.
+- Add pagination and filtering for large result sets.
+- Support appropriate real-time updates through existing event mechanisms or controlled polling.
 
-However, do not weaken backend authorization.
+The Portal must not directly modify database records to perform workflow operations.
 
-Document the requirement for authentication before exposing the portal outside a trusted local-development environment.
+## 8. External AI Execution Compatibility
 
-## 11. Error handling and self-diagnostics
+Preserve EAEH's external AI execution architecture.
 
-Create a consistent error model across CLI, worker, workflow engine and portal.
+Claude Code and GitHub Copilot must continue to perform AI-intensive work through their supported integrations and existing subscriptions.
 
-Every operational error should explain:
+EAEH remains responsible for:
 
-1. What happened?
-2. Why did it happen?
-3. Which workflow, task or project was affected?
-4. Is the workflow recoverable?
-5. What should the developer do next?
-6. Which exact command should be used, if applicable?
+- Preparing execution tasks and context.
+- Dispatching or exposing tasks through supported integration mechanisms.
+- Receiving results.
+- Validating returned artifacts.
+- Enforcing approvals.
+- Managing workflow progression.
+- Maintaining audit and traceability.
 
-Introduce diagnostic capabilities where appropriate.
+Do not introduce direct Anthropic API calls, additional API billing, or hidden LLM fallback mechanisms.
 
-A developer should be able to run a diagnostic command that checks:
+Workflow recovery must correctly handle tasks waiting for external AI execution.
 
-- Current project context.
-- Current identity.
-- Credential validity.
-- Project authorization.
-- Workflow registration.
-- Workflow readiness.
-- Worker availability.
-- External AI configuration.
-- MCP configuration.
-- Pending tasks.
-- Pending approvals.
-- Persistence health.
+## 9. Security and Governance
 
-Diagnostics must distinguish blocking errors from warnings.
+Preserve existing EAEH security and governance controls.
 
-Do not claim that a workflow is ready if an essential execution dependency is unavailable.
+- Do not bypass approval enforcement.
+- Do not introduce privilege escalation.
+- Enforce project and tenant isolation.
+- Validate all filesystem paths.
+- Prevent unauthorized workspace access.
+- Treat external AI output as untrusted.
+- Protect credentials and execution logs.
+- Audit all workflow and task state changes.
+- Require appropriate authorization for destructive or administrative operations.
 
-## 12. Reliability and persistence
+The initial local-development Portal may retain its existing no-login experience, but do not weaken backend authorization or present it as production-ready.
 
-Ensure workflow execution survives:
+## 10. Testing and Acceptance Criteria
 
-- Terminal closure.
-- CLI interruption.
-- Worker restart.
-- Application restart.
-- Temporary external AI unavailability.
-- Network interruption.
-- Duplicate task polling.
-- Duplicate result submission.
+Add backend, frontend, integration and end-to-end tests.
 
-Use persistent workflow state.
+Mandatory scenarios:
 
-Implement idempotent task execution and result submission.
+1. Register an existing Spring Boot project by providing its location.
+2. Discover its project structure and existing documentation.
+3. Start a requirements/HLD/LLD design workflow through the Portal.
+4. View every stage and task from the Portal.
+5. Approve requirements and verify workflow progression.
+6. Approve HLD and verify LLD generation.
+7. Resume a workflow waiting for external AI execution.
+8. Recover a workflow after worker interruption.
+9. Retry a failed task.
+10. Restart execution from an earlier supported stage.
+11. Change an upstream artifact and verify downstream invalidation.
+12. Verify approved artifacts are not silently overwritten.
+13. Verify CLI and Portal display consistent workflow state.
+14. Verify all supported CLI operations are represented in the Portal inventory.
+15. Verify authorization, audit history and project isolation.
 
-Use bounded retries and explicit recovery policies.
+Use the existing `simple-springboot-api-b` project as an end-to-end test candidate. Do not overwrite its active workflow, approvals or artifacts. Use isolated test data when required.
 
-Avoid:
+## 11. Documentation
 
-- Lost tasks.
-- Duplicate execution.
-- Duplicate artifacts.
-- Incorrect workflow transitions.
-- Silent failures.
-- Infinite retry loops.
-- Stale worker leases.
-- Uncontrolled task concurrency.
-
-Preserve the existing persistence architecture. Do not introduce a separate database for workflow management without a demonstrated architectural requirement.
-
-## 13. Testing requirements
-
-Create meaningful automated tests for the actual implementation.
-
-At minimum, cover:
-
-### Identity and authorization
-- Correct developer profile resolution.
-- Incorrect profile-to-principal mapping.
-- Expired and revoked credentials.
-- Operator access to authorized projects.
-- Operator access denied to unauthorized projects.
-- Admin and developer identities remain separate.
-- Worker uses the correct identity.
-
-### Worker lifecycle
-- Worker startup.
-- Worker shutdown.
-- Worker unavailable.
-- Worker restart.
-- Stale worker detection.
-- Duplicate task claim prevention.
-- Interrupted task recovery.
-
-### Workflow execution
-- Successful workflow execution.
-- Stage transitions.
-- Waiting for external AI.
-- Waiting for approval.
-- Approval and automatic continuation.
-- Rejection and controlled correction.
-- Task failure.
-- Retry exhaustion.
-- Cancellation.
-- Restart recovery.
-
-### External AI
-- Task handoff.
-- Result submission.
-- Invalid result.
-- Duplicate result.
-- External AI unavailable.
-- Authentication failure.
-- No hidden direct-provider fallback.
-
-### Governance Portal
-- Dashboard reflects backend data.
-- Workflow detail reflects actual execution.
-- Approval actions work.
-- Errors are understandable.
-- Unauthorized actions are rejected.
-
-Run the relevant existing test suites and regression tests.
-
-Do not report tests as successful unless they were actually executed.
-
-## 14. Documentation
-
-Review all existing user-facing documentation.
-
-Update the relevant guides in place, particularly:
-
-- `docs/user-guides/EAEH-GETTING-STARTED.md`
-- `docs/user-guides/DEVELOPER-EXPERIENCE-GUIDE.md`
-- CLI documentation.
-- Workflow management documentation.
-- Worker management documentation.
-- Authentication and authorization documentation.
-- MCP integration documentation.
-- Governance Portal documentation.
-
-Correct obsolete commands and confusing manual procedures.
-
-Provide a clear end-to-end workflow management guide showing the developer's actual operating experience.
-
-Create:
-
-`docs/implementation/EAEH-WORKFLOW-MANAGEMENT-ENHANCEMENTS.md`
+Update the relevant existing documentation and user guides.
 
 Document:
 
-- Root causes discovered.
-- Architectural changes.
-- CLI improvements.
-- Worker lifecycle improvements.
-- Identity and authorization improvements.
-- Workflow state management.
-- Recovery mechanisms.
-- Portal enhancements.
-- Testing evidence.
-- Known limitations.
-- Remaining risks.
+- Registering an existing project by location.
+- Starting workflows from the Portal.
+- Workflow and task monitoring.
+- Resuming and restarting workflows.
+- Retry and recovery behaviour.
+- CLI-to-Portal feature parity.
+- Limitations and CLI-only operations.
+- Security and local-development restrictions.
 
-**Do not modify the existing next steps or roadmap in `claude-instructions.md`.**
+Add an implementation document containing the Portal capability inventory and test evidence.
 
-## 15. End-to-end acceptance scenario
+## 12. Implementation Constraints
 
-Use the existing `simple-springboot-api-a` project, if its current state permits, to validate the improvements.
+- Read `claude-instructions.md` before implementation.
+- Inspect the current architecture and implementation before changing anything.
+- Implement only within Phases 1–3.
+- Do not modify, reorder, rename or reinterpret the eight-phase roadmap.
+- Do not change any existing next steps, phase dependencies, acceptance criteria or implementation instructions in `claude-instructions.md`.
+- Do not start implementation of Phases 4–8.
+- Preserve existing functionality and backward compatibility.
+- Prefer extending existing services over introducing new subsystems.
+- Do not add a separate database or workflow engine.
+- Do not commit or push changes.
 
-The application scope is:
+## 13. Final Delivery Report
 
-- Java 21.
-- Spring Boot 3.x.
-- Maven.
-- GET `/api/hello`.
-- GET `/api/info`.
-- GET `/api/products`.
-- Three static in-memory products.
-- No database.
-- No Spring Security.
-- No authentication.
+Provide an evidence-based report containing:
 
-Validate the existing Phase 1–3 engineering design workflow:
+1. Features implemented.
+2. Project onboarding flow.
+3. Workflow resume/restart capabilities.
+4. CLI-to-Portal feature parity matrix.
+5. Backend APIs added or reused.
+6. Frontend screens and interactions added.
+7. Files changed.
+8. Database/schema changes, if any.
+9. Automated test results.
+10. End-to-end test evidence.
+11. Known limitations and unsupported CLI operations.
+12. Documentation updated.
+13. Remaining gaps and recommended next actions.
 
-1. Developer identity is correctly resolved.
-2. Project readiness is correctly reported.
-3. Workflow starts.
-4. Worker becomes available with the correct identity.
-5. BRD analysis executes.
-6. Requirements artifact is generated.
-7. Workflow waits for requirements approval.
-8. Approver reviews and approves.
-9. HLD generation executes.
-10. Workflow waits for HLD approval.
-11. Approver reviews and approves.
-12. LLD generation executes.
-13. Workflow waits for LLD approval.
-14. Approver reviews and approves.
-15. Workflow reaches its expected Phase 3 terminal state.
-16. Artifacts and audit history are persisted.
-17. CLI and portal show consistent results.
+Do not report a feature as implemented unless its backend operation, Portal interaction and relevant tests are verified.
 
-Do not falsely claim that the entire scenario passed if some steps could not be executed.
-
-If external AI authentication, worker authorization or an environment dependency prevents testing, document the exact limitation and the evidence.
-
-Do not damage or overwrite existing project artifacts or historical workflow executions during testing.
-
-## 16. Implementation principles
-
-- Preserve the existing Rust-first architecture.
-- Preserve deterministic governance and workflow enforcement.
-- Preserve external AI execution architecture.
-- Prefer improving existing services over introducing duplicate components.
-- Keep implementation modular and maintainable.
-- Avoid unnecessary dependencies.
-- Preserve backward compatibility where feasible.
-- Maintain tenant and project isolation.
-- Ensure auditability.
-- Never expose credentials in logs.
-- Do not bypass authorization or human approval.
-- Do not introduce functionality belonging to future phases.
-
-## 17. Execution and completion criteria
-
-Work systematically:
-
-1. Inspect existing architecture and implementation.
-2. Identify and document root causes.
-3. Present the proposed implementation approach.
-4. Implement the approved in-scope changes.
-5. Add and execute automated tests.
-6. Run regression tests.
-7. Update documentation.
-8. Validate the end-to-end Phase 1–3 scenario.
-9. Produce a final implementation report.
-
-The final report must contain:
-
-- Problems identified.
-- Root causes.
-- Changes implemented.
-- Files changed.
-- CLI changes.
-- Worker lifecycle changes.
-- Authentication and authorization changes.
-- Workflow management changes.
-- Governance Portal changes.
-- Test results with actual evidence.
-- End-to-end acceptance results.
-- Remaining limitations.
-- Security considerations.
-- Documentation updated.
-- Explicit confirmation that Phases 4–8 and the existing master roadmap were left unchanged.
-
-Stop after completing this enhancement.
-
-Do not proceed with Phase 4 or any later phase.
-
-Do not commit or push changes unless explicitly authorized.
-
-**Definition of success:** A developer should be able to start, monitor, approve, recover and complete a Phase 1–3 EAEH workflow without manually troubleshooting identity mappings, worker startup, authorization inconsistencies or unclear workflow states.
+Stop after completing this scope and wait for my approval before undertaking any further phase or roadmap work.

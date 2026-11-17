@@ -115,6 +115,7 @@ impl ExternalExecutor for FakeClient {
             notional_cost_usd: Some(0.0),
             auth_source: Some("none".into()),
             final_text: "EAEH_RESULT".into(),
+            permission_denials: vec![],
         };
         let fail = |class| ExecFailure {
             class,
@@ -426,7 +427,10 @@ async fn failed_attempts_retry_with_backoff_then_stop_and_can_be_retried_by_a_pe
         ex.iter()
             .map(|e| (e.outcome.as_str(), e.failure_class.as_deref()))
             .collect::<Vec<_>>(),
-        vec![("retry", Some("timeout")), ("exhausted", Some("invalid_output"))]
+        vec![
+            ("retry", Some("timeout")),
+            ("exhausted", Some("result_validation_failed"))
+        ]
     );
     assert!(
         ex[1]

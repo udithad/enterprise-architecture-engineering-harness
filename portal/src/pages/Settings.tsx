@@ -1,5 +1,7 @@
 import { ShieldAlert } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/queries";
+import { api, describeError } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorState, LoadingRows } from "@/components/States";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +35,39 @@ function Identity({ title, a, empty }: { title: string; a: Acting | null; empty:
   );
 }
 
+/** Installation health and audit-chain verification (`eaeh health`, `eaeh audit verify`). */
+function Health() {
+  const h = useQuery({ queryKey: ["health-details"], queryFn: () => api.get<{ status: string; database: string; migrations: number[]; model_providers: number; active_plugins: string[]; pending_events: number }>("/v1/health/details"), retry: false });
+  const v = useQuery({ queryKey: ["audit-verify"], queryFn: () => api.get<Record<string, unknown>>("/v1/audit/verify"), retry: false });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Health and audit chain</CardTitle>
+        <CardDescription>The same checks as <code>eaeh health</code> and <code>eaeh audit verify</code>.</CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm">
+        {h.data ? (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5" aria-label="Health">
+            <dt className="text-muted-foreground">Status</dt>
+            <dd>{h.data.status}</dd>
+            <dt className="text-muted-foreground">Migrations</dt>
+            <dd>{h.data.migrations.join(", ")}</dd>
+            <dt className="text-muted-foreground">Pending events</dt>
+            <dd>{h.data.pending_events}</dd>
+            <dt className="text-muted-foreground">Active plugins</dt>
+            <dd>{h.data.active_plugins.join(", ") || "none"}</dd>
+          </dl>
+        ) : (
+          h.isError && <p className="text-xs text-muted-foreground">Health details: {describeError(h.error).detail}</p>
+        )}
+        <div className="mt-3 text-xs" data-testid="audit-verify">
+          Audit chain: {v.data ? <code className="break-all">{JSON.stringify(v.data)}</code> : v.isError ? describeError(v.error).detail : "checking…"}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /** Read-only: the portal has no settings of its own; these are the launch options in force. */
 export function SettingsPage() {
   const s = useSession();
@@ -45,6 +80,9 @@ export function SettingsPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Identity title="Viewing identity (--as)" a={s.data.viewer} empty="—" />
           <Identity title="Approver identity (--approver)" a={s.data.approver} empty="None: the portal is read-only. Restart with --approver <approver-profile> to record decisions." />
+          <Identity title="Operator identity (--operator)" a={s.data.operator ?? null} empty="None: start, cancel, resume, restart and retry are disabled. Restart with --operator <developer-profile>." />
+          <Identity title="Administrator identity (--admin)" a={s.data.admin ?? null} empty="None: Register existing project is disabled. Restart with --admin <admin-profile>." />
+          <Health />
           <Card>
             <CardHeader>
               <CardTitle>Installation</CardTitle>
@@ -62,6 +100,8 @@ export function SettingsPage() {
                 <dd>{s.data.api_version}</dd>
                 <dt className="text-muted-foreground">Authentication</dt>
                 <dd>{s.data.authentication}</dd>
+                <dt className="text-muted-foreground">Workspace roots</dt>
+                <dd className="break-all font-mono text-xs">{(s.data.workspace_roots ?? []).join(", ") || "—"}</dd>
               </dl>
             </CardContent>
           </Card>

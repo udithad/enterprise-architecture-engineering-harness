@@ -41,6 +41,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::BTreeSet;
 
+pub mod delivery;
+pub use delivery::{DeliverySummary, INTERACTIVE};
+
 /// Largest accepted submission (canonical JSON bytes).
 pub const MAX_SUBMISSION_BYTES: usize = 2 * 1024 * 1024;
 
@@ -518,6 +521,28 @@ impl AgentRuntime {
                 "EAEH validates the result, then a human approves it at the workflow's approval gate. Do not write governed artifacts anywhere else.",
             ],
         });
+        let package_bytes = canonical_json(&package).len();
+        if package_bytes > delivery::MAX_PACKAGE_BYTES {
+            let mut sizes: Vec<(String, usize)> = package
+                .as_object()
+                .map(|m| {
+                    m.iter()
+                        .map(|(k, v)| (k.clone(), canonical_json(v).len()))
+                        .collect()
+                })
+                .unwrap_or_default();
+            sizes.sort_by_key(|s| std::cmp::Reverse(s.1));
+            return Err(HarnessError::invalid_input(format!(
+                "the task package is {package_bytes} bytes, above the {} byte limit; it is never truncated. Largest parts: {}. Reduce the task input or the retrieved knowledge",
+                delivery::MAX_PACKAGE_BYTES,
+                sizes
+                    .iter()
+                    .take(3)
+                    .map(|(k, n)| format!("{k} ({n})"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )));
+        }
         let package_hash = sha256_hex(canonical_json(&package).as_bytes());
         let now = ts(self.db().now());
         let mut tx = self.db().write().await?;

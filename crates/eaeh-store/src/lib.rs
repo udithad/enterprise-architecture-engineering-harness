@@ -225,7 +225,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("eaeh.db");
         let db = Db::open(&path).await.unwrap();
-        assert_eq!(db.applied_migrations().await.unwrap(), vec![1, 2, 3, 4, 5, 6]);
+        assert_eq!(
+            db.applied_migrations().await.unwrap(),
+            vec![1, 2, 3, 4, 5, 6, 7, 8, 9]
+        );
         db.close().await;
         let nested = dir.path().join("new-data-dir").join("eaeh.db");
         Db::open(&nested).await.unwrap().close().await;
@@ -240,7 +243,10 @@ mod tests {
             assert_eq!(mode, 0o700, "data directory created by EAEH must be owner-only");
         }
         let db = Db::open(&path).await.unwrap();
-        assert_eq!(db.applied_migrations().await.unwrap(), vec![1, 2, 3, 4, 5, 6]);
+        assert_eq!(
+            db.applied_migrations().await.unwrap(),
+            vec![1, 2, 3, 4, 5, 6, 7, 8, 9]
+        );
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;

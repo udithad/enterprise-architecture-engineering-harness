@@ -164,6 +164,10 @@ pub struct CoordinatorConfig {
     pub task_timeout_secs: u64,
     /// Attempts per hand-off (first run + retries) before it is marked `exhausted`.
     pub max_attempts: u32,
+    /// Failed context deliveries (the AI client could not retrieve or read its task package)
+    /// tolerated per hand-off before it stops `blocked`. They use neither an execution
+    /// attempt nor a correction attempt.
+    pub max_context_attempts: u32,
     /// First retry delay; doubles per attempt.
     pub backoff_secs: u64,
     /// How often an idle worker looks for work.
@@ -185,6 +189,7 @@ impl Default for CoordinatorConfig {
             model: None,
             task_timeout_secs: 1800,
             max_attempts: 3,
+            max_context_attempts: 3,
             backoff_secs: 30,
             poll_interval_ms: 3000,
             lease_secs: 120,
